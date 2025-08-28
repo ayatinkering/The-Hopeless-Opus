@@ -110,52 +110,72 @@
   will-change: background-position;
 }
 
-/* Custom scrollbar */
+/* Optimized custom scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #0D1A2F;
+  background: rgba(13, 26, 47, 0.8);
+  border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #09D8C7;
-  border-radius: 4px;
+  background: rgba(9, 216, 199, 0.5);
+  border-radius: 3px;
+  transition: background 0.3s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #17364F;
+  background: rgba(9, 216, 199, 0.7);
 }
 
-/* Adding mysterious glowing effects and horror animations */
+/* Optimized animations for better performance */
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+/* Optimized animations */
 @keyframes mystical-glow {
   0%,
   100% {
-    box-shadow: 0 0 3px #09D8C7, 0 0 6px #09D8C7, 0 0 9px #09D8C7;
+    text-shadow: 0 0 3px #09D8C7;
+    opacity: 0.8;
   }
   50% {
-    box-shadow: 0 0 6px #09D8C7, 0 0 12px #09D8C7, 0 0 18px #09D8C7;
+    text-shadow: 0 0 6px #09D8C7, 0 0 12px #09D8C7;
+    opacity: 1;
   }
 }
 
 @keyframes horror-pulse {
   0%,
   100% {
-    box-shadow: 0 0 3px #BD0927, 0 0 6px #BD0927, inset 0 0 5px rgba(189, 9, 39, 0.05);
+    transform: scale(1);
+    opacity: 0.7;
   }
   50% {
-    box-shadow: 0 0 8px #BD0927, 0 0 15px #BD0927, inset 0 0 10px rgba(189, 9, 39, 0.1);
+    transform: scale(1.05);
+    opacity: 1;
   }
 }
 
 @keyframes eerie-shimmer {
   0%,
   100% {
-    text-shadow: 0 0 2px #09D8C7, 0 0 4px #09D8C7;
+    text-shadow: 0 0 2px #09D8C7;
+    opacity: 0.8;
   }
   50% {
-    text-shadow: 0 0 4px #09D8C7, 0 0 8px #09D8C7, 0 0 12px #09D8C7;
+    text-shadow: 0 0 4px #09D8C7, 0 0 8px #09D8C7;
+    opacity: 1;
   }
 }
 
