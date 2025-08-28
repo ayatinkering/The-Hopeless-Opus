@@ -16,13 +16,13 @@ export default function HomePage() {
 
       <div className="text-center space-y-12 relative z-10">
         {/* Enhanced header section */}
-        <div className="page-header">
+        <div className="page-header mt-18">
           <div className="space-y-6">
-            <h1 className="eerie-text text-7xl md:text-8xl lg:text-9xl font-bold mb-6 leading-tight">
+            <h1 className="eerie-text text-xl md:text-3xl lg:text-7xl font-bold mb-4 leading-snug">
               Hopeless Opus
             </h1>
             <div className="w-32 h-1 bg-turquoise mx-auto rounded-full shadow-lg shadow-turquoise/50"></div>
-            <p className="text-2xl md:text-3xl lg:text-4xl mb-8 font-medium leading-relaxed text-shadow-horror" style={{ color: "#FFD700" }}>
+            <p className="text-2xl md:text-2xl lg:text-2xl mb-6 font-medium leading-relaxed text-shadow-horror" style={{ color: "#FFD700" }}>
               Enter the Ultimate Story Mode Experience
             </p>
           </div>
@@ -42,7 +42,7 @@ export default function HomePage() {
           </Link>
           <Link to="/register" className="w-full sm:w-auto">
             <Button variant="outline" className="horror-button px-12 py-4 font-bold text-xl w-full sm:w-auto transform hover:scale-105 transition-all duration-300">
-              <span className="ancient-text">Forge Your Team</span>
+              <span className="ancient-text" style={{ color: "white" }}>Forge Your Team</span>
             </Button>
           </Link>
         </div>

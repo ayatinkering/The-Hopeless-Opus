@@ -3,8 +3,8 @@
 
 /* Font declarations */
 @font-face {
-  font-family: 'Spartacus';
-  src: url('/fonts/Spartacus-KVdLp.ttf') format('truetype');
+  font-family: 'setsame';
+  src: url('/fonts/Minecraftia-Regular.ttf') format('truetype');
   font-weight: normal;
   font-style: normal;
   font-display: swap;
@@ -49,7 +49,7 @@
 }
 
 @theme inline {
-  --font-spartacus: 'Spartacus', serif;
+  --font-setsame: 'setsame', serif;
 
   /* Custom colors for Hopeless Opus */
   --color-turquoise: #09D8C7;
@@ -98,12 +98,12 @@
   --color-sidebar-ring: var(--sidebar-ring);
 }
 
-.font-spartacus {
-  font-family: 'Spartacus', serif;
+.font-  setsame {
+  font-family: 'setsame', serif;
 }
 
 .bg-gemini {
-  background-image: url("/images/gemini-background.png");
+  background-image: url("/images/gemini-generated3.png");
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -309,7 +309,7 @@
 }
 
 .bg-gemini {
-  background-image: url("/images/gemini-background.png");
+  background-image: url("/images/gemini-generated3.png");
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -436,7 +436,7 @@
   }
   body {
     @apply bg-background text-foreground;
-    font-family: 'Spartacus', serif;
+    font-family: 'setsame', serif;
     background: #0D1A2F;
     color: #09D8C7;
     /* Optimize for smooth animations */
@@ -449,9 +449,9 @@
     perspective: 1000px;
   }
   
-  /* Apply Spartacus font to all text elements */
+  /* Apply setsame font to all text elements */
   h1, h2, h3, h4, h5, h6, p, span, div, button, input, label, a {
-    font-family: 'Spartacus', serif;
+    font-family: 'setsame', serif;
   }
 }
 
