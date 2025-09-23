@@ -1,10 +1,10 @@
 // KnobPuzzle.jsx
 import React, { useState, useEffect } from "react";
-import valImg from "./val.jpg"; // replace or import another image
+import valImg from "./tiles2image.jpg"; // replace or import another image
 
 export default function KnobPuzzle({
   gridSize = 6,      // number of tiles per row/col (NxN)
-  tileSize = 100,    // pixel size of each tile (standard size)
+  tileSize = 125.5,    // pixel size of each tile (standard size)
   imageSrc = valImg, // image to slice
 }) {
   const [tiles, setTiles] = useState([]);
