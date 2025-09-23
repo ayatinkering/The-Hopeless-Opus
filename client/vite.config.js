@@ -11,11 +11,7 @@ export default defineConfig({
     },
   },
   server: {
-<<<<<<< HEAD
-    port: 3000,
-=======
     port: 5173,
->>>>>>> 813ac5d80d63e82081cce6d7cd26398bfed8c8c4
     open: true,
   },
   build: {
