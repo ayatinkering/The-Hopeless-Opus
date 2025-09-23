@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import valImg from "./val.jpg";
+import valImg from "./assets/val.jpg";
 
 const GRID_SIZE = 4; // 4x4 grid
 const IMAGE_URL = valImg;
