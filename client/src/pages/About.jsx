@@ -54,6 +54,10 @@ function About() {
       </section>
     </div>
   );
+<<<<<<< HEAD
 }
 
 export default About;
+=======
+}
+>>>>>>> a819762df10c97fa678d85cb31a2f24795f0fba2
