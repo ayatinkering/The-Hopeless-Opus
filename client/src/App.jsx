@@ -1,9 +1,8 @@
-import Profile from './pages/Profile'
-
+import Chips from "./Minigames/Chips"
 function App() {
   return (
     <>
-      <Profile />
+    <Chips/>
     </>
   )
 }
