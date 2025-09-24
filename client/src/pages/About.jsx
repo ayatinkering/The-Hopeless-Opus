@@ -1,82 +1,59 @@
-import logo from "../assets/gangster.jpeg";
+import gangster from "../assets/gangster.jpeg";
 
-export default function AboutUs() {
-  const team = [
-    { name: "ABC", fun: "50% Binge", role: "CORE COMMITTEE", image: logo},
-    { name: "DEF", fun: "66% Netflix", role: "CORE COMMITTEE", image: logo},
-    { name: "GHI", fun: "52% PotatoLaptop", role: "CORE COMMITTEE", image: logo},
-    { name: "JKL", fun: "69% Manga", role: "CORE COMMITTEE", image: logo},
-    { name: "MNO", fun: "99% Pugi", role: "CORE COMMITTEE", image: logo},
-    { name: "PQR", fun: "99% Home", role: "CORE COMMITTEE", image: logo},
-    { name: "STU", fun: "100% Artist", role: "CORE COMMITTEE", image: logo},
-    { name: "VWX", fun: "96% Design", role: "CORE COMMITTEE", image: logo}
-  ];
-
+function About() {
   return (
-    <section
-      className="w-full min-h-screen flex flex-col items-center justify-center px-0 py-0"
-      style={{
-      background: `linear-gradient(135deg, #0D1A2F, #17364F, #411E3A)`,
-      backgroundSize: "400% 400%",
-      animation: "gradientAnimation 15s ease infinite"
-      }}
-    >
-      {/* Gradient Animation */}
-      <style>
-        {`
-          @keyframes gradientAnimation {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-          }
-        `}
-      </style>
-
-      {/* Title */}
-        <div className="text-center mb-12 text-white px-4 pt-28">
-        <h2 className="text-4xl font-bold mb-4" style={{ color: "#09D8C7", fontFamily: '"Goldman", sans-serif', textShadow: `0 0 10px rgba(99,102,241,0.8), 0 0 20px rgba(99,102,241,0.6), 0 0 40px rgba(99,102,241,0.5)`,}}>ABOUT ACUMEN</h2>
-        <p className="text-2xl text-gray-200 mb-10 px-24" style={{fontFamily: '"Geo", sans-serif'}}>
-          TechTatva 2025 Acumen where Strategy, Puzzles, and Possibilities Unite! Step into Techtatva 2025's most exhilarating challenge : ACUMEN. A clash of intelellect and strategy, featuring two thrilling journeys - TESSERACT and HOPELESS OPUS. From mind-bending puzzles to choices that shape your destiny, Acumen is not just a game - it's an adventure you won't forget. Try your hand at the prize pool of a whopping _______
+    <div className="px-6 md:px-16 lg:px-32 py-16">
+      {/* WHAT IS ACUMEN */}
+      <section className="text-center mt-24 mb-20">
+        <h2 className="text-3xl md:text-4xl font-bold mb-6">WHAT IS ACUMEN?</h2>
+        <p className="text-lg leading-relaxed max-w-5xl mx-auto text-gray-700 text-justify">
+          Techtatva 2025 Acumen — Where Strategy, Puzzles, and Possibilities Unite! 
+          Step into Techtatva 2025's most exhilarating challenge: Acumen. 
+          A clash of intellect and strategy, featuring two thrilling journeys- Tesseract and Hopeless Opus. 
+          From mind-bending puzzles to choices that shape your destiny, Acumen is not just a test, it's an adventure 
+          you won't forget. Try your hand at the prize pool of a whopping Rs. 24,000!
         </p>
+      </section>
 
-        <h2 className="text-4xl font-bold mb-4" style={{ color: "#09D8C7", fontFamily: '"Goldman", sans-serif', textShadow: `0 0 10px rgba(99,102,241,0.8), 0 0 20px rgba(99,102,241,0.6), 0 0 40px rgba(99,102,241,0.5)`, }}>HOPELESS OPUS</h2>
-        <p className="text-2xl text-gray-200 mb-10 px-24" style={{fontFamily: '"Geo", sans-serif'}}>
-          Hopeless Opus is back and more thrilling than ever! Step into an immersive online experience where every decision shapes your story! In this interactive storytelling event, your choices hold the power to unlock new paths and outcomes as you tackle mini games at step. The fate of the narrative is in your hands—choose wisely, and watch as your unique journey unfolds in real-time. Be ready for twists, turns, and unexpected revelations, where every choice you make matters!
+      {/* WHAT IS HOPELESS OPUS */}
+      <section className="text-center mb-20">
+        <h2 className="text-3xl md:text-4xl font-bold mb-6">WHAT IS HOPELESS OPUS?</h2>
+        <p className="text-lg leading-relaxed max-w-5xl mx-auto text-gray-700 text-justify">
+          Hopeless Opus is back and more thrilling than ever! Step into an immersive online experience 
+          where every decision shapes your story! In this interactive storytelling event, your choices 
+          hold the power to unlock new paths and outcomes as you tackle mini-games at steps. 
+          The fate of the narrative is in your hands—choose wisely, and watch as your unique journey unfolds 
+          in real-time. Be ready for twists, turns, and unexpected revelations, where every choice you make matters! 
+          <br /> <br />
+          <span className="font-semibold">Event Dates:</span> 17th-18th October, 2024
         </p>
-        <h2 className="text-4xl font-bold " style={{ color: "#09D8C7", fontFamily: '"Goldman", sans-serif', textShadow: `0 0 10px rgba(99,102,241,0.8), 0 0 20px rgba(99,102,241,0.6), 0 0 40px rgba(99,102,241,0.5)`, }}>MEET  OUR TEAM</h2>
-        
-      </div>
+      </section>
 
-      {/* Profile Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 w-full mx-auto pr-8 pl-8 pb-20">
-        {team.map((member, index) => (
-          <div
-            key={index}
-            className="rounded-2xl text-center p-6 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-z-12 hover:scale-110"
+      {/* MEET THE CORE TEAM */}
+      <section>
+        <h2 className="text-3xl md:text-4xl font-bold text-center mb-10">Meet The Core Team</h2>
 
-            style={{
-              backgroundColor: "#0D1A2F",
-              border: "2px solid #09D8C7"
-            }}
-          >
-            <img
-              src={member.image}
-              alt={member.name}
-              className="w-24 h-24 object-cover rounded-full mx-auto mb-4 border-4"
-              style={{ borderColor: "#09D8C7" }}
-            />
-            <h3 className="text-xl font-bold mb-2" style={{ color: "#09D8C7" }}>
-              {member.name}
-            </h3>
-            <p className="mb-3" style={{ color: "#BD0927" }}>
-              {member.fun}
-            </p>
-            <p className="uppercase text-xs font-semibold tracking-wide" style={{ color: "#CCCCCC" }}>
-              {member.role}
-            </p>
-          </div>
-        ))}
-      </div>
-    </section>
+        {/* Grid team layout */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12 text-center">
+          {[...Array(12)].map((_, i) => {
+            // Row 1 (i < 4) gets red border, others get blue
+            const borderColor = i < 4 ? "border-red-500" : "border-blue-500";
+            return (
+              <div key={i}>
+                <img
+                  src={gangster}
+                  alt={`Member ${i + 1}`}
+                  className={`w-40 h-40 mx-auto mb-4 rounded-full object-cover border-4 ${borderColor}`}
+                />
+                <h3 className="text-xl font-semibold">Member {i + 1}</h3>
+                <p className="text-gray-600">Designation</p>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+    </div>
   );
 }
+
+export default About;
