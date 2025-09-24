@@ -1,8 +1,8 @@
-import Chips from "./Minigames/Chips"
+import GamingProfile from "./pages/Contact.jsx";
 function App() {
   return (
     <>
-    <Chips/>
+    <GamingProfile/>
     </>
   )
 }

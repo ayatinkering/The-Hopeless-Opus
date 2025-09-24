@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-export default function GamingProfile() {
+export default function Profile() {
   const [profileData] = useState({
     UserName: "Histaxe",
     fullName: "Sumeet",
