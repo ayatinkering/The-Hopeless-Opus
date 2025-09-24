@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import backgroundImage from "./cipherimage.jpg"; // Your historical background
+import backgroundImage from "../assets/cipherimage.jpg"; // Your historical background
 
-export default function CaesarCipherPuzzle() {
+export default function Cipher() {
   const cipherText = "Zvuv Whgga Xbhzap Vvthup"; // +7 Caesar cipher of "Sono Pazzi Questi Romani"
   const correctAnswer = "theseromansarecrazy";
   const [input, setInput] = useState("");

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import morseAudio from "../assets/morse.wav"; // your Morse audio file
-import morseBg from "./assets/morse.png"; // background image
+import morseBg from "../assets/morse.png"; // background image
 
 const Morsecode = () => {
   const [input, setInput] = useState("");
