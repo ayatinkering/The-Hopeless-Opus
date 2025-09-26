@@ -1,8 +1,8 @@
-import GamingProfile from "./pages/Contact.jsx";
+import About from "./pages/About.jsx";
 function App() {
   return (
     <>
-    <GamingProfile/>
+    <About/>
     </>
   )
 }
