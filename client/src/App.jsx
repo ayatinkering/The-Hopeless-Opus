@@ -1,12 +1,12 @@
-import LandingPage from "./pages/LandingPage"
-import Navbar from "./components/Navbar"
+import React from "react";
+import Home from "./pages/Home";
+
 function App() {
   return (
     <>
-    <Navbar/>
-    <LandingPage/>
+    <Home/>
     </>
-  )
+  );
 }
 
-export default App
+export default App;
