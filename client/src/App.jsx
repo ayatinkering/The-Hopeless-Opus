@@ -1,4 +1,4 @@
-import About from "./pages/About.jsx";
+import About from "./pages/Leaderboard.jsx";
 function App() {
   return (
     <>
