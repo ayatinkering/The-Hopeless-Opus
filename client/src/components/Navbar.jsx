@@ -1,81 +1,94 @@
 import React, { useState } from "react";
+import { Link } from "react-router-dom";
 import logo from "../assets/logo.jpg";
-import profile from "../assets/profile.png";
+import { FiMenu, FiX } from "react-icons/fi"; // Hamburger & Close icons
 
-function Navbar() {
+const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
 
-  const goHome = () => {
-    window.location.href = "/";
-  };
+  const navItems = [
+    { name: "Home", path: "/" },
+    { name: "About Us", path: "/about" },
+    { name: "Leaderboard", path: "/leaderboard" },
+    { name: "Contact Us", path: "/contact" },
+    { name: "Rules", path: "/rules" },
+  ];
 
   return (
-    <div className="fixed top-0 left-0 w-full bg-gray-900 shadow-md z-50">
-      <nav className="flex justify-between items-center px-4 sm:px-8 py-4">
-        
-        {/* Left Logo */}
-        <div className="flex items-center space-x-2 cursor-pointer" onClick={goHome}>
-          <img src={logo} alt="Logo" className="w-10 h-10 rounded-full object-cover" />
+    <nav className="w-full fixed top-0 z-50 backdrop-blur-sm border-b border-white/30">
+      <div className="max-w-7xl mx-auto px-6 lg:px-8 flex justify-between items-center h-18">
+        {/* Logo */}
+        <div className="flex-shrink-0">
+          <Link to="/">
+            <img src={logo} alt="Hopeless Opus Logo" className="h-12 w-auto object-contain" />
+          </Link>
         </div>
 
-        {/* Navbar Links (visible on tablet and above) */}
-        <ul className="hidden sm:flex space-x-10 text-white">
-          {["Home", "Play", "About", "Contact", "Leaderboard", "Login"].map((item) => (
-            <li
-              key={item}
-              className="relative cursor-pointer sm:after:absolute sm:after:left-0 sm:after:-bottom-1 sm:after:h-[1.6px] sm:after:w-0 sm:after:bg-white sm:after:transition-all sm:after:duration-300 hover:sm:after:w-full"
-              onClick={goHome}
-            >
-              {item}
+        {/* Desktop Links */}
+        <ul className="hidden md:flex space-x-18 text-white text-lg">
+          {navItems.map((item, index) => (
+            <li key={index} className="relative">
+              <Link
+                to={item.path}
+                className="relative after:content-[''] after:absolute after:left-0 after:-bottom-1 after:w-0 after:h-[2px] after:bg-white after:transition-all after:duration-300 hover:after:w-full"
+              >
+                {item.name}
+              </Link>
             </li>
           ))}
         </ul>
 
-        {/* Right Profile & Hamburger */}
-        <div className="flex items-center space-x-4">
-          {/* Profile Icon */}
-          <div className="w-8 h-8 rounded-full overflow-hidden cursor-pointer" onClick={goHome}>
-            <img src={profile} alt="Profile" className="w-full h-full object-cover" />
-          </div>
-
-          {/* Hamburger Menu (only visible on phones) */}
-          <button
-            className="sm:hidden text-white focus:outline-none"
-            onClick={() => setIsOpen(!isOpen)}
+        {/* Login Button (Desktop) */}
+        <div className="hidden md:block">
+          <Link
+            to="/login"
+            className="bg-[#9f1818] hover:bg-[#800b0b] text-white font-normal px-6 py-2 rounded-full transition text-base"
           >
-            <svg
-              className="w-6 h-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              {isOpen ? (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              ) : (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              )}
-            </svg>
+            LOGIN
+          </Link>
+        </div>
+
+        {/* Hamburger Menu Button (Mobile) */}
+        <div className="md:hidden flex items-center">
+          <button
+            onClick={() => setIsOpen(!isOpen)}
+            className="text-white focus:outline-none"
+          >
+            {isOpen ? <FiX size={28} /> : <FiMenu size={28} />}
           </button>
         </div>
-      </nav>
+      </div>
 
-      {/* Mobile Menu (visible only on phones when hamburger clicked) */}
-      {isOpen && (
-        <ul className="sm:hidden bg-gray-900 text-white flex flex-col space-y-4 px-6 py-4">
-          {["Home", "Play", "About", "Contact", "Leaderboard", "Login"].map((item) => (
-            <li
-              key={item}
-              className="cursor-pointer"
-              onClick={goHome}
-            >
-              {item}
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
+      {/* Mobile Menu */}
+{isOpen && (
+  <div className="md:hidden backdrop-blur-sm  border-white/30">
+    <ul className="flex flex-col items-center py-6 space-y-6 text-white text-lg">
+      {navItems.map((item, index) => (
+        <li key={index} className="relative">
+          <Link
+            to={item.path}
+            onClick={() => setIsOpen(false)}
+            className="relative after:content-[''] after:absolute after:left-0 after:-bottom-1 after:w-0 after:h-[2px] after:bg-white after:transition-all after:duration-300 hover:after:w-full"
+          >
+            {item.name}
+          </Link>
+        </li>
+      ))}
+      <li>
+        <Link
+          to="/login"
+          onClick={() => setIsOpen(false)}
+          className="bg-[#9f1818] hover:bg-[#800b0b] text-white font-normal px-8 py-2 rounded-full transition text-base"
+        >
+          LOGIN
+        </Link>
+      </li>
+    </ul>
+  </div>
+)}
+
+    </nav>
   );
-}
+};
 
 export default Navbar;

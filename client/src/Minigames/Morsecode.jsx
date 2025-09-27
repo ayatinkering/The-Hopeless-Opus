@@ -39,9 +39,9 @@ const Morsecode = () => {
     }
   };
 
-  // Play Morse audio using Blob
-  const handlePlayMorse = async () => {
-    if (!audioPlaying) {
+  // Toggle Play/Pause Morse audio
+  const handleToggleMorse = async () => {
+    if (!audioRef.current) {
       try {
         const resp = await fetch(morseAudio, { cache: "no-store" });
         const arrayBuffer = await resp.arrayBuffer();
@@ -52,8 +52,19 @@ const Morsecode = () => {
         const audioEl = new Audio();
         audioEl.src = url;
         audioEl.loop = true;
-        await audioEl.play();
         audioRef.current = audioEl;
+      } catch (err) {
+        console.error("Audio setup failed:", err);
+        return;
+      }
+    }
+
+    if (audioPlaying) {
+      audioRef.current.pause();
+      setAudioPlaying(false);
+    } else {
+      try {
+        await audioRef.current.play();
         setAudioPlaying(true);
       } catch (err) {
         console.error("Audio playback failed:", err);
@@ -78,16 +89,16 @@ const Morsecode = () => {
         {timeLeft}s
       </div>
 
-      {/* Input row with Play button, input, and submit */}
+      {/* Input row with Play/Pause button, input, and submit */}
       <div className="absolute top-[50%] left-[47%] transform -translate-x-1/2 flex items-center gap-3">
-        {/* Play Audio button - always visible, but disabled once playing */}
+        {/* Play/Pause button */}
         <button
-          onClick={handlePlayMorse}
-          disabled={audioPlaying || gameOver}
+          onClick={handleToggleMorse}
+          disabled={gameOver}
           className={`px-4 py-2 rounded-md transition duration-300 ease-in-out shadow-md hover:scale-105 cursor-pointer
-                      ${audioPlaying ? "bg-gray-600 text-gray-300 cursor-not-allowed" : "bg-gray-800 hover:bg-gray-700 text-white"}`}
+                      ${gameOver ? "bg-gray-600 text-gray-300 cursor-not-allowed" : "bg-gray-800 hover:bg-gray-700 text-white"}`}
         >
-          ▶︎ •၊၊||၊•
+          {audioPlaying ? "❚❚" : "▶︎"}
         </button>
 
         {/* Input field */}
