@@ -1,38 +1,109 @@
-import LoginForm from "@/components/LoginForm.jsx"
+import React, { useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
 
-export default function LoginPage() {
+
+export default function Login() {
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+  });
+  const [showPassword, setShowPassword] = useState(false);
+
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    console.log("Form Submitted:", formData);
+  };
+
   return (
-    <div className="min-h-screen bg-gemini flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Enhanced background overlay for better text readability */}
-      <div className="absolute inset-0 bg-gradient-to-br from-dark-navy/50 via-dark-navy/30 to-transparent"></div>
-      
-      {/* Floating horror elements */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-1/3 left-1/4 w-1.5 h-1.5 bg-turquoise/40 rounded-full animate-pulse"></div>
-        <div className="absolute bottom-1/3 right-1/4 w-1 h-1 bg-red/50 rounded-full animate-pulse" style={{animationDelay: '1s'}}></div>
-        <div className="absolute top-2/3 left-2/3 w-2 h-2 bg-plum/40 rounded-full animate-pulse" style={{animationDelay: '2s'}}></div>
-      </div>
+    <div className="min-h-screen bg-gradient-to-br from-[#411E3A] to-[#0D1A2F] flex items-center justify-center p-4">
+      <div className="w-full max-w-sm bg-[#0D1A2F] rounded-2xl p-6 sm:p-8 shadow-xl border border-slate-800">
+        {/* Header */}
+        <h1 className="text-2xl sm:text-3xl font-bold text-[#09D8C7] text-center mb-2">
+          Welcome Back
+        </h1>
+        <p className="text-gray-400 text-center text-sm mb-6">
+          Sign in to continue to your account
+        </p>
 
-      <div className="w-full max-w-md relative z-10">
-        {/* Enhanced page header */}
-        <div className="page-header text-center mb-8">
-          <h1 className="text-5xl md:text-6xl font-bold mb-4 text-shadow-strong" style={{ color: "#09D8C7" }}>
-            Hopeless Opus
-          </h1>
-          <div className="w-16 h-1 bg-turquoise mx-auto rounded-full shadow-lg shadow-turquoise/50 mb-4"></div>
-          <p className="text-xl md:text-2xl font-medium text-shadow-horror" style={{ color: "#FFD700" }}>
-            Enter the Story Mode
-          </p>
-          <p className="text-sm text-shadow-strong mt-2" style={{ color: "#09D8C7" }}>
-            Step into the shadows and begin your journey
-          </p>
-        </div>
-        
-        {/* Enhanced form container */}
-        <div className="form-container p-8">
-          <LoginForm />
-        </div>
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Email */}
+          <div>
+            <label className="block text-[#09D8C7] text-sm font-medium mb-1">
+              Email Address
+            </label>
+            <input
+              type="email"
+              name="email"
+              placeholder="Enter your email"
+              value={formData.email}
+              onChange={handleChange}
+              className="w-full px-3 py-2 rounded-md bg-transparent border border-slate-700 text-white text-sm focus:outline-none focus:border-[#09D8C7]"
+              required
+            />
+          </div>
+
+          {/* Password with toggle */}
+          <div>
+            <label className="block text-[#09D8C7] text-sm font-medium mb-1">
+              Password
+            </label>
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                name="password"
+                placeholder="Enter your password"
+                value={formData.password}
+                onChange={handleChange}
+                className="w-full px-3 py-2 rounded-md bg-transparent border border-slate-700 text-white text-sm focus:outline-none focus:border-[#09D8C7] pr-14"
+                required
+              />
+              {/* Toggle button */}
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute inset-y-0 right-3 flex items-center text-xs font-medium text-[#09D8C7] hover:text-cyan-400"
+              >
+              {showPassword ? <Eye size={16} /> : <EyeOff size={16} />}
+              </button>
+
+            </div>
+          </div>
+
+          {/* Forgot password */}
+          <div className="text-right">
+            <a
+              href="#"
+              className="text-xs text-[#09D8C7] hover:text-gray-400"
+            >
+              Forgot Password?
+            </a>
+          </div>
+
+          {/* Sign In button */}
+          <button
+            type="submit"
+            className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-2 rounded-md transition-all duration-300"
+          >
+            SIGN IN
+          </button>
+        </form>
+
+        {/* Sign Up link */}
+        <p className="text-center text-sm text-gray-400 mt-6 pb-20">
+          Don’t have an account?{" "}
+          <a href="#" className="text-[#09D8C7] hover:text-cyan-400">
+            Sign up here
+          </a>
+        </p>
       </div>
     </div>
-  )
-} 
+  );
+}
