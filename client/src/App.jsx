@@ -3,8 +3,9 @@ import VisualNovelInterface from "./components/GameSlide"
 
 function App() {
   return (
-    <VisualNovelInterface/>
-  )
+    <>
+    </>
+  );
 }
 
 export default App

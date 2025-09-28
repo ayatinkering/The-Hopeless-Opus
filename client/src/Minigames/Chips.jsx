@@ -202,7 +202,7 @@ const Chips = () => {
                 data-col={col}
                 className={`w-full h-full max-w-12 max-h-12 sm:max-w-14 sm:max-h-14 md:max-w-16 md:max-h-16 rounded-full border-2 sm:border-4 flex items-center justify-center text-black font-bold text-sm sm:text-base md:text-lg transition-all duration-200 cursor-pointer select-none ${
                     isSelected
-                    ? 'bg-cyan-300 border-cyan-100 shadow-lg shadow-cyan-400/50'
+                    ? 'bg-cyan-100 border-cyan-100 shadow-lg shadow-cyan-400/50'
                     : chip.currentConnections === chip.value
                     ? 'bg-green-300 border-green-100 shadow-lg shadow-green-400/50'
                     : 'bg-cyan-400 border-cyan-200 shadow-lg shadow-cyan-500/50'
