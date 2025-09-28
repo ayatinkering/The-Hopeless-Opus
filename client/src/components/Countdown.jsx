@@ -3,7 +3,6 @@ import React, { useState, useEffect } from "react";
 const Countdown = ({ targetDateProp }) => {
   const [time, setTime] = useState(0);
 
-  // Use prop if passed, else default to 8th Oct 2025 00:00
   const targetDate = targetDateProp || new Date("2025-10-08T00:00:00");
 
   useEffect(() => {
@@ -29,26 +28,40 @@ const Countdown = ({ targetDateProp }) => {
 
   const { days, hours, minutes, seconds } = formatTime(time);
 
+  const unitBlock = (value, label) => (
+    <div
+      className="relative flex items-center justify-center
+                 backdrop-blur-xs bg-[#000000]/20
+                 w-16 sm:w-28 md:w-32 lg:w-36
+                 h-20 sm:h-28 md:h-32 lg:h-36
+                 rounded-lg shadow-lg px-2"
+    >
+      {/* Number moved slightly up using absolute positioning */}
+      <div
+        className="absolute top-2 sm:top-3 md:top-4 lg:top-5 w-full text-white font-mono
+                   text-2xl sm:text-4xl md:text-6xl lg:text-7xl flex justify-center"
+      >
+        {value.toString().padStart(2, "0")}
+      </div>
+
+      {/* Label remains in the same position */}
+      <div
+        className="absolute bottom-4 text-xs sm:text-sm md:text-base lg:text-lg text-gray-300 text-center w-full"
+      >
+        {label}
+      </div>
+    </div>
+  );
+
   const colon = (
-    <div className="text-white font-light text-4xl sm:text-6xl md:text-8xl lg:text-9xl mx-1 sm:mx-2 select-none">
+    <div className="text-white font-mono text-2xl sm:text-4xl md:text-6xl lg:text-7xl mx-1 sm:mx-2.5 flex items-center justify-center select-none">
       :
     </div>
   );
 
-const unitBlock = (value, label) => (
-  <div className="flex flex-col items-center bg-black/20 px-3 sm:px-4 md:px-5 py-3 rounded-lg shadow-lg">
-    <div className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-sans text-white tracking-wider">
-      {value.toString().padStart(2, "0")}
-    </div>
-    <div className="mt-2 text-sm sm:text-base md:text-lg lg:text-xl text-gray-300">
-      {label}
-    </div>
-  </div>
-);
-
   return (
-    <div className="text-center m-3 sm:m-5 p-4 sm:p-5 rounded-2xl shadow-lg">
-      <div className="flex justify-center items-center flex-wrap gap-2 sm:gap-4">
+    <div className="w-full flex justify-center items-center min-h-[60vh] px-4">
+      <div className="flex flex-nowrap sm:flex-wrap justify-center gap-3 sm:gap-6 md:gap-7 lg:gap-6 overflow-x-auto">
         {unitBlock(days, "Days")}
         {colon}
         {unitBlock(hours, "Hours")}
