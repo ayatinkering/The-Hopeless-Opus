@@ -74,23 +74,8 @@ const About = () => {
   };
 
   return (
-    <div className="bg-black text-white min-h-screen w-full font-sans overflow-x-hidden">
+    <div className="bg-black pt-10 text-white min-h-screen w-full font-sans overflow-x-hidden">
       {/* Navigation - Fully Responsive */}
-      <nav className="flex flex-col sm:flex-row items-center justify-between px-4 sm:px-5 lg:px-4 py-3 border-b border-gray-800 w-full">
-        <div className="flex items-center space-x-1 mb-2 sm:mb-0">
-            <img src={Logo} alt="Logo" className="w-5 h-5 sm:w-25 sm:h-25" />
-        </div>
-        <div className="flex flex-wrap items-center justify-evenly sm:justify-evenly w-full sm:flex-1 sm:ml-8 text-sm sm:text-base font-medium tracking-tight">
-          <a href="#" className="text-gray-300 hover:text-white transition-colors">HOME</a>
-          <a href="#" className="text-white">ABOUT US</a>
-          <a href="#" className="text-gray-300 hover:text-white transition-colors">LEADERBOARD</a>
-          <a href="#" className="text-gray-300 hover:text-white transition-colors">CONTACT US</a>
-          <a href="#" className="text-gray-300 hover:text-white transition-colors">RULES</a>
-          <button className="bg-red-600 text-white px-3 py-1 sm:px-4 sm:py-2 rounded text-sm sm:text-base hover:bg-red-700 transition-colors font-medium">
-            LOGIN
-          </button>
-        </div>
-      </nav>
 
       {/* Main Content Container with consistent spacing */}
       <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

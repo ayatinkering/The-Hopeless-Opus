@@ -44,7 +44,7 @@ export default function Register() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#411E3A] to-[#0D1A2F] p-4">
+    <div className="min-h-screen pt-25 flex items-center justify-center bg-gradient-to-br from-[#411E3A] to-[#0D1A2F] p-4">
       <div className="w-full max-w-3xl bg-[#0D1A2F] rounded-2xl shadow-lg p-4 sm:p-10 text-white">
         <h1 className="text-3xl font-bold text-center text-[#09D8C7] mb-2">
           Register

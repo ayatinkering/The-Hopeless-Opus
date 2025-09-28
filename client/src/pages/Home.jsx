@@ -7,6 +7,7 @@ import CardSlider from "../components/CardSlider";
 import FAQ from "../components/FAQ";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import "../css/styles.css";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -47,7 +48,6 @@ function Home() {
 
       {/* Content */}
       <div className="relative z-10">
-        <Navbar />
         <LandingPage />
 
         {/* Countdown with ref */}
