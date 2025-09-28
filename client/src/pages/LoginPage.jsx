@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
-
+import axios from "axios";
 
 export default function Login() {
   const [formData, setFormData] = useState({
@@ -8,6 +8,9 @@ export default function Login() {
     password: "",
   });
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
+  const [successMsg, setSuccessMsg] = useState("");
 
   const handleChange = (e) => {
     setFormData({
@@ -16,9 +19,32 @@ export default function Login() {
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Form Submitted:", formData);
+    setLoading(true);
+    setErrorMsg("");
+    setSuccessMsg("");
+
+    try {
+      const res = await axios.post("http://localhost:5000/api/users/login", formData, {
+        headers: { "Content-Type": "application/json" },
+      });
+
+      setSuccessMsg(res.data.message);
+      console.log("User Data:", res.data);
+
+      // Optionally store token in localStorage for authentication
+      localStorage.setItem("token", res.data.token);
+
+    } catch (err) {
+      if (err.response) {
+        setErrorMsg(err.response.data.message || "Something went wrong");
+      } else {
+        setErrorMsg("Server not reachable");
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -50,7 +76,7 @@ export default function Login() {
             />
           </div>
 
-          {/* Password with toggle */}
+          {/* Password */}
           <div>
             <label className="block text-[#09D8C7] text-sm font-medium mb-1">
               Password
@@ -65,38 +91,39 @@ export default function Login() {
                 className="w-full px-3 py-2 rounded-md bg-transparent border border-slate-700 text-white text-sm focus:outline-none focus:border-[#09D8C7] pr-14"
                 required
               />
-              {/* Toggle button */}
+              {/* Toggle */}
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute inset-y-0 right-3 flex items-center text-xs font-medium text-[#09D8C7] hover:text-cyan-400"
               >
-              {showPassword ? <Eye size={16} /> : <EyeOff size={16} />}
+                {showPassword ? <Eye size={16} /> : <EyeOff size={16} />}
               </button>
-
             </div>
           </div>
 
           {/* Forgot password */}
           <div className="text-right">
-            <a
-              href="#"
-              className="text-xs text-[#09D8C7] hover:text-gray-400"
-            >
+            <a href="#" className="text-xs text-[#09D8C7] hover:text-gray-400">
               Forgot Password?
             </a>
           </div>
 
+          {/* Error / Success Messages */}
+          {errorMsg && <p className="text-red-500 text-sm">{errorMsg}</p>}
+          {successMsg && <p className="text-green-500 text-sm">{successMsg}</p>}
+
           {/* Sign In button */}
           <button
             type="submit"
+            disabled={loading}
             className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-2 rounded-md transition-all duration-300"
           >
-            SIGN IN
+            {loading ? "Signing In..." : "SIGN IN"}
           </button>
         </form>
 
-        {/* Sign Up link */}
+        {/* Sign Up */}
         <p className="text-center text-sm text-gray-400 mt-6 pb-20">
           Don’t have an account?{" "}
           <a href="#" className="text-[#09D8C7] hover:text-cyan-400">
