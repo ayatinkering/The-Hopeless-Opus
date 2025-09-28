@@ -1,152 +1,105 @@
-"use client"
-import React from "react"
-import pfp from "../assets/pfp.jpg" // Import profile picture asset
+import React, { useState } from "react";
 
 export default function Profile() {
-  // Stats data to be displayed as progress bars
-  const stats = {
-    accuracy: 95.2,
-    performance: 87.5,
-    efficiency: 92.8,
-  }
+  const [profileData] = useState({
+    UserName: "Histaxe",
+    fullName: "Sumeet",
+    email: "sumeet@example.com",
+    phoneNumber: "+91 9999999999",
+    registrationId: "240906218",
+    pointsEarned: 75, // percentage for progress bar
+    rank: 3,
+  });
 
   return (
-    // Full-screen container with dark background
-    <div
-      className="min-h-screen p-4 sm:p-6 lg:p-8 relative overflow-hidden"
-      style={{ backgroundColor: "#0D1A2F" }}
-    >
-      {/* Decorative background circles (subtle blur effect for aesthetics) */}
-      <div className="absolute inset-0 opacity-5">
-        <div
-          className="absolute top-20 left-10 w-32 h-32 rounded-full blur-xl"
-          style={{ backgroundColor: "#09D8C7" }}
-        ></div>
-        <div
-          className="absolute bottom-20 right-10 w-40 h-40 rounded-full blur-xl"
-          style={{ backgroundColor: "#BD0927" }}
-        ></div>
-      </div>
+    <div className="min-h-screen bg-gradient-to-br from-[#411E3A] to-[#0D1A2F] flex items-center justify-center p-4">
+      <div className="w-full max-w-sm sm:max-w-md md:max-w-lg">
+        {/* Profile Header */}
+        <div className="text-center mb-5">
+          <div className="w-14 h-14 sm:w-18 sm:h-18 md:w-20 md:h-20 bg-red-500 rounded-full mx-auto mb-4 shadow-[0_0_20px_#09D8C7]"></div>
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-[#09D8C7] mb-1">
+            {profileData.UserName}
+          </h1>
+          <p className="text-[#09D8C7] text-xs sm:text-sm">USER NAME</p>
+        </div>
 
-      {/* Centered profile card */}
-      <div className="max-w-2xl mx-auto relative z-10">
-        {/* Profile Card wrapper */}
-        <div
-          className="rounded-2xl p-6 sm:p-8 bg-[#17364F]/40 shadow-lg border transition-all duration-300 hover:shadow-lg"
-          style={{
-            borderColor: "#09D8C7",
-            // Removed excessive glow for a cleaner look
-          }}
-        >
-          {/* Profile Image Section */}
-          <div className="flex justify-center mb-6">
-            <div className="relative group">
-              {/* Circular frame for profile picture */}
-              <div
-                className="w-32 h-32 sm:w-40 sm:h-40 rounded-full border-2 flex items-center justify-center transition-all duration-300 group-hover:scale-105"
-                style={{
-                  backgroundColor: "#411E3A",
-                  borderColor: "#09D8C7",
-                }}
-              >
-                {/* Profile picture inside circle */}
-                <img
-                  src={pfp}
-                  alt="Profile"
-                  className="w-full h-full rounded-full object-cover"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* User Info Section */}
-          <div className="text-center mb-8">
-            {/* User Name */}
-            <h1
-              className="text-2xl sm:text-3xl font-bold mb-2 transition-all duration-300"
-              style={{ color: "#09D8C7" }}
-            >
-              Pranav Kumar
-            </h1>
-
-            {/* ID + Email */}
-            <div className="space-y-2">
-              {/* Techtatva ID with styled badge */}
-              <p className="text-lg font-medium" style={{ color: "#09D8C7" }}>
-                Techtatva ID:{" "}
-                <span
-                  className="font-mono bg-black/30 px-2 py-1 rounded border"
-                  style={{ borderColor: "#09D8C7" }}
-                >
-                  Gj4701i
-                </span>
-              </p>
-              {/* Email */}
-              <p className="text-base" style={{ color: "#09D8C7" }}>
-                sumit.doe@gmail.com
+        {/* Personal Information Card */}
+        <div className="bg-[#0D1A2F] rounded-2xl p-4 sm:p-5 mb-2 border border-[#09D8C7]/20">
+          <h2 className="text-[#09D8C7] text-sm sm:text-base font-semibold mb-3">
+            Personal Information
+          </h2>
+          <div className="space-y-3 text-xs sm:text-sm">
+            <div>
+              <p className="text-gray-400">Full Name</p>
+              <p className="text-white border-b border-slate-700 pb-1">
+                {profileData.fullName}
               </p>
             </div>
-          </div>
-
-          {/* Stats Section */}
-          <div className="space-y-6">
-            {/* Loop over stats object to render progress bars */}
-            {Object.entries(stats).map(([key, value]) => (
-              <div key={key} className="group">
-                {/* Stat label and percentage */}
-                <div className="flex justify-between items-center mb-2">
-                  <span
-                    className="text-lg font-semibold capitalize"
-                    style={{ color: "#09D8C7" }}
-                  >
-                    {key}
-                  </span>
-                  <span
-                    className="text-xl font-bold"
-                    style={{ color: "#09D8C7" }}
-                  >
-                    {value}%
-                  </span>
-                </div>
-
-                {/* Progress bar container */}
-                <div
-                  className="relative h-3 rounded-full overflow-hidden"
-                  style={{ backgroundColor: "#ffffff" }}
-                >
-                  {/* Filled progress bar */}
-                  <div
-                    className="absolute top-0 left-0 h-full rounded-full transition-all duration-1000 ease-out"
-                    style={{
-                      width: `${value}%`,
-                      background: `#BD0927`,
-                    }}
-                  ></div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Footer with logout button */}
-          <div
-            className="mt-8 pt-6 border-t"
-            style={{ borderColor: "#09D8C7" }}
-          >
-            <div className="text-center">
-              <button
-                className="px-6 py-2 rounded-lg border transition-all duration-300 hover:bg-red-600/20 font-medium cursor-pointer"
-                style={{
-                  borderColor: "#BD0927",
-                  color: "#BD0927",
-                  backgroundColor: "transparent",
-                }}
-              >
-                Logout
-              </button>
+            <div>
+              <p className="text-gray-400">Email</p>
+              <p className="text-white border-b border-slate-700 pb-1">
+                {profileData.email}
+              </p>
+            </div>
+            <div>
+              <p className="text-gray-400">Phone Number</p>
+              <p className="text-white border-b border-slate-700 pb-1">
+                {profileData.phoneNumber}
+              </p>
+            </div>
+            <div>
+              <p className="text-gray-400">Registration ID</p>
+              <p className="text-white border-b border-slate-700 pb-1">
+                {profileData.registrationId}
+              </p>
             </div>
           </div>
         </div>
+
+        {/* Gaming Stats Card */}
+        <div className="bg-[#0D1A2F] rounded-2xl p-4 border border-slate-700">
+          <h2 className="text-[#09D8C7] text-sm sm:text-base font-semibold mb-3">
+            Gaming Stats
+          </h2>
+
+          {/* Points Earned */}
+          <div className="bg-[#17364F]/40 border border-[#09D8C7]/40 rounded-xl p-3 mb-4">
+            <div className="text-center mb-2">
+              <p className="text-gray-300 text-xs">Points Earned</p>
+              <p className="text-white font-bold text-lg">
+                {profileData.pointsEarned}
+              </p>
+            </div>
+            <div className="w-full bg-slate-600 rounded-full h-1.5">
+              <div
+                className="bg-gradient-to-r from-[#09D8C7] to-[#09D8C7] h-1.5 rounded-full"
+                style={{ width: `${profileData.pointsEarned}%` }}
+              ></div>
+            </div>
+          </div>
+
+          {/* Rank */}
+          <div className="bg-[#17364F]/40 border border-[#09D8C7]/40 rounded-xl p-3 mb-5">
+            <div className="text-center mb-2">
+              <div className="text-sm sm:text-xl md:text-xl font-bold text-white">
+                #{profileData.rank}
+              </div>
+              <p className="text-gray-300 text-xs sm:text-sm">Rank</p>
+            </div>
+            <div className="w-full bg-slate-600 rounded-full h-1.5">
+              <div
+                className="bg-gradient-to-r from-[#09D8C7] to-[#09D8C7] h-1.5 rounded-full"
+                style={{ width: `${(profileData.rank / 10) * 100}%` }}
+              ></div>
+            </div>
+          </div>
+
+          {/* Action Button */}
+          <button className="w-full bg-gradient-to-r from-[#09D8C7] to-[#09D8C7] hover:from-cyan-500 hover:to-cyan-600 text-white font-semibold py-2 rounded-full transition-all duration-300 transform hover:scale-103 text-xs sm:text-sm">
+            Edit Profile
+          </button>
+        </div>
       </div>
     </div>
-  )
+  );
 }

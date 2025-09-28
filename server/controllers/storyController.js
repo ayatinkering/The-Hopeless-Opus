@@ -1,0 +1,106 @@
+// controllers/storyController.js
+import fs from "fs";
+import path from "path";
+import Story from "../models/storySchema.js";
+import User from "../models/user.js";
+
+// Get absolute path to JSON file
+const __dirname = path.resolve();
+const storyPath = path.join(__dirname, "story/storyreal.json");
+
+// Load JSON file
+// const storyreal = JSON.parse(fs.readFileSync(storyPath, "utf-8"));
+
+/** MongoDB: Get story by ID */
+export const getStoryById = async (req, res) => {
+  try {
+    const { storyId } = req.params;
+    const story = await Story.findOne({ storyID: storyId });
+    if (!story) return res.status(404).json({ message: "Story not found" });
+    return res.json(story);
+  } catch (err) {
+    console.error("Get story error:", err);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
+/** Local JSON: Get story by ID 
+export const getLocalStoryById = (req, res) => {
+  const { storyId } = req.params;
+  const story = storyreal.find(s => s.storyID === storyId);
+  if (!story) return res.status(404).json({ message: "Story not found in local JSON" });
+  res.json(story);
+};
+
+/** Local JSON: Get all stories 
+export const getLocalStoryAll = (req, res) => {
+  res.json(storyreal);
+};*/
+
+/** MongoDB: Get current story for logged-in user */
+export const getCurrentStory = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    const storyId = user.currentStoryId;
+    const story = await Story.findOne({ storyID: storyId });
+    if (!story) return res.status(404).json({ message: "Story not found" });
+
+    return res.json({
+      story,
+      userState: {
+        points: user.points,
+        money: user.money,
+        health: user.health,
+        rf: user.rf,
+        inventory: user.inventory,
+        minicounter: user.minicounter,
+      },
+    });
+  } catch (err) {
+    console.error("Get current story error:", err);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
+/** MongoDB: Apply a choice and update user's state */
+export const makeChoice = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { choiceIndex } = req.body;
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    const story = await Story.findOne({ storyID: user.currentStoryId });
+    if (!story) return res.status(404).json({ message: "Current story node not found" });
+
+    if (choiceIndex === undefined || choiceIndex < 0 || choiceIndex >= story.nextID.length) {
+      return res.status(400).json({ message: "Invalid choice index" });
+    }
+
+    user.choiceTime = Date.now();
+    user.currentStoryId = story.nextID[choiceIndex];
+
+    await user.save();
+
+    const nextStory = await Story.findOne({ storyID: user.currentStoryId });
+
+    return res.json({
+      message: "Choice applied",
+      newState: {
+        points: user.points,
+        money: user.money,
+        health: user.health,
+        rf: user.rf,
+        inventory: user.inventory,
+        currentStoryId: user.currentStoryId,
+      },
+      nextStory: nextStory || null,
+    });
+  } catch (err) {
+    console.error("Make choice error:", err);
+    return res.status(500).json({ message: "Server error", error: err.message });
+  }
+};
