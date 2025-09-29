@@ -42,7 +42,6 @@ const UserSchema = new Schema({
       type: String,
       required: false,
       unique: true,
-      sparse: true
     },
     name: { type: String },
     registrationNumber: { type: String },
