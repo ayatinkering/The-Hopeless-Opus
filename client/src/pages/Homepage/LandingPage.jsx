@@ -1,8 +1,13 @@
 import React from "react";
 import "./LandingPage.css"; 
 import DecryptedText from "../../components/DecryptedText"; 
+import { useNavigate } from "react-router-dom";
 
 const LandingPage = () => {
+  const Navigate = useNavigate();
+  const handlePlayClick = () => {
+    Navigate("/play");
+  }
   return (
     <div className="h-screen w-full flex items-center justify-between flex-col relative px-14 sm:px-0 md:justify-start md:flex-row md:px-0">
       {/* Content goes above overlay */}
@@ -50,7 +55,7 @@ const LandingPage = () => {
 
         {/* PLAY Button */}
         <div className="flex justify-center lg:justify-start mt-6 lg:mt-0">
-          <button className="uiverse-button">
+          <button className="uiverse-button" onClick={handlePlayClick}>
             <span className="font-[300]">PLAY</span>
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 66 43">
               <polygon points="39.58,4.46 44.11,0 66,21.5 44.11,43 39.58,38.54 56.94,21.5"></polygon>
