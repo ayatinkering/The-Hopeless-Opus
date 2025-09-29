@@ -13,10 +13,10 @@ function Contact() {
           <p className="text-gray-300">
             Or just send us an email directly at{" "}
             <a
-              href="mailto:hello@slothui.com"
+              href="mailto:tt.acumen@gmail.com"
               className="text-[#09D8C7] underline hover:text-[#BD0927] transition"
             >
-              sumeet@gmail.com
+              tt.acumen@gmail.com
             </a>
             <img src={Cyber} alt="envelope" className="pt-7 md:flex hidden w-full h-[27em] ounded-lg mt-2" />
           </p>

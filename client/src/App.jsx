@@ -9,6 +9,7 @@ import Contact from "./pages/Contact";
 import Rules from "./pages/Rules";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage"
+import Play from "./pages/Play";
 
 function App() {
   return (
@@ -25,6 +26,7 @@ function App() {
           <Route path="/rules" element={<Rules />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/play" element={<Play />} />
         </Routes>
     </Router>
   );

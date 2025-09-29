@@ -15,26 +15,29 @@ const generateToken = (user) => {
 // ---------------- Register User ----------------
 export const registerUser = async (req, res) => {
   try {
-    // Validate required fields for teamLeader
-    // console.log(req.body)
-    // const check = validateRequestBody(req.body, ["teamId", "teamLeader", "password"]);
-    // if (!check.isValid) return res.status(400).json({ message: check.message });
-
     const { teamId, teamLeader, player2, password, role } = req.body;
 
-    console.log(req.body)
-    // If player2 exists, validate it
-    if (player2) {
-      const player2Check = validateRequestBody(player2, ["name", "email"]);
-      if (!player2Check.isValid)
-        return res.status(400).json({ message: `Player2: ${player2Check.message}` });
+    // Always validate leader
+    // (you can uncomment your validateRequestBody for leader if you want)
+    if (!teamId || !teamLeader || !password) {
+      return res.status(400).json({ message: "Team ID, leader, and password are required" });
     }
 
-    // Check if email already exists (either teamLeader or player2)
+    // If player2 exists and has meaningful data, validate it
+    let finalPlayer2 = undefined;
+    if (player2 && Object.values(player2).some((v) => v && v !== "")) {
+      const player2Check = validateRequestBody(player2, ["name", "email"]);
+      if (!player2Check.isValid) {
+        return res.status(400).json({ message: `Player2: ${player2Check.message}` });
+      }
+      finalPlayer2 = player2;
+    }
+
+    // Check if email already exists (either leader or player2)
     const existingUser = await User.findOne({
       $or: [
         { "teamLeader.email": teamLeader.email },
-        player2?.email ? { "player2.email": player2.email } : null,
+        finalPlayer2?.email ? { "player2.email": finalPlayer2.email } : null,
       ].filter(Boolean),
     });
 
@@ -42,13 +45,18 @@ export const registerUser = async (req, res) => {
       return res.status(400).json({ message: "Email already registered" });
     }
 
-    const newUser = new User({
+    // Build user object only with player2 if valid
+    const newUserData = {
       teamId,
       teamLeader,
-      player2,
       password,
       role: role || 2001,
-    });
+    };
+    if (finalPlayer2) {
+      newUserData.player2 = finalPlayer2;
+    }
+
+    const newUser = new User(newUserData);
 
     const token = generateToken(newUser);
     await newUser.save();
@@ -62,6 +70,7 @@ export const registerUser = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+
 
 // ---------------- Login User ----------------http:localhost:5000/api/users/login
 export const loginUser = async (req, res) => {

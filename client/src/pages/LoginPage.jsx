@@ -2,8 +2,10 @@ import React, { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { Link } from "react-router-dom";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 export default function Login() {
+  const Navigate = useNavigate();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -36,6 +38,7 @@ export default function Login() {
 
       // Optionally store token in localStorage for authentication
       localStorage.setItem("token", res.data.token);
+      Navigate("/");
 
     } catch (err) {
       if (err.response) {
