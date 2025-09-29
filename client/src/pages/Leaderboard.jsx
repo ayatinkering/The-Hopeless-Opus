@@ -38,28 +38,9 @@ export default function Leaderboard() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#0D1A2B] text-white">
+    <div className="min-h-screen pt-15 bg-[#0D1A2B] text-white">
       {/* Navbar */}
-      <nav className="flex flex-wrap justify-between items-center px-6 md:px-10 py-6 border-b border-gray-700">
-        <div className="flex items-center gap-3 mb-4 md:mb-0">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-r from-cyan-500 to-blue-700 flex items-center justify-center">
-            <span className="text-lg font-bold">H</span>
-          </div>
-          <span className="text-xl font-bold">Acumen</span>
-        </div>
-        <div className="flex gap-6 text-teal-300 flex-wrap justify-center mb-4 md:mb-0">
-          <a href="#">HOME</a>
-          <a href="#">ABOUT</a>
-          <a href="#" className="border-b-2 border-teal-400">
-            LEADERBOARD
-          </a>
-          <a href="#">CONTACT</a>
-          <a href="#">RULES</a>
-        </div>
-        <button className="px-5 py-2 bg-red-600 rounded-full text-white font-bold">
-          LOGIN
-        </button>
-      </nav>
+      
 
       {/* Stats & Leaderboard Section */}
       <div className="max-w-screen-xl mx-auto px-4">

@@ -1,65 +1,108 @@
-// Footer.jsx
 import React from "react";
+import { useNavigate } from 'react-router-dom';
 
-function Footer() {
+const Footer = () => {
+  const navigate = useNavigate();
+
+  const openHome = () => {
+    navigate('/');
+  };
+
+  const openPlay = () => {
+    navigate('/about');
+  };
+
+  const openContact = () => {
+    navigate('/contact');
+  };
+
   return (
-    <footer className="bg-[#0D1A2F] text-gray-300 py-12 mt-10 w-full">
-      <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-10">
-        
-        {/* Brand / Game Info */}
-        <div>
-          <h2 className="text-2xl font-bold text-white">Hopeless Opus</h2>
-          <p className="mt-4 text-sm leading-relaxed text-gray-400">
-            A cyberpunk choice-based experience crafted by{" "}
-            <span className="text-[#BD0927] font-semibold">Acumen</span>.  
-            Step into a world of endless possibilities, are you good enough to win?
-          </p>
+    <footer
+      className="text-white w-full"
+      style={{
+        backgroundImage: `url(https://res.cloudinary.com/diswj8gya/image/upload/v1728568149/Earth2_hyfg6q.jpg)`, // Correctly use the image
+        backgroundSize: 'cover', // Ensures the image covers the entire footer
+        backgroundPosition: 'center', // Positions the image at the center
+        backgroundRepeat: 'no-repeat', // Prevents the image from repeating
+        // padding: '2rem 0', // Adds vertical padding
+        display: 'flex', // Use flexbox for better alignment
+        flexDirection: 'column', // Stacks content vertically
+        justifyContent: 'flex-end', // Vertically center the content
+        alignItems: 'center', // Horizontally center the content
+        height: '400px',
+      }}
+    >
+      <div
+        className="absolute inset-0 bg-black opacity-50"
+        style={{ zIndex: '-1' }} // Ensure the overlay is behind content
+      ></div>
+      <div
+        className="container text-center"
+        style={{
+          display: 'flex', // Flexbox for centering
+          flexDirection: 'column', // Stack content
+          alignItems: 'center', // Center horizontally
+        }}
+      >
+        <div className="mb-5">
+          <button className="text-white text-3xl font-bold">
+            ACUMEN
+          </button>
         </div>
-
-        {/* Quick Links */}
-        <div>
-          <h3 className="text-lg font-semibold text-white mb-4">Explore</h3>
-          <ul className="space-y-3">
-            <li><a href="#about" className="hover:text-[#BD0927] transition">About</a></li>
-            <li><a href="#features" className="hover:text-[#BD0927] transition">Features</a></li>
-            <li><a href="#team" className="hover:text-[#BD0927] transition">Team</a></li>
-            <li><a href="#contact" className="hover:text-[#BD0927] transition">Contact</a></li>
-          </ul>
+        <div
+          className="flex justify-center mb-4"
+          style={{
+            display: 'flex', // Flex for link buttons
+            gap: '', // Gap between buttons
+          }}
+        >
+          <button
+            className="text-gray-200 text-xl hover:text-white p-2"
+            onClick={openHome}
+            style={{ transition: 'color 0.3s ease' }} // Smooth transition on hover
+          >
+            Home
+          </button>
+          <button
+            className="text-gray-200 text-xl hover:text-white p-2"
+            onClick={openPlay}
+            style={{ transition: 'color 0.3s ease' }}
+          >
+            About
+          </button>
+          <button
+            className="text-gray-200 text-xl hover:text-white p-2"
+            onClick={openContact}
+            style={{ transition: 'color 0.3s ease' }}
+          >
+            Contact
+          </button>
+          <button
+            className="text-gray-200 text-xl hover:text-white p-2"
+            onClick={openHome}
+            style={{ transition: 'color 0.3s ease' }}
+          >
+            Events
+          </button>
         </div>
-
-        {/* Newsletter / Socials */}
-        <div>
-          <h3 className="text-lg font-semibold text-white mb-4">Stay Connected</h3>
-          <p className="text-sm text-gray-400 mb-3">Subscribe for updates:</p>
-          <form className="flex">
-            <input
-              type="email"
-              placeholder="Your email"
-              className="w-full px-3 py-2 text-sm bg-[#17364F] text-white rounded-l-md focus:outline-none"
-            />
-            <button
-              type="submit"
-              className="px-4 py-2 bg-[#BD0927] text-white font-semibold rounded-r-md hover:bg-[#500A1F] transition"
-            >
-              Join
-            </button>
-          </form>
-
-          <div className="flex space-x-4 mt-6">
-            <a href="#" className="hover:text-white transition">Twitter</a>
-            <a href="#" className="hover:text-white transition">Discord</a>
-            <a href="#" className="hover:text-white transition">GitHub</a>
-          </div>
+        <div
+          className="text-gray-300 pb-4"
+          style={{
+            color: '#FFF',
+            textAlign: 'center',
+            fontFamily: 'Roboto Serif',
+            fontSize: '15px',
+            fontStyle: 'normal',
+            fontWeight: 400,
+            lineHeight: '26.99px',
+            marginTop: '1rem'
+          }}
+        >
+          © {new Date().getFullYear()} ACUMEN. All rights reserved.
         </div>
-      </div>
-
-      {/* Divider */}
-      <div className="border-t border-[#17364F] mt-10 pt-6 text-center text-sm text-gray-500">
-        © {new Date().getFullYear()} Hopeless Opus — Built by{" "}
-        <span className="text-white">Acumen</span>.
       </div>
     </footer>
   );
-}
+};
 
 export default Footer;

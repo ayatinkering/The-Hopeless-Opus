@@ -3,7 +3,7 @@ import Cyber from "../assets/cyber.png";
 
 function Contact() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#411E3A] to-[#0D1A2F] text-white px-6">
+    <div className="min-h-screen pt-30 flex items-center justify-center bg-gradient-to-br from-[#411E3A] to-[#0D1A2F] text-white px-6">
       <div className="max-w-5xl w-full grid md:grid-cols-2 gap-12">
         {/* Left Section */}
         <div>
@@ -18,7 +18,7 @@ function Contact() {
             >
               sumeet@gmail.com
             </a>
-            <img src={Cyber} alt="envelope" className="pt-7 w-full h-[27em] ounded-lg mt-2" />
+            <img src={Cyber} alt="envelope" className="pt-7 md:flex hidden w-full h-[27em] ounded-lg mt-2" />
           </p>
         </div>
 

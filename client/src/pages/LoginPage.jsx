@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
+import { Link } from "react-router-dom";
 import axios from "axios";
 
 export default function Login() {
@@ -48,7 +49,7 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#411E3A] to-[#0D1A2F] flex items-center justify-center p-4">
+    <div className="min-h-screen pt-20 bg-gradient-to-br from-[#411E3A] to-[#0D1A2F] flex items-center justify-center p-4">
       <div className="w-full max-w-sm bg-[#0D1A2F] rounded-2xl p-6 sm:p-8 shadow-xl border border-slate-800">
         {/* Header */}
         <h1 className="text-2xl sm:text-3xl font-bold text-[#09D8C7] text-center mb-2">
@@ -125,11 +126,14 @@ export default function Login() {
 
         {/* Sign Up */}
         <p className="text-center text-sm text-gray-400 mt-6 pb-20">
-          Don’t have an account?{" "}
-          <a href="#" className="text-[#09D8C7] hover:text-cyan-400">
-            Sign up here
-          </a>
-        </p>
+  Don’t have an account?{" "}
+  <Link
+    to="/register"
+    className="text-[#09D8C7] hover:text-cyan-400"
+  >
+    Sign up here
+  </Link>
+</p>
       </div>
     </div>
   );
