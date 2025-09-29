@@ -8,7 +8,7 @@ const generateToken = (user) => {
   return jwt.sign(
     { id: user._id, role: user.role },
     process.env.JWT_SECRET,
-    { expiresIn: "1h" }
+    { expiresIn: "1d" }
   );
 };
 
@@ -63,11 +63,11 @@ export const registerUser = async (req, res) => {
   }
 };
 
-// ---------------- Login User ----------------
+// ---------------- Login User ----------------http:localhost:5000/api/users/login
 export const loginUser = async (req, res) => {
   try {
     const check = validateRequestBody(req.body, ["email", "password"]);
-    // if (!check.isValid) return res.status(400).json({ message: check.message });
+    if (!check.isValid) return res.status(400).json({ message: check.message });
 
     const { email, password } = req.body;
 
