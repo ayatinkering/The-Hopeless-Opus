@@ -80,12 +80,43 @@ export const makeChoice = async (req, res) => {
       return res.status(400).json({ message: "Invalid choice index" });
     }
 
+    // Update user state
     user.choiceTime = Date.now();
     user.currentStoryId = story.nextID[choiceIndex];
-
     await user.save();
 
+    if (user.currentStoryId.startsWith("M")) {
+      return res.json({
+        message: "Choice applied - minigame triggered",
+        newState: {
+          points: user.points,
+          money: user.money,
+          health: user.health,
+          rf: user.rf,
+          inventory: user.inventory,
+          currentStoryId: user.currentStoryId,
+        },
+        minigame: {
+          id: user.currentStoryId,
+          config: {
+            M1a: 3,
+            M1b: 3,
+            M1c: 3,
+            M2: 3,
+            M3: 3,
+            M4: 3,
+            M5: 3,
+            M6: 3,
+            M7: 3,
+          },
+        },
+      });
+    }
+
     const nextStory = await Story.findOne({ storyID: user.currentStoryId });
+    if (!nextStory) {
+      return res.status(404).json({ message: "Next story not found" });
+    }
 
     return res.json({
       message: "Choice applied",
@@ -97,7 +128,7 @@ export const makeChoice = async (req, res) => {
         inventory: user.inventory,
         currentStoryId: user.currentStoryId,
       },
-      nextStory: nextStory || null,
+      nextStory,
     });
   } catch (err) {
     console.error("Make choice error:", err);
