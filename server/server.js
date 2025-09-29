@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import connectDB from "./config/db.config.js";
 import storyRoutes from "./routes/storyRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
+import cors from "cors"
 
 dotenv.config();
 
@@ -15,7 +16,7 @@ connectDB();
 
 // Middleware
 app.use(express.json()); // Parse JSON bodies
-
+app.use(cors())
 // Routes
 app.use("/api/story", storyRoutes); // Story routes
 app.use("/api/users", userRoutes);  // User routes

@@ -1,4 +1,5 @@
 import { useState } from "react"
+import axios from "axios"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -34,6 +35,11 @@ export default function RegisterForm() {
     special: false,
   })
 
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState("")
+  const [success, setSuccess] = useState("")
+
+  // ---------------- Password Strength ----------------
   const checkPasswordStrength = (password) => {
     setPasswordStrength({
       length: password.length >= 8,
@@ -59,24 +65,42 @@ export default function RegisterForm() {
     })
   }
 
-  const handleSubmit = (e) => {
+  // ---------------- Submit Handler ----------------
+  const handleSubmit = async (e) => {
     e.preventDefault()
+    setError("")
+    setSuccess("")
 
     if (formData.password !== formData.confirmPassword) {
-      alert("Passwords do not match!")
+      setError("Passwords do not match!")
       return
     }
 
     const strengthCount = Object.values(passwordStrength).filter(Boolean).length
     if (strengthCount < 4) {
-      alert("Password must meet at least 4 strength requirements!")
+      setError("Password must meet at least 4 strength requirements!")
       return
     }
 
-    console.log("Registration attempt:", formData)
-    // Add registration logic here
+    try {
+      setLoading(true)
+      const res = await axios.post("http://localhost:5000/api/users/register", {
+        teamId: formData.teamId,
+        teamLeader: formData.teamLeader,
+        player2: formData.player2,
+        password: formData.password,
+      })
+
+      setSuccess(res.data.message || "Registration successful!")
+      console.log("Registered User:", res.data)
+    } catch (err) {
+      setError(err.response?.data?.message || "Something went wrong")
+    } finally {
+      setLoading(false)
+    }
   }
 
+  // ---------------- Password Strength Component ----------------
   const PasswordStrengthIndicator = () => (
     <div className="strength-indicator mt-3 p-4 rounded-lg border-2 border-turquoise/30">
       <p className="text-sm font-semibold mb-3 text-shadow-horror" style={{ color: "#09D8C7" }}>
@@ -110,104 +134,31 @@ export default function RegisterForm() {
     </div>
   )
 
+  // ---------------- Player Section ----------------
   const PlayerSection = ({ title, player, playerKey }) => (
     <div className="space-y-5">
       <h3 className="ancient-text text-xl font-bold text-shadow-strong" style={{ color: "#09D8C7" }}>
         {title}
       </h3>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-        <div>
-          <Label
-            className="font-semibold text-sm text-shadow-horror"
-            style={{ color: "#09D8C7" }}
-          >
-            Name *
-          </Label>
-          <Input
-            value={player.name}
-            onChange={(e) => updatePlayerField(playerKey, "name", e.target.value)}
-            required
-            className="mystical-input mt-2 bg-transparent border-2 text-shadow-horror"
-            style={{ borderColor: "#17364F", color: "#09D8C7" }}
-          />
-        </div>
-        <div>
-          <Label
-            className="font-semibold text-sm text-shadow-horror"
-            style={{ color: "#09D8C7" }}
-          >
-            Email *
-          </Label>
-          <Input
-            type="email"
-            value={player.email}
-            onChange={(e) => updatePlayerField(playerKey, "email", e.target.value)}
-            required
-            className="mystical-input mt-2 bg-transparent border-2 text-shadow-horror"
-            style={{ borderColor: "#17364F", color: "#09D8C7" }}
-          />
-        </div>
-        <div>
-          <Label
-            className="font-semibold text-sm text-shadow-horror"
-            style={{ color: "#09D8C7" }}
-          >
-            Phone *
-          </Label>
-          <Input
-            type="tel"
-            value={player.phone}
-            onChange={(e) => updatePlayerField(playerKey, "phone", e.target.value)}
-            required
-            className="mystical-input mt-2 bg-transparent border-2 text-shadow-horror"
-            style={{ borderColor: "#17364F", color: "#09D8C7" }}
-          />
-        </div>
-        <div>
-          <Label
-            className="font-semibold text-sm text-shadow-horror"
-            style={{ color: "#09D8C7" }}
-          >
-            Registration Number *
-          </Label>
-          <Input
-            value={player.registrationNumber}
-            onChange={(e) => updatePlayerField(playerKey, "registrationNumber", e.target.value)}
-            required
-            className="mystical-input mt-2 bg-transparent border-2 text-shadow-horror"
-            style={{ borderColor: "#17364F", color: "#09D8C7" }}
-          />
-        </div>
-        <div>
-          <Label
-            className="font-semibold text-sm text-shadow-horror"
-            style={{ color: "#09D8C7" }}
-          >
-            Institute *
-          </Label>
-          <Input
-            value={player.institute}
-            onChange={(e) => updatePlayerField(playerKey, "institute", e.target.value)}
-            required
-            className="mystical-input mt-2 bg-transparent border-2 text-shadow-horror"
-            style={{ borderColor: "#17364F", color: "#09D8C7" }}
-          />
-        </div>
-        <div>
-          <Label
-            className="font-semibold text-sm text-shadow-horror"
-            style={{ color: "#09D8C7" }}
-          >
-            Delegate ID *
-          </Label>
-          <Input
-            value={player.delegateId}
-            onChange={(e) => updatePlayerField(playerKey, "delegateId", e.target.value)}
-            required
-            className="mystical-input mt-2 bg-transparent border-2 text-shadow-horror"
-            style={{ borderColor: "#17364F", color: "#09D8C7" }}
-          />
-        </div>
+        {["name", "email", "phone", "registrationNumber", "institute", "delegateId"].map((field) => (
+          <div key={field}>
+            <Label
+              className="font-semibold text-sm text-shadow-horror"
+              style={{ color: "#09D8C7" }}
+            >
+              {field.charAt(0).toUpperCase() + field.slice(1)} *
+            </Label>
+            <Input
+              type={field === "email" ? "email" : field === "phone" ? "tel" : "text"}
+              value={player[field]}
+              onChange={(e) => updatePlayerField(playerKey, field, e.target.value)}
+              required
+              className="mystical-input mt-2 bg-transparent border-2 text-shadow-horror"
+              style={{ borderColor: "#17364F", color: "#09D8C7" }}
+            />
+          </div>
+        ))}
       </div>
     </div>
   )
@@ -243,20 +194,14 @@ export default function RegisterForm() {
             />
           </div>
 
-          {/* Team Leader Details */}
+          {/* Team Leader & Player2 */}
           <PlayerSection title="Team Leader Details" player={formData.teamLeader} playerKey="teamLeader" />
-
-          {/* Player 2 Details */}
           <PlayerSection title="Player 2 Details" player={formData.player2} playerKey="player2" />
 
-          {/* Password Fields */}
+          {/* Passwords */}
           <div className="space-y-5">
             <div>
-              <Label
-                htmlFor="password"
-                className="font-semibold text-sm text-shadow-horror"
-                style={{ color: "#09D8C7" }}
-              >
+              <Label htmlFor="password" className="font-semibold text-sm text-shadow-horror" style={{ color: "#09D8C7" }}>
                 Password *
               </Label>
               <div className="relative mt-2">
@@ -282,11 +227,7 @@ export default function RegisterForm() {
             </div>
 
             <div>
-              <Label
-                htmlFor="confirmPassword"
-                className="font-semibold text-sm text-shadow-horror"
-                style={{ color: "#09D8C7" }}
-              >
+              <Label htmlFor="confirmPassword" className="font-semibold text-sm text-shadow-horror" style={{ color: "#09D8C7" }}>
                 Confirm Password *
               </Label>
               <div className="relative mt-2">
@@ -315,21 +256,24 @@ export default function RegisterForm() {
                 </button>
               </div>
               {formData.confirmPassword && formData.password !== formData.confirmPassword && (
-                <p
-                  className="text-sm mt-2 font-medium text-shadow-horror"
-                  style={{ color: "#BD0927" }}
-                >
+                <p className="text-sm mt-2 font-medium text-shadow-horror" style={{ color: "#BD0927" }}>
                   Passwords do not match
                 </p>
               )}
             </div>
           </div>
 
+          {/* Error / Success Messages */}
+          {error && <p className="text-red-500 font-semibold">{error}</p>}
+          {success && <p className="text-green-500 font-semibold">{success}</p>}
+
+          {/* Submit */}
           <Button
             type="submit"
             className="horror-button w-full font-bold text-lg text-shadow-horror"
+            disabled={loading}
           >
-            <span className="ancient-text">Join the Opus</span>
+            {loading ? "Registering..." : <span className="ancient-text">Join the Opus</span>}
           </Button>
 
           <div className="text-center text-shadow-horror">
@@ -348,4 +292,4 @@ export default function RegisterForm() {
       </CardContent>
     </Card>
   )
-} 
+}
