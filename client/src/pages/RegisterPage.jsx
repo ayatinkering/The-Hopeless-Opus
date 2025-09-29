@@ -1,6 +1,9 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 export default function Register() {
+  const Navigate = useNavigate();
+
   const [formData, setFormData] = useState({
     teamId: "",
     password: "",
@@ -41,57 +44,70 @@ export default function Register() {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    if (formData.password !== formData.confirmPassword) {
-      alert("Passwords do not match");
-      return;
-    }
+  if (formData.password !== formData.confirmPassword) {
+    alert("Passwords do not match");
+    return;
+  }
 
-    // ✅ Map to backend structure
-    const payload = {
-      teamId: formData.teamId,
-      password: formData.password,
-      teamLeader: {
-        name: formData.leader.name,
-        email: formData.leader.email,
-        phone: formData.leader.phone,
-        registrationNumber: formData.leader.registration,
-        institute: formData.leader.institute,
-        delegateId: formData.leader.delegate,
-      },
-    };
+  // ✅ Map to backend structure
+  const payload = {
+    teamId: formData.teamId,
+    password: formData.password,
+    teamLeader: {
+      name: formData.leader.name,
+      email: formData.leader.email,
+      phone: formData.leader.phone,
+      registrationNumber: formData.leader.registration,
+      institute: formData.leader.institute,
+      delegateId: formData.leader.delegate,
+    },
+  };
 
-    if (hasPlayer2) {
+  // 👇 Only add player2 if checkbox ticked AND at least one field filled
+  if (hasPlayer2) {
+    const { name, email, phone, registration, institute, delegate } = formData.player2;
+
+    // Check if player2 has any actual data
+    const hasAnyValue = [name, email, phone, registration, institute, delegate].some(
+      (val) => val && val.trim() !== ""
+    );
+
+    if (hasAnyValue) {
       payload.player2 = {
-        name: formData.player2.name,
-        email: formData.player2.email,
-        phone: formData.player2.phone,
-        registrationNumber: formData.player2.registration,
-        institute: formData.player2.institute,
-        delegateId: formData.player2.delegate,
+        name,
+        email,
+        phone,
+        registrationNumber: registration,
+        institute,
+        delegateId: delegate,
       };
     }
+  }
 
-    try {
-      const res = await fetch("http://localhost:5000/api/users/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+  try {
+    const res = await fetch("http://localhost:5000/api/users/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
 
-      const data = await res.json();
-      if (res.ok) {
-        alert("Registration successful!");
-        console.log("Server response:", data);
-      } else {
-        alert(data.message || "Registration failed");
-      }
-    } catch (err) {
-      console.error(err);
-      alert("Network error");
+    const data = await res.json();
+    if (res.ok) {
+      alert("Registration successful!");
+      console.log("Server response:", data);
+      Navigate("/login");
+
+    } else {
+      alert(data.message || "Registration failed");
     }
-  };
+  } catch (err) {
+    console.error(err);
+    alert("Network error");
+  }
+};
+
 
   return (
     <div className="min-h-screen pt-25 flex items-center justify-center bg-gradient-to-br from-[#411E3A] to-[#0D1A2F] p-4">
