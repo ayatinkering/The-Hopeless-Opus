@@ -1,5 +1,4 @@
-import { getAllUsers } from "./userController";
-// ---------------- Leaderboard Controller ----------------
+// ---------------- Leaderboard Controller ---------------
 import User from "../models/user.js";
 
 // Get Leaderboard

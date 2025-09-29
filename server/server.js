@@ -4,6 +4,7 @@ import connectDB from "./config/db.config.js";
 import storyRoutes from "./routes/storyRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import leaderboardRoutes from "./routes/leaderboardRoutes.js"
+import forgotpwdRoutes from "./routes/forgotpwdRoutes.js"
 import cors from "cors"
 
 dotenv.config();
