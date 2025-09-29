@@ -116,6 +116,12 @@ const UserSchema = new Schema({
     type: Date,
     default: Date.now,
   },
+  otp: {
+  type: String,
+},
+otpExpiry: {
+  type: Date,
+},
 });
 
 // ---------------- Password Hashing ----------------

@@ -79,7 +79,7 @@ export const loginUser = async (req, res) => {
     if (!check.isValid) return res.status(400).json({ message: check.message });
 
     const { email, password } = req.body;
-
+    console.log(email, password);
     const user = await User.findOne({
       $or: [{ "teamLeader.email": email }, { "player2.email": email }],
     });
