@@ -31,3 +31,38 @@ export const getLeaderboard = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+
+export const getLeaderboardWithCurrentUser = async (req, res) => {
+  try {
+    const { userId } = req.params; // current user ID from frontend
+
+    // fetch all users
+    const users = await User.find().select("-password");
+
+    if (!users || users.length === 0)
+      return res.status(404).json({ message: "No users found" });
+
+    // calculate totalGames for each user
+    const leaderboard = users.map(u => ({
+      ...u.toObject(),
+      totalGames: u.minicounter.reduce((acc, val) => acc + val, 0),
+    }));
+
+    // sort: points desc, money desc, totalGames asc
+    leaderboard.sort((a, b) => {
+      if (b.points !== a.points) return b.points - a.points;
+      if (b.money !== a.money) return b.money - a.money;
+      return a.totalGames - b.totalGames;
+    });
+
+    // find current user's rank
+    const currentUserIndex = leaderboard.findIndex(u => u._id.toString() === userId);
+
+    res.json({
+      leaderboard,
+      currentUserIndex, // frontend can highlight using this
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
