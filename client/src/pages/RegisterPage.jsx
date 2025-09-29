@@ -38,9 +38,54 @@ export default function Register() {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log(formData);
+
+    if (formData.player2.password !== formData.player2.confirmPassword) {
+      alert("Passwords do not match");
+      return;
+    }
+
+    // ✅ Map to backend structure
+    const payload = {
+      teamId: formData.teamId,
+      password: formData.player2.password,
+      teamLeader: {
+        name: formData.leader.name,
+        email: formData.leader.email,
+        phone: formData.leader.phone,
+        registrationNumber: formData.leader.registration,
+        institute: formData.leader.institute,
+        delegateId: formData.leader.delegate,
+      },
+      player2: {
+        name: formData.player2.name,
+        email: formData.player2.email,
+        phone: formData.player2.phone,
+        registrationNumber: formData.player2.registration,
+        institute: formData.player2.institute,
+        delegateId: formData.player2.delegate,
+      },
+    };
+
+    try {
+      const res = await fetch("http://localhost:5000/api/users/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        alert("Registration successful!");
+        console.log("Server response:", data);
+      } else {
+        alert(data.message || "Registration failed");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Network error");
+    }
   };
 
   return (
@@ -52,6 +97,7 @@ export default function Register() {
         <p className="text-center text-gray-300 mb-4">
           Join the adventure and create your gaming profile
         </p>
+
         <form onSubmit={handleSubmit} className="space-y-5">
           {/* Team ID */}
           <div>
@@ -132,7 +178,6 @@ export default function Register() {
             ))}
           </div>
 
-          {/* Submit */}
           <button
             type="submit"
             className="w-full bg-[#09D8C7] text-[#0D1A2F] font-semibold py-2 rounded-md hover:bg-cyan-500 transition"
@@ -140,10 +185,12 @@ export default function Register() {
             REGISTER
           </button>
 
-          {/* Sign In Link */}
           <p className="text-center text-sm text-gray-400 mt-4">
             Already have an account?{" "}
-            <a href="/login" className="text-[#09D8C7] font-medium hover:underline">
+            <a
+              href="/login"
+              className="text-[#09D8C7] font-medium hover:underline"
+            >
               Sign in here
             </a>
           </p>
