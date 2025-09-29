@@ -3,6 +3,8 @@ import React, { useState } from "react";
 export default function Register() {
   const [formData, setFormData] = useState({
     teamId: "",
+    password: "",
+    confirmPassword: "",
     leader: {
       name: "",
       email: "",
@@ -18,10 +20,10 @@ export default function Register() {
       registration: "",
       institute: "",
       delegate: "",
-      password: "",
-      confirmPassword: "",
     },
   });
+
+  const [hasPlayer2, setHasPlayer2] = useState(false);
 
   const handleChange = (e, section, field) => {
     const value = e.target.value;
@@ -41,7 +43,7 @@ export default function Register() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (formData.player2.password !== formData.player2.confirmPassword) {
+    if (formData.password !== formData.confirmPassword) {
       alert("Passwords do not match");
       return;
     }
@@ -49,7 +51,7 @@ export default function Register() {
     // ✅ Map to backend structure
     const payload = {
       teamId: formData.teamId,
-      password: formData.player2.password,
+      password: formData.password,
       teamLeader: {
         name: formData.leader.name,
         email: formData.leader.email,
@@ -58,15 +60,18 @@ export default function Register() {
         institute: formData.leader.institute,
         delegateId: formData.leader.delegate,
       },
-      player2: {
+    };
+
+    if (hasPlayer2) {
+      payload.player2 = {
         name: formData.player2.name,
         email: formData.player2.email,
         phone: formData.player2.phone,
         registrationNumber: formData.player2.registration,
         institute: formData.player2.institute,
         delegateId: formData.player2.delegate,
-      },
-    };
+      };
+    }
 
     try {
       const res = await fetch("http://localhost:5000/api/users/register", {
@@ -143,39 +148,81 @@ export default function Register() {
             ))}
           </div>
 
-          {/* Player 2 */}
-          <h2 className="text-lg font-semibold text-[#09D8C7]">
-            Player 2 Details
+          {/* Checkbox for Player 2 */}
+          <div className="flex items-center space-x-2 mt-4">
+            <input
+              type="checkbox"
+              id="hasPlayer2"
+              checked={hasPlayer2}
+              onChange={(e) => setHasPlayer2(e.target.checked)}
+              className="h-4 w-4 text-[#09D8C7] border-gray-300 rounded"
+            />
+            <label htmlFor="hasPlayer2" className="text-sm">
+              Do you have a second player?
+            </label>
+          </div>
+
+          {/* Player 2 (only if checked) */}
+          {hasPlayer2 && (
+            <>
+              <h2 className="text-lg font-semibold text-[#09D8C7]">
+                Player 2 Details
+              </h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {[
+                  ["Name", "name", "text"],
+                  ["Email", "email", "email"],
+                  ["Phone", "phone", "text"],
+                  ["Registration Number", "registration", "text"],
+                  ["Institute", "institute", "text"],
+                  ["Delegate ID", "delegate", "text"],
+                ].map(([label, field, type]) => (
+                  <div key={field}>
+                    <label className="block text-sm mb-1">{label}</label>
+                    <input
+                      type={type}
+                      value={formData.player2[field]}
+                      onChange={(e) => handleChange(e, "player2", field)}
+                      placeholder={`Enter player 2's ${label.toLowerCase()}`}
+                      className="w-full px-3 py-2 rounded-md bg-[#17364F] border border-[#09D8C7]/40 focus:outline-none focus:border-[#09D8C7] text-sm"
+                    />
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+
+          {/* Password fields (always visible) */}
+          <h2 className="text-lg font-semibold text-[#09D8C7] mt-4">
+            Team Password
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {[
-              ["Name", "name", "text"],
-              ["Email", "email", "email"],
-              ["Phone", "phone", "text"],
-              ["Registration Number", "registration", "text"],
-              ["Institute", "institute", "text"],
-              ["Delegate ID", "delegate", "text"],
-              ["Password", "password", "password"],
-              ["Confirm Password", "confirmPassword", "password"],
-            ].map(([label, field, type]) => (
-              <div key={field}>
-                <label className="block text-sm mb-1">
-                  {label} <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type={type}
-                  value={formData.player2[field]}
-                  onChange={(e) => handleChange(e, "player2", field)}
-                  placeholder={
-                    field.includes("Password")
-                      ? label
-                      : `Enter player 2's ${label.toLowerCase()}`
-                  }
-                  className="w-full px-3 py-2 rounded-md bg-[#17364F] border border-[#09D8C7]/40 focus:outline-none focus:border-[#09D8C7] text-sm"
-                  required
-                />
-              </div>
-            ))}
+            <div>
+              <label className="block text-sm mb-1">
+                Password <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="password"
+                value={formData.password}
+                onChange={(e) => handleChange(e, null, "password")}
+                placeholder="Enter password"
+                className="w-full px-3 py-2 rounded-md bg-[#17364F] border border-[#09D8C7]/40 focus:outline-none focus:border-[#09D8C7] text-sm"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm mb-1">
+                Confirm Password <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="password"
+                value={formData.confirmPassword}
+                onChange={(e) => handleChange(e, null, "confirmPassword")}
+                placeholder="Confirm password"
+                className="w-full px-3 py-2 rounded-md bg-[#17364F] border border-[#09D8C7]/40 focus:outline-none focus:border-[#09D8C7] text-sm"
+                required
+              />
+            </div>
           </div>
 
           <button
