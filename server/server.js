@@ -4,17 +4,21 @@ import dotenv from "dotenv";
 import connectDB from "./config/db.config.js";
 import storyRoutes from "./routes/storyRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
+import cors from "cors"
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+
 // Connect to MongoDB
 connectDB();
 
 // Middleware
 app.use(express.json()); // Parse JSON bodies
+app.use(express.urlencoded({ extended: true })); // Parse URL-encoded bodies
+app.use(cors())
 
 // Routes
 app.use("/api/story", storyRoutes); // Story routes
@@ -29,3 +33,4 @@ app.get("/", (req, res) => {
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });
+
