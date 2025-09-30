@@ -28,7 +28,16 @@ function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/about" element={<About />} />
-        <Route path="/leaderboard" element={<Leaderboard currentUserId={user._id} token={token} />} />
+        <Route
+          path="/leaderboard"
+          element={
+            user ? (
+              <Leaderboard currentUserId={user._id} token={token} />
+            ) : (
+              <Leaderboard />
+            )
+          }
+        />
         <Route path="/contact" element={<Contact />} />
         <Route path="/rules" element={<Rules />} />
         <Route path="/login" element={<LoginPage setUser={setUser} />} />
