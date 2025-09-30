@@ -13,7 +13,7 @@ import Play from "./pages/Play";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import GameSlide from "./components/GameSlide";
-
+import M4 from "./Minigames/M4";
 function App() {
   return (
     <Router>
@@ -33,6 +33,7 @@ function App() {
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/game" element={<GameSlide />} />
+          <Route path="/minigame4" element={<M4 />} />
         </Routes>
     </Router>
   );
