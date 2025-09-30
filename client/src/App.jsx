@@ -17,6 +17,7 @@ import Profile from "./pages/Profile";
 function App() {
   // Top-level user state
   const [user, setUser] = useState(JSON.parse(localStorage.getItem("user")));
+  const [token,setToken] = useState(localStorage.getItem("token"))
 
   return (
     <Router>
@@ -27,7 +28,7 @@ function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/about" element={<About />} />
-        <Route path="/leaderboard" element={<Leaderboard />} />
+        <Route path="/leaderboard" element={<Leaderboard currentUserId={user._id} token={token} />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/rules" element={<Rules />} />
         <Route path="/login" element={<LoginPage setUser={setUser} />} />

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 
-export default function Leaderboard({ currentUserId, token }) {
+export default function Leaderboard({ currentUserId, token}) {
   const [teams, setTeams] = useState([]);
   const [currentUserIndex, setCurrentUserIndex] = useState(null);
   const [loading, setLoading] = useState(true);
