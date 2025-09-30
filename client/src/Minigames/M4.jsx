@@ -1,16 +1,18 @@
+// ============================================
+// M4.jsx - Cake Slicing Game
+// ============================================
 import React, { useState, useEffect } from "react";
-// BUFFER - MAKE AGAIN
-const Cake = () => {
+
+const M4 = ({ config, onComplete }) => {
   const [dots, setDots] = useState([]);
   const [flowers, setFlowers] = useState([]);
   const [selectedDots, setSelectedDots] = useState([]);
   const [cuts, setCuts] = useState([]);
   const [message, setMessage] = useState("");
 
-  const RADIUS = 150; // cake radius
-  const CENTER = { x: 200, y: 200 }; // svg center
+  const RADIUS = 150;
+  const CENTER = { x: 200, y: 200 };
 
-  // Hardcoded flower positions
   const FIXED_FLOWERS = [
     { id: 0, x: 238.66665649414062, y: 293.6666564941406 },
     { id: 1, x: 240.66665649414062, y: 199.66665649414062 },
@@ -21,15 +23,13 @@ const Cake = () => {
     { id: 6, x: 298.6666564941406, y: 199.66665649414062 },
   ];
 
-  // Winning cuts (dot indices, 0-based)
   const WINNING_CUTS = [
-    [0, 15],  // 1 and 16
-    [21, 10], // 22 and 11
-    [1, 12],  // 2 and 13
-    [2, 10],  // 3 and 11
+    [0, 15],
+    [21, 10],
+    [1, 12],
+    [2, 10],
   ];
 
-  // Generate 24 dots around the cake
   useEffect(() => {
     const newDots = Array.from({ length: 24 }, (_, i) => {
       const angle = (2 * Math.PI * i) / 24;
@@ -43,7 +43,6 @@ const Cake = () => {
     setFlowers(FIXED_FLOWERS);
   }, []);
 
-  // Handle dot click to make a cut
   const handleDotClick = (dot) => {
     if (selectedDots.length === 1 && selectedDots[0].id === dot.id) return;
 
@@ -53,21 +52,18 @@ const Cake = () => {
     if (newSelected.length === 2) {
       const [d1, d2] = newSelected;
       if (Math.abs(d1.id - d2.id) !== 1 && Math.abs(d1.id - d2.id) !== 23) {
-        // add cut
         setCuts([...cuts, { d1, d2 }]);
       }
       setSelectedDots([]);
     }
   };
 
-  // Restart the game
   const handleRestart = () => {
     setCuts([]);
     setSelectedDots([]);
     setMessage("");
   };
 
-  // Submit: check if the drawn cuts match exactly the winning cuts
   const handleSubmit = () => {
     if (cuts.length !== WINNING_CUTS.length) {
       setMessage("Oops, wrong slicing!");
@@ -83,21 +79,25 @@ const Cake = () => {
       return normalizedCuts.some(c => c[0] === sortedWin[0] && c[1] === sortedWin[1]);
     });
 
-    setMessage(allMatch ? "🎉 You won!" : "Oops, wrong slicing!");
+    if (allMatch) {
+      setMessage("🎉 You won!");
+      if (onComplete) {
+        setTimeout(() => onComplete(true), 2000);
+      }
+    } else {
+      setMessage("Oops, wrong slicing!");
+    }
   };
 
   return (
     <div className="flex flex-col items-center h-screen justify-center bg-pink-50">
       <svg width="400" height="400" className="rounded-full shadow-lg">
-        {/* Cake */}
         <circle cx={CENTER.x} cy={CENTER.y} r={RADIUS} fill="#fcd5ce" />
 
-        {/* Flowers */}
         {flowers.map(f => (
           <circle key={f.id} cx={f.x} cy={f.y} r={8} fill="red" />
         ))}
 
-        {/* Cuts */}
         {cuts.map((cut, i) => (
           <line
             key={i}
@@ -110,7 +110,6 @@ const Cake = () => {
           />
         ))}
 
-        {/* Dots */}
         {dots.map(d => (
           <circle
             key={d.id}
@@ -124,7 +123,6 @@ const Cake = () => {
         ))}
       </svg>
 
-      {/* Buttons */}
       <div className="mt-4 flex gap-4">
         <button
           onClick={handleRestart}
@@ -140,10 +138,9 @@ const Cake = () => {
         </button>
       </div>
 
-      {/* Message */}
       {message && <p className="mt-3 font-bold">{message}</p>}
     </div>
   );
 };
 
-export default Cake;
+export default M4;

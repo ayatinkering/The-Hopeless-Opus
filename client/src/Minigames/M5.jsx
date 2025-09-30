@@ -1,8 +1,11 @@
+// ============================================
+// M5.jsx - Morse Code Game
+// ============================================
 import React, { useState, useEffect, useRef } from "react";
-import morseAudio from "../assets/morse.wav"; // your Morse audio file
-import morseBg from "../assets/morse.png"; // background image
+import morseAudio from "../assets/morse.wav";
+import morseBg from "../assets/morse.png";
 
-const Morsecode = () => {
+const M5 = ({ config, onComplete }) => {
   const [input, setInput] = useState("");
   const [message, setMessage] = useState("");
   const [timeLeft, setTimeLeft] = useState(90);
@@ -12,7 +15,6 @@ const Morsecode = () => {
   const audioRef = useRef(null);
   const objectUrlRef = useRef(null);
 
-  // Timer countdown
   useEffect(() => {
     if (timeLeft > 0 && !gameOver) {
       const timer = setInterval(() => setTimeLeft((prev) => prev - 1), 1000);
@@ -25,21 +27,24 @@ const Morsecode = () => {
     }
   }, [timeLeft, gameOver]);
 
-  // Submit logic
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!gameOver) {
       if (input.trim().toLowerCase() === "unlock") {
         setMessage("ACCESS GRANTED");
+        setGameOver(true);
+        if (audioRef.current) audioRef.current.pause();
+        if (onComplete) {
+          setTimeout(() => onComplete(true), 2000);
+        }
       } else {
         setMessage("ACCESS DENIED");
+        setGameOver(true);
+        if (audioRef.current) audioRef.current.pause();
       }
-      setGameOver(true);
-      if (audioRef.current) audioRef.current.pause();
     }
   };
 
-  // Toggle Play/Pause Morse audio
   const handleToggleMorse = async () => {
     if (!audioRef.current) {
       try {
@@ -72,7 +77,6 @@ const Morsecode = () => {
     }
   };
 
-  // Cleanup blob on unmount
   useEffect(() => {
     return () => {
       if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current);
@@ -84,14 +88,11 @@ const Morsecode = () => {
       className="relative flex items-center justify-center min-h-screen bg-black bg-cover bg-center"
       style={{ backgroundImage: `url(${morseBg})` }}
     >
-      {/* Timer (top-right corner) */}
       <div className="absolute top-4 right-6 text-xl font-bold text-red-400">
         {timeLeft}s
       </div>
 
-      {/* Input row with Play/Pause button, input, and submit */}
       <div className="absolute top-[50%] left-[47%] transform -translate-x-1/2 flex items-center gap-3">
-        {/* Play/Pause button */}
         <button
           onClick={handleToggleMorse}
           disabled={gameOver}
@@ -101,7 +102,6 @@ const Morsecode = () => {
           {audioPlaying ? "❚❚" : "▶︎"}
         </button>
 
-        {/* Input field */}
         <input
           type="text"
           placeholder="Enter the override code..."
@@ -112,7 +112,6 @@ const Morsecode = () => {
                      placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-400"
         />
 
-        {/* Submit button */}
         <button
           type="submit"
           onClick={handleSubmit}
@@ -124,7 +123,6 @@ const Morsecode = () => {
         </button>
       </div>
 
-      {/* Message below input */}
       <p
         className={`absolute top-[32%] left-[44%] transform -translate-x-1/2 text-xl font-bold ${
           message.includes("GRANTED") ? "text-[#2f6602]" : "text-[#731005]"
@@ -136,4 +134,4 @@ const Morsecode = () => {
   );
 };
 
-export default Morsecode;
+export default M5;

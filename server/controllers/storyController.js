@@ -101,9 +101,13 @@ export const makeChoice = async (req, res) => {
         minigame: {
           id: user.currentStoryId,
           config: {
-            M1a: 3, M1b: 3, M1c: 3,
-            M2: 3, M3: 3, M4: 3,
-            M5: 3, M6: 3, M7: 3,
+            M1: 3,
+            M2: 3,
+            M3: 3,
+            M4: 3,
+            M5: 3,
+            M6: 3,
+            M7: 3,
           },
         },
       });

@@ -42,7 +42,7 @@ function App() {
         <Route path="/rules" element={<Rules />} />
         <Route path="/login" element={<LoginPage setUser={setUser} />} />
         <Route path="/register" element={<RegisterPage />} />
-        <Route path="/play" element={<Play />} />
+        <Route path="/play" element={<GameSlide />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/profile" element={<Profile setUser={setUser} />} />
