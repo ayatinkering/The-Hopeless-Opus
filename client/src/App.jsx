@@ -12,6 +12,7 @@ import RegisterPage from "./pages/RegisterPage"
 import Play from "./pages/Play";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
+import GameSlide from "./components/GameSlide";
 
 function App() {
   return (
@@ -31,6 +32,7 @@ function App() {
           <Route path="/play" element={<Play />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/game" element={<GameSlide />} />
         </Routes>
     </Router>
   );

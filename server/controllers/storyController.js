@@ -69,11 +69,13 @@ export const getCurrentStory = async (req, res) => {
 export const makeChoice = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { choiceIndex } = req.body;
+    const { storyId, choiceIndex } = req.body; // take storyId from frontend
+
     const user = await User.findById(userId);
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    const story = await Story.findOne({ storyID: user.currentStoryId });
+    // Fetch story using storyId from frontend instead of user.currentStoryId
+    const story = await Story.findOne({ storyID: storyId });
     if (!story) return res.status(404).json({ message: "Current story node not found" });
 
     if (choiceIndex === undefined || choiceIndex < 0 || choiceIndex >= story.nextID.length) {
@@ -99,15 +101,9 @@ export const makeChoice = async (req, res) => {
         minigame: {
           id: user.currentStoryId,
           config: {
-            M1a: 3,
-            M1b: 3,
-            M1c: 3,
-            M2: 3,
-            M3: 3,
-            M4: 3,
-            M5: 3,
-            M6: 3,
-            M7: 3,
+            M1a: 3, M1b: 3, M1c: 3,
+            M2: 3, M3: 3, M4: 3,
+            M5: 3, M6: 3, M7: 3,
           },
         },
       });
@@ -135,3 +131,56 @@ export const makeChoice = async (req, res) => {
     return res.status(500).json({ message: "Server error", error: err.message });
   }
 };
+
+
+export const updateUserStoryOnLevelEnd = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { storyId } = req.body; // <- story ID from frontend
+
+    if (!storyId) return res.status(400).json({ message: "storyId is required" });
+
+    // Fetch user
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    // Fetch the story passed from frontend
+    const levelStory = await Story.findOne({ storyID: storyId });
+    if (!levelStory) return res.status(404).json({ message: "Story not found" });
+
+    // Check if level ended
+    if (!levelStory.levelEnd) {
+      return res.status(400).json({ message: "This story is not marked as levelEnd" });
+    }
+
+    // Update user's currentStoryId to this story
+    user.currentStoryId = levelStory.storyID;
+    await user.save();
+
+    // Determine next story
+    let nextStory = null;
+    if (levelStory.choice && levelStory.choice.length > 0) {
+      nextStory = levelStory; // choices exist, return this story so frontend renders buttons
+    } else if (levelStory.nextID && levelStory.nextID.length > 0) {
+      nextStory = await Story.findOne({ storyID: levelStory.nextID[0] });
+    }
+
+    return res.json({
+      message: "User story updated on level end",
+      nextStory,
+      userState: {
+        points: user.points,
+        money: user.money,
+        health: user.health,
+        rf: user.rf,
+        inventory: user.inventory,
+        currentStoryId: user.currentStoryId,
+      },
+    });
+
+  } catch (err) {
+    console.error("Update user story error:", err);
+    return res.status(500).json({ message: "Server error", error: err.message });
+  }
+};
+

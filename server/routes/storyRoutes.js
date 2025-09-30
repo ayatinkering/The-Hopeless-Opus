@@ -4,6 +4,7 @@ import {
   getStoryById,
   getCurrentStory,
   makeChoice,
+  updateUserStoryOnLevelEnd
 //   getLocalStoryById,
 //   getLocalStoryAll
 } from "../controllers/storyController.js";
@@ -19,5 +20,6 @@ router.get("/:storyId", getStoryById);               // MongoDB story
 // Player routes
 router.get("/current/me", protect, getCurrentStory);
 router.post("/current/choice", protect, makeChoice);
+router.post("/level-end", protect, updateUserStoryOnLevelEnd);
 
 export default router;
