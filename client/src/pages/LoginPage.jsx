@@ -1,10 +1,9 @@
 import React, { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
 
-export default function Login() {
+export default function Login({ setUser }) {  // ✅ receive setUser from App.jsx
   const Navigate = useNavigate();
   const [formData, setFormData] = useState({
     email: "",
@@ -29,17 +28,26 @@ export default function Login() {
     setSuccessMsg("");
 
     try {
-      const res = await axios.post("http://localhost:5000/api/users/login", formData, {
-        headers: { "Content-Type": "application/json" },
-      });
+      const res = await axios.post(
+        "http://localhost:5000/api/users/login",
+        formData,
+        {
+          headers: { "Content-Type": "application/json" },
+        }
+      );
 
       setSuccessMsg(res.data.message);
       console.log("User Data:", res.data);
 
-      // Optionally store token in localStorage for authentication
+      // Store token and user in localStorage
       localStorage.setItem("token", res.data.token);
-      Navigate("/");
+      localStorage.setItem("user", JSON.stringify(res.data.user));
 
+      // Update App-level user state immediately
+      setUser(res.data.user);
+
+      // Redirect to profile page (or home if you want)
+      Navigate("/");
     } catch (err) {
       if (err.response) {
         setErrorMsg(err.response.data.message || "Something went wrong");
@@ -106,13 +114,12 @@ export default function Login() {
             </div>
           </div>
 
-         {/* Forgot password */}
-<div className="text-right">
-  <Link to="/forgot-password" className="text-xs text-[#09D8C7] hover:text-gray-400">
-    Forgot Password?
-  </Link>
-</div>
-
+          {/* Forgot password */}
+          <div className="text-right">
+            <Link to="/forgot-password" className="text-xs text-[#09D8C7] hover:text-gray-400">
+              Forgot Password?
+            </Link>
+          </div>
 
           {/* Error / Success Messages */}
           {errorMsg && <p className="text-red-500 text-sm">{errorMsg}</p>}
@@ -130,14 +137,11 @@ export default function Login() {
 
         {/* Sign Up */}
         <p className="text-center text-sm text-gray-400 mt-6 pb-20">
-  Don’t have an account?{" "}
-  <Link
-    to="/register"
-    className="text-[#09D8C7] hover:text-cyan-400"
-  >
-    Sign up here
-  </Link>
-</p>
+          Don’t have an account?{" "}
+          <Link to="/register" className="text-[#09D8C7] hover:text-cyan-400">
+            Sign up here
+          </Link>
+        </p>
       </div>
     </div>
   );
