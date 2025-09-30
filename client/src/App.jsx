@@ -10,6 +10,8 @@ import Rules from "./pages/Rules";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage"
 import Play from "./pages/Play";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 
 function App() {
   return (
@@ -27,6 +29,8 @@ function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/play" element={<Play />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
         </Routes>
     </Router>
   );
