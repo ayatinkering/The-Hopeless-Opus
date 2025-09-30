@@ -5,6 +5,7 @@ import storyRoutes from "./routes/storyRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import leaderboardRoutes from "./routes/leaderboardRoutes.js"
 import forgotpwdRoutes from "./routes/forgotpwdRoutes.js"
+import contactRoutes from "./routes/contactRoutes.js"
 import cors from "cors"
 
 dotenv.config();
@@ -24,6 +25,7 @@ app.use("/api/story", storyRoutes);
 app.use("/api/users", userRoutes);  
 app.use("/api/leaderboard", leaderboardRoutes);  
 app.use("/api/forgotpwd", forgotpwdRoutes);
+app.use("/api/contactus", contactRoutes);
 
 // Root route
 app.get("/", (req, res) => {
