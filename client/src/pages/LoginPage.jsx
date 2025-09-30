@@ -106,12 +106,13 @@ export default function Login() {
             </div>
           </div>
 
-          {/* Forgot password */}
-          <div className="text-right">
-            <a href="#" className="text-xs text-[#09D8C7] hover:text-gray-400">
-              Forgot Password?
-            </a>
-          </div>
+         {/* Forgot password */}
+<div className="text-right">
+  <Link to="/forgot-password" className="text-xs text-[#09D8C7] hover:text-gray-400">
+    Forgot Password?
+  </Link>
+</div>
+
 
           {/* Error / Success Messages */}
           {errorMsg && <p className="text-red-500 text-sm">{errorMsg}</p>}
