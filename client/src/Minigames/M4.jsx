@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-
+// BUFFER - MAKE AGAIN
 const Cake = () => {
   const [dots, setDots] = useState([]);
   const [flowers, setFlowers] = useState([]);
