@@ -1,9 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import logo from "../assets/logo.png";
 import { FiMenu, FiX } from "react-icons/fi";
 
-const Navbar = () => {
+const Navbar = ({ user }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   const navItems = [
@@ -17,14 +17,9 @@ const Navbar = () => {
   return (
     <nav className="w-full fixed top-0 z-50 backdrop-blur-sm bg-[#000000]/20 border-b border-[#787661]">
       <div className="max-w-7xl mx-auto px-6 lg:px-8 flex justify-between items-center h-20">
-        {/* Logo */}
         <div className="flex-shrink-0">
           <Link to="/">
-            <img
-              src={logo}
-              alt="Hopeless Opus Logo"
-              className="h-14 w-auto object-contain"
-            />
+            <img src={logo} alt="Hopeless Opus Logo" className="h-14 w-auto object-contain" />
           </Link>
         </div>
 
@@ -47,22 +42,28 @@ const Navbar = () => {
           ))}
         </ul>
 
-        {/* Login Button (Desktop) */}
+        {/* Auth Button (Desktop) */}
         <div className="hidden md:block">
-          <Link
-            to="/login"
-            className="bg-[#9f1818] hover:bg-[#800b0b] text-white font-normal px-8 py-2 rounded-full transition text-sm"
-          >
-            LOGIN
-          </Link>
+          {user ? (
+            <Link
+              to="/profile"
+              className="bg-[#09D8C7] hover:bg-cyan-600 text-white font-normal px-8 py-2 rounded-full transition text-sm"
+            >
+              PROFILE
+            </Link>
+          ) : (
+            <Link
+              to="/login"
+              className="bg-[#9f1818] hover:bg-[#800b0b] text-white font-normal px-8 py-2 rounded-full transition text-sm"
+            >
+              LOGIN
+            </Link>
+          )}
         </div>
 
-        {/* Hamburger Menu Button (Mobile) */}
+        {/* Hamburger Menu (Mobile) */}
         <div className="md:hidden flex items-center">
-          <button
-            onClick={() => setIsOpen(!isOpen)}
-            className="text-white focus:outline-none"
-          >
+          <button onClick={() => setIsOpen(!isOpen)} className="text-white focus:outline-none">
             {isOpen ? <FiX size={28} /> : <FiMenu size={28} />}
           </button>
         </div>
@@ -70,7 +71,7 @@ const Navbar = () => {
 
       {/* Mobile Menu */}
       {isOpen && (
-        <div className="md:hidden ">
+        <div className="md:hidden">
           <ul className="flex flex-col items-center py-6 space-y-6 text-white text-lg">
             {navItems.map((item, index) => (
               <li key={index} className="relative">
@@ -83,15 +84,28 @@ const Navbar = () => {
                 </Link>
               </li>
             ))}
-            <li>
-              <Link
-                to="/login"
-                onClick={() => setIsOpen(false)}
-                className="bg-[#9f1818] hover:bg-[#800b0b] text-white font-normal px-8 py-2 rounded-full transition text-base"
-              >
-                LOGIN
-              </Link>
-            </li>
+
+            {user ? (
+              <li>
+                <Link
+                  to="/profile"
+                  onClick={() => setIsOpen(false)}
+                  className="bg-[#09D8C7] hover:bg-cyan-600 text-white font-normal px-8 py-2 rounded-full transition text-base"
+                >
+                  PROFILE
+                </Link>
+              </li>
+            ) : (
+              <li>
+                <Link
+                  to="/login"
+                  onClick={() => setIsOpen(false)}
+                  className="bg-[#9f1818] hover:bg-[#800b0b] text-white font-normal px-8 py-2 rounded-full transition text-base"
+                >
+                  LOGIN
+                </Link>
+              </li>
+            )}
           </ul>
         </div>
       )}
