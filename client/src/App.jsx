@@ -14,6 +14,7 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import Profile from "./pages/Profile";
 import GameSlide from "./components/GameSlide";
+
 function App() {
   // Top-level user state
   const [user, setUser] = useState(JSON.parse(localStorage.getItem("user")));

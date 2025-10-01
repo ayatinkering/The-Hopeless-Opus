@@ -290,7 +290,7 @@ const M3 = ({ config, onComplete }) => {
           <div className="bg-slate-800/30 p-3 sm:p-4 rounded-lg border border-cyan-500/20 mb-4 sm:mb-6 mx-2">
             <p className="text-cyan-100 text-xs sm:text-sm">
               Tap chips to select and connect them. Each chip must have exactly the number of connections shown.
-              Tap wires to remove them. Only horizontal and vertical connections allowed!
+              Tap wires to remove them. Only horizontal and vertical connections allowed! Multiple wires can connect the same chips, but wires cannot cross each other.
             </p>
           </div>
         </div>
@@ -300,7 +300,7 @@ const M3 = ({ config, onComplete }) => {
             <div className="absolute inset-0 flex items-center justify-center backdrop-blur-sm bg-black/40 rounded-xl z-50">
               <div className="text-center p-6 sm:p-10 bg-slate-900/80 rounded-2xl border border-red-500/50 shadow-2xl">
                 <h2 className="text-2xl sm:text-3xl font-bold text-red-400 mb-3">
-                  ❌ Game Over
+                   Game Over
                 </h2>
                 <p className="text-red-200 text-sm sm:text-base">
                   Better luck next time!
