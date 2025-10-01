@@ -1,22 +1,23 @@
-// KnobPuzzle.jsx
+// ============================================
+// M1.jsx - KnobPuzzle
+// ============================================
 import React, { useState, useEffect } from "react";
-import valImg from "./assets/tiles2image.jpg"; // replace or import another image
+import valImg from "../assets/tiles2image.jpg";
 
-export default function KnobPuzzle({
-  gridSize = 6,      // number of tiles per row/col (NxN)
-  tileSize = 125.5,    // pixel size of each tile (standard size)
-  imageSrc = valImg, // image to slice
+export default function M1({
+  gridSize = 6,
+  tileSize = 125.5,
+  imageSrc = valImg,
+  onComplete
 }) {
   const [tiles, setTiles] = useState([]);
   const [won, setWon] = useState(false);
 
   const sizePx = tileSize * gridSize;
 
-  // Initialize board in solved order and scramble it
   useEffect(() => {
     const initial = Array.from({ length: gridSize * gridSize }, (_, i) => i);
 
-    // scramble by applying random knob rotations (rotate 2x2 blocks)
     let scrambled = [...initial];
     const scrambleMoves = Math.max(30, gridSize * gridSize * 6);
     for (let m = 0; m < scrambleMoves; m++) {
@@ -29,7 +30,12 @@ export default function KnobPuzzle({
     setWon(false);
   }, [gridSize, tileSize, imageSrc]);
 
-  // rotate a 2x2 block clockwise at top-left (row, col)
+  useEffect(() => {
+    if (won && onComplete) {
+      setTimeout(() => onComplete(true), 2000);
+    }
+  }, [won, onComplete]);
+
   function rotate2x2(board, row, col, N) {
     const newBoard = board.slice();
     const idx = (r, c) => r * N + c;
@@ -39,7 +45,6 @@ export default function KnobPuzzle({
     const cIdx = idx(row + 1, col);
     const d = idx(row + 1, col + 1);
 
-    // clockwise permutation: a <- c, c <- d, d <- b, b <- a
     const tmp = newBoard[a];
     newBoard[a] = newBoard[cIdx];
     newBoard[cIdx] = newBoard[d];
@@ -49,7 +54,6 @@ export default function KnobPuzzle({
     return newBoard;
   }
 
-  // When a knob is clicked, rotate its 2x2 block
   function handleKnobClick(row, col) {
     if (won) return;
     const newTiles = rotate2x2(tiles, row, col, gridSize);
@@ -58,7 +62,6 @@ export default function KnobPuzzle({
     if (solved) setWon(true);
   }
 
-  // Render
   return (
     <div
       style={{
@@ -103,7 +106,6 @@ export default function KnobPuzzle({
           overflow: "hidden",
         }}
       >
-        {/* Tiles */}
         {tiles.map((tileIndex, i) => {
           const imgRow = Math.floor(tileIndex / gridSize);
           const imgCol = tileIndex % gridSize;
@@ -123,10 +125,8 @@ export default function KnobPuzzle({
           );
         })}
 
-        {/* Knobs: there are (gridSize - 1) x (gridSize - 1) */}
         {Array.from({ length: gridSize - 1 }).map((_, r) =>
           Array.from({ length: gridSize - 1 }).map((_, c) => {
-            // knob position as percentage intersection between tiles:
             const leftPct = ((c + 1) / gridSize) * 100;
             const topPct = ((r + 1) / gridSize) * 100;
             return (
@@ -155,7 +155,6 @@ export default function KnobPuzzle({
                   padding: 0,
                 }}
               >
-                {/* small inner dot for visual */}
                 <span
                   style={{
                     display: "block",
@@ -172,7 +171,6 @@ export default function KnobPuzzle({
         )}
       </div>
 
-      {/* Controls */}
       <div style={{ marginTop: 16, color: "#bbb", fontSize: 13 }}>
         Click any knob to rotate the 2×2 block clockwise.
       </div>

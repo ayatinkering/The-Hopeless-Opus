@@ -1,7 +1,9 @@
+// ============================================
+// M3.jsx - Electrical Chip Connection
+// ============================================
 import React, { useState, useCallback, useEffect } from 'react';
 
-const Chips = () => {
-  // Game board configuration
+const M3 = ({ config, onComplete }) => {
   const BOARD_SIZE = 10;
   const CHIP_POSITIONS = [
     { row: 0, col: 1, value: 1 }, { row: 0, col: 3, value: 4 }, { row: 0, col: 5, value: 3 }, { row: 0, col: 6, value: 5 }, { row: 0, col: 9, value: 4 },
@@ -17,11 +19,7 @@ const Chips = () => {
     const chipMap = {};
     CHIP_POSITIONS.forEach(chip => {
       const key = `${chip.row}-${chip.col}`;
-      chipMap[key] = {
-        ...chip,
-        connections: [],
-        currentConnections: 0
-      };
+      chipMap[key] = { ...chip, connections: [], currentConnections: 0 };
     });
     return chipMap;
   });
@@ -37,31 +35,19 @@ const Chips = () => {
 
   const getChipKey = (row, col) => `${row}-${col}`;
 
-  // Calculate grid cell size and positions
-  /*const getCellPosition = useCallback((row, col) => {
-    const cellSize = gridSize.width / BOARD_SIZE;
-    return {
-      x: col * cellSize + cellSize / 2,
-      y: row * cellSize + cellSize / 2,
-      cellSize
-    };
-  }, [gridSize]);*/
-
   const isValidConnection = (chip1Key, chip2Key) => {
     const chip1 = chips[chip1Key];
     const chip2 = chips[chip2Key];
     
-    // Check if chips can accept more connections
     if (chip1.currentConnections >= chip1.value || chip2.currentConnections >= chip2.value) {
       return false;
     }
 
-    // Only allow horizontal or vertical connections (no diagonals)
     const [row1, col1] = chip1Key.split('-').map(Number);
     const [row2, col2] = chip2Key.split('-').map(Number);
     
     if (row1 !== row2 && col1 !== col2) {
-      return false; // Diagonal connection - not allowed
+      return false;
     }
 
     return true;
@@ -75,7 +61,6 @@ const Chips = () => {
       const [r1, c1] = conn.from.split('-').map(Number);
       const [r2, c2] = conn.to.split('-').map(Number);
 
-      // Check if lines intersect (simplified intersection check)
       if (doLinesIntersect(row1, col1, row2, col2, r1, c1, r2, c2)) {
         return true;
       }
@@ -85,7 +70,7 @@ const Chips = () => {
 
   const doLinesIntersect = (x1, y1, x2, y2, x3, y3, x4, y4) => {
     const denom = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
-    if (denom === 0) return false; // Lines are parallel
+    if (denom === 0) return false;
     
     const t = ((x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)) / denom;
     const u = -((x1 - x2) * (y1 - y3) - (y1 - y2) * (x1 - x3)) / denom;
@@ -101,7 +86,6 @@ const Chips = () => {
     } else if (selectedChip === chipKey) {
       setSelectedChip(null);
     } else {
-      // Try to create connection
       if (isValidConnection(selectedChip, chipKey)) {
         const newConnection = { from: selectedChip, to: chipKey };
         
@@ -109,14 +93,8 @@ const Chips = () => {
           setConnections(prev => [...prev, newConnection]);
           setChips(prev => ({
             ...prev,
-            [selectedChip]: {
-              ...prev[selectedChip],
-              currentConnections: prev[selectedChip].currentConnections + 1
-            },
-            [chipKey]: {
-              ...prev[chipKey],
-              currentConnections: prev[chipKey].currentConnections + 1
-            }
+            [selectedChip]: { ...prev[selectedChip], currentConnections: prev[selectedChip].currentConnections + 1 },
+            [chipKey]: { ...prev[chipKey], currentConnections: prev[chipKey].currentConnections + 1 }
           }));
           setMoves(prev => prev - 1);
         }
@@ -130,28 +108,22 @@ const Chips = () => {
 
     const connection = connections[connectionIndex];
     
-    // Remove connection
     setConnections(prev => prev.filter((_, index) => index !== connectionIndex));
     setChips(prev => ({
       ...prev,
-      [connection.from]: {
-        ...prev[connection.from],
-        currentConnections: prev[connection.from].currentConnections - 1
-      },
-      [connection.to]: {
-        ...prev[connection.to],
-        currentConnections: prev[connection.to].currentConnections - 1
-      }
+      [connection.from]: { ...prev[connection.from], currentConnections: prev[connection.from].currentConnections - 1 },
+      [connection.to]: { ...prev[connection.to], currentConnections: prev[connection.to].currentConnections - 1 }
     }));
     setMoves(prev => prev - 1);
   };
 
   const checkGameComplete = useCallback(() => {
-    const allChipsConnected = Object.values(chips).every(chip => 
-      chip.currentConnections === chip.value
-    );
+    const allChipsConnected = Object.values(chips).every(chip => chip.currentConnections === chip.value);
     setIsComplete(allChipsConnected);
-  }, [chips]);
+    if (allChipsConnected && onComplete) {
+      setTimeout(() => onComplete(true), 2000);
+    }
+  }, [chips, onComplete]);
 
   useEffect(() => {
     checkGameComplete();
@@ -163,7 +135,6 @@ const Chips = () => {
     }
   }, [moves, isComplete]);
 
-  // Update grid size when component mounts or window resizes
   useEffect(() => {
     const updateGridSize = () => {
       const gridEl = document.querySelector('.game-grid');
@@ -187,29 +158,18 @@ const Chips = () => {
         const isSelected = selectedChip === chipKey;
         
         grid.push(
-          <div
-            key={chipKey}
-            className="aspect-square flex items-center justify-center relative"
-            style={{
-              gridRow: row + 1,
-              gridColumn: col + 1
-            }}
-          >
+          <div key={chipKey} className="aspect-square flex items-center justify-center relative" style={{ gridRow: row + 1, gridColumn: col + 1 }}>
             {chip && (
-            <div
+              <div
                 data-chip={chipKey}
                 data-row={row}
                 data-col={col}
                 className={`w-full h-full max-w-12 max-h-12 sm:max-w-14 sm:max-h-14 md:max-w-16 md:max-h-16 rounded-full border-2 sm:border-4 flex items-center justify-center text-black font-bold text-sm sm:text-base md:text-lg transition-all duration-200 cursor-pointer select-none ${
-                    isSelected
-                    ? 'bg-cyan-100 border-cyan-100 shadow-lg shadow-cyan-400/50'
-                    : chip.currentConnections === chip.value
-                    ? 'bg-green-300 border-green-100 shadow-lg shadow-green-400/50'
-                    : 'bg-cyan-400 border-cyan-200 shadow-lg shadow-cyan-500/50'
+                  isSelected ? 'bg-cyan-100 border-cyan-100 shadow-lg shadow-cyan-400/50' : chip.currentConnections === chip.value ? 'bg-green-300 border-green-100 shadow-lg shadow-green-400/50' : 'bg-cyan-400 border-cyan-200 shadow-lg shadow-cyan-500/50'
                 } hover:scale-110`}
                 onClick={() => handleChipClick(chipKey)}
                 style={{ userSelect: 'none', WebkitUserSelect: 'none', msUserSelect: 'none' }}
-            >
+              >
                 {romanNumerals[chip.value]}
               </div>
             )}
@@ -221,7 +181,6 @@ const Chips = () => {
   };
 
   const renderConnections = () => {
-    // Get fresh grid dimensions each render to ensure accuracy
     const gridEl = document.querySelector('.game-grid');
     if (!gridEl) return null;
     
@@ -231,14 +190,11 @@ const Chips = () => {
     const cellSize = rect.width / BOARD_SIZE;
     const chipRadius = Math.min(cellSize * 0.25, 30);
     
-    // Group ALL connections by exact chip pair
     const wireGroups = new Map();
     
     connections.forEach((connection, index) => {
       const key1 = connection.from;
       const key2 = connection.to;
-      
-      // Always use alphabetical order for consistent grouping
       const sortedPair = [key1, key2].sort().join('|');
       
       if (!wireGroups.has(sortedPair)) {
@@ -252,7 +208,6 @@ const Chips = () => {
     wireGroups.forEach((group) => {
       if (group.length === 0) return;
       
-      // Get positions for this pair
       const firstConn = group[0];
       const [fromRow, fromCol] = firstConn.from.split('-').map(Number);
       const [toRow, toCol] = firstConn.to.split('-').map(Number);
@@ -266,24 +221,19 @@ const Chips = () => {
       const dy = toY - fromY;
       const mainAngle = Math.atan2(dy, dx);
       
-      // Fixed spacing - larger to prevent any overlap
       const WIRE_SPACING = Math.max(12, cellSize * 0.2);
       const wireCount = group.length;
       
       group.forEach((connection, wireIdx) => {
-        // Calculate offset from center line
         let offsetDistance = 0;
         if (wireCount > 1) {
-          // For multiple wires, space them evenly around center
           const totalWidth = (wireCount - 1) * WIRE_SPACING;
           offsetDistance = (wireIdx * WIRE_SPACING) - (totalWidth / 2);
         }
         
-        // Calculate perpendicular offset
         const offsetX = -Math.sin(mainAngle) * offsetDistance;
         const offsetY = Math.cos(mainAngle) * offsetDistance;
         
-        // Start and end points with chip radius and offset
         const startX = fromX + Math.cos(mainAngle) * chipRadius + offsetX;
         const startY = fromY + Math.sin(mainAngle) * chipRadius + offsetY;
         const endX = toX - Math.cos(mainAngle) * chipRadius + offsetX;
@@ -300,7 +250,7 @@ const Chips = () => {
               left: startX,
               top: startY,
               width: wireLength,
-              height: 5, // Slightly thicker for better visibility
+              height: 5,
               transformOrigin: '0 50%',
               transform: `rotate(${(wireAngle * 180) / Math.PI}deg)`,
               boxShadow: '0 0 8px rgba(34, 211, 238, 0.6)',
@@ -318,7 +268,6 @@ const Chips = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-2 sm:p-4">
       <div className="max-w-4xl mx-auto">
-        {/* Header */}
         <div className="text-center mb-4 sm:mb-6">
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-cyan-300 mb-2">
             Electrical Chip Connection
@@ -327,7 +276,6 @@ const Chips = () => {
             Connect chips so each has the same number of connections as shown on the chip
           </p>
           
-          {/* Game Status */}
           <div className="flex justify-center items-center gap-3 sm:gap-6 mb-4">
             <div className="bg-slate-800/50 px-3 sm:px-4 py-2 rounded-lg border border-cyan-500/30">
               <span className="text-cyan-300 font-bold text-sm sm:text-base">Moves: {moves}</span>
@@ -339,7 +287,6 @@ const Chips = () => {
             )}
           </div>
 
-          {/* Instructions */}
           <div className="bg-slate-800/30 p-3 sm:p-4 rounded-lg border border-cyan-500/20 mb-4 sm:mb-6 mx-2">
             <p className="text-cyan-100 text-xs sm:text-sm">
               Tap chips to select and connect them. Each chip must have exactly the number of connections shown.
@@ -348,7 +295,6 @@ const Chips = () => {
           </div>
         </div>
 
-        {/* Game Board */}
         <div className="relative bg-slate-800/50 p-2 sm:p-4 md:p-8 rounded-xl border border-cyan-500/30 shadow-2xl mx-2">
           {isGameOver && (
             <div className="absolute inset-0 flex items-center justify-center backdrop-blur-sm bg-black/40 rounded-xl z-50">
@@ -380,4 +326,4 @@ const Chips = () => {
   );
 };
 
-export default Chips;
+export default M3;

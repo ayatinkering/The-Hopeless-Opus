@@ -1,8 +1,9 @@
+// ============================================
+// M7.jsx - Token Puzzle Game
+// ============================================
 import React, { useState, useEffect, useRef } from 'react';
 
-// The PuzzleGame component is self-contained and ready to be imported.
-const PuzzleGame = () => {
-  // Hardcoded token data as provided by the user
+const M7 = ({ config, onComplete }) => {
   const initialTokens = [
     { id: 1, symbols: ['⚔️', '🐟'] },
     { id: 2, symbols: ['⚔️', '🐟'] },
@@ -18,7 +19,6 @@ const PuzzleGame = () => {
     { id: 12, symbols: ['⚔️', '🍇'] },
   ];
 
-  // Define paths between slots (assuming user meant slot numbers for the paths)
   const initialPaths = [
     { from: 1, to: 3 },
     { from: 1, to: 4 },
@@ -40,7 +40,6 @@ const PuzzleGame = () => {
     { from: 7, to: 8 },
   ];
 
-  // Define the position of each slot for visual layout (adjusted to be under 85% top and more uniform)
   const slotPositions = {
     1: { top: '5%', left: '10%' },
     2: { top: '1%', left: '90%' },
@@ -56,7 +55,6 @@ const PuzzleGame = () => {
     12: { top: '40%', left: '50%' }, 
   };
 
-  // State variables for the game
   const [tokens, setTokens] = useState(initialTokens);
   const [slots, setSlots] = useState(
     Array.from({ length: 12 }, (_, i) => ({ id: i + 1, placedToken: null }))
@@ -66,11 +64,9 @@ const PuzzleGame = () => {
   const [pathColors, setPathColors] = useState({});
   const [greenPathsCount, setGreenPathsCount] = useState(0);
 
-  // Ref to get the game board container's dimensions
   const gameBoardRef = useRef(null);
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
 
-  // Update container size on mount and window resize
   useEffect(() => {
     const updateContainerSize = () => {
       if (gameBoardRef.current) {
@@ -86,7 +82,6 @@ const PuzzleGame = () => {
     return () => window.removeEventListener('resize', updateContainerSize);
   }, []);
 
-  // Check win condition whenever slots or paths change
   useEffect(() => {
     const newPathColors = {};
     let newGreenPathsCount = 0;
@@ -119,7 +114,14 @@ const PuzzleGame = () => {
     setGreenPathsCount(newGreenPathsCount);
   }, [slots]);
 
-  // Handle drag start event on a token
+  useEffect(() => {
+    const totalPaths = initialPaths.length;
+    const isWin = greenPathsCount === totalPaths && totalPaths > 0;
+    if (isWin && onComplete) {
+      setTimeout(() => onComplete(true), 2000);
+    }
+  }, [greenPathsCount, onComplete]);
+
   const handleDragStart = (e, token, fromSlotId = null) => {
     setDraggedToken(token);
     setDraggedFromSlotId(fromSlotId);
@@ -127,7 +129,6 @@ const PuzzleGame = () => {
     e.dataTransfer.setData('text/plain', token.id);
   };
 
-  // Handle drop event on a slot
   const handleDrop = (e, slotId) => {
     e.preventDefault();
     if (!draggedToken) return;
@@ -219,7 +220,6 @@ const PuzzleGame = () => {
         </div>
       )}
 
-      {/* Token Bar */}
       <div
         className="flex flex-wrap justify-center p-2 bg-gray-800 rounded-2xl shadow-xl border border-gray-700 w-full max-w-4xl z-10"
         onDragOver={handleDragOver}
@@ -247,13 +247,11 @@ const PuzzleGame = () => {
         Green Paths: <span className="text-green-400">{greenPathsCount}</span> / <span className="text-yellow-400">{totalPaths}</span>
       </div>
 
-      {/* Game Board (slots and paths) */}
       <div
         ref={gameBoardRef}
         className="relative w-full max-w-5xl h-[70vh] mt-4 z-10"
         style={{ height: '70vh' }}
       >
-        {/* SVG for paths */}
         <svg className="absolute inset-0 w-full h-full z-0">
           {initialPaths.map((path, index) => {
             const pathKey = `${path.from}-${path.to}`;
@@ -283,7 +281,6 @@ const PuzzleGame = () => {
           })}
         </svg>
 
-        {/* Slots */}
         {slots.map(slot => (
           <div
             key={slot.id}
@@ -298,7 +295,7 @@ const PuzzleGame = () => {
                 draggable
                 onDragStart={(e) => handleDragStart(e, slot.placedToken, slot.id)}
               >
-                 <div className="text-3xl">
+                <div className="text-3xl">
                   {slot.placedToken.symbols[0]}
                 </div>
                 <div className="text-3xl -mt-2">
@@ -313,4 +310,4 @@ const PuzzleGame = () => {
   );
 };
 
-export default PuzzleGame;
+export default M7;
