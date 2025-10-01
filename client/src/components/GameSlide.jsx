@@ -2,28 +2,13 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
 // Import your minigame components
-import M1 from '../Minigames/M1'; // KnobPuzzle
-import M2 from '../Minigames/M2'; // Cake Matching
-import M3 from '../Minigames/M3'; // Chip Connection
-import M4 from '../Minigames/M4'; // Cake Slicing
-import M5 from '../Minigames/M5'; // Morse Code
-import M6 from '../Minigames/M6'; // Cipher
-import M7 from '../Minigames/M7'; // Token Puzzle
+import MinigameLoader from './MinigameLoader';
 
 // --- Config ---
 const TYPING_SPEED = 30;
 const API_BASE = "http://localhost:5000/api/story";
 
-// --- Minigame Mapper ---
-const MINIGAME_COMPONENTS = {
-  M1: M1,
-  M2: M2,
-  M3: M3,
-  M4: M4,
-  M5: M5,
-  M6: M6,
-  M7: M7,
-};
+// Minigame rendering is delegated to MinigameLoader
 
 const VisualNovelInterface = () => {
   const [storyData, setStoryData] = useState(null);
@@ -92,7 +77,7 @@ const VisualNovelInterface = () => {
         { storyId: storyData.storyID, choiceIndex: index },
         getToken()
       );
-
+      console.log("Choice response:", res.data);
       const { nextStory, minigame } = res.data;
 
       // Check if minigame was triggered
@@ -119,30 +104,62 @@ const VisualNovelInterface = () => {
     setActiveMinigame(null);
     setMinigameConfig(null);
 
-    // If there's a pending story after the minigame, show it
+    // Instead of advancing automatically based on success/failure, show the choices
+    // that are defined after the minigame. Prefer the pendingStory (stored when
+    // the minigame was triggered). If not available, try to fetch the next node(s)
+    // from the current minigame story's nextID.
+
+    // If we had a pendingStory (returned earlier by choice) use it
     if (pendingStory) {
       setStoryData(pendingStory);
-      setFullDialogue(pendingStory.text.join("\n"));
-      setDisplayedText("");
+      setFullDialogue((pendingStory.text && pendingStory.text.length) ? pendingStory.text.join('\n') : '');
+      setDisplayedText('');
       setIsSkipping(false);
       setPendingStory(null);
       setSelectedChoice(null);
-    } else {
-      // Otherwise fetch the current story from the backend
-      try {
-        const res = await axios.get(`${API_BASE}/current/me`, getToken());
-        const { story } = res.data;
+      return;
+    }
 
-        if (story) {
-          setStoryData(story);
-          setFullDialogue(story.text.join("\n"));
-          setDisplayedText("");
+    // If the current storyData is the minigame node and it contains choices, show it
+    // so users can pick which path to take next (do NOT auto-advance).
+    try {
+      if (storyData?.storyID?.startsWith('M')) {
+        if (storyData.choice && storyData.choice.length > 0) {
+          // Show the minigame node itself (choices are on the node)
+          setStoryData(storyData);
+          setFullDialogue((storyData.text && storyData.text.length) ? storyData.text.join('\n') : '');
+          setDisplayedText('');
           setIsSkipping(false);
           setSelectedChoice(null);
+          return;
         }
-      } catch (err) {
-        console.error("Error fetching story after minigame:", err);
+
+        // No choices on the minigame node itself: fetch the first next node so users see the follow-up
+        if (storyData.nextID?.length > 0) {
+          const nextNode = await fetchStoryById(storyData.nextID[0]);
+          if (nextNode) {
+            setStoryData(nextNode);
+            setFullDialogue((nextNode.text && nextNode.text.length) ? nextNode.text.join('\n') : '');
+            setDisplayedText('');
+            setIsSkipping(false);
+            setSelectedChoice(null);
+            return;
+          }
+        }
       }
+
+      // Final fallback: refresh current story from server
+      const res = await axios.get(`${API_BASE}/current/me`, getToken());
+      const { story } = res.data;
+      if (story) {
+        setStoryData(story);
+        setFullDialogue((story.text && story.text.length) ? story.text.join('\n') : '');
+        setDisplayedText('');
+        setIsSkipping(false);
+        setSelectedChoice(null);
+      }
+    } catch (err) {
+      console.error('Error fetching story after minigame:', err);
     }
   };
 
@@ -169,11 +186,25 @@ const VisualNovelInterface = () => {
       }
 
       if (nextStory) {
-        setStoryData(nextStory);
-        setFullDialogue(nextStory.text.join("\n"));
-        setDisplayedText("");
-        setIsSkipping(false);
-        setSelectedChoice(null);
+        // If the next story node is a minigame, trigger the minigame UI
+        if (nextStory.storyID && nextStory.storyID.startsWith('M')) {
+          console.log('Next story is a minigame, launching:', nextStory.storyID);
+          setStoryData(nextStory);
+          setFullDialogue(nextStory.text?.join('\n') || '');
+          setDisplayedText('');
+          setIsSkipping(false);
+          setSelectedChoice(null);
+          setActiveMinigame(nextStory.storyID);
+          // If the story provides a minigame config, use it; otherwise leave null
+          if (nextStory.minigameConfig) setMinigameConfig(nextStory.minigameConfig);
+          else setMinigameConfig(null);
+        } else {
+          setStoryData(nextStory);
+          setFullDialogue(nextStory.text.join("\n"));
+          setDisplayedText("");
+          setIsSkipping(false);
+          setSelectedChoice(null);
+        }
       }
     } catch (err) {
       console.error("Error updating user story on level end:", err);
@@ -222,22 +253,22 @@ const VisualNovelInterface = () => {
     </div>
   );
 
-  // If minigame is active, render it instead
+  // If minigame is active, render it via MinigameLoader
   if (activeMinigame) {
-    const MinigameComponent = MINIGAME_COMPONENTS[activeMinigame];
-    
     return (
-      <div className="w-screen h-screen">
-        {MinigameComponent ? (
-          <MinigameComponent 
-            config={minigameConfig} 
-            onComplete={handleMinigameComplete}
-          />
-        ) : (
-          <div className="flex items-center justify-center h-full bg-gray-900">
-            <div className="text-white text-2xl">Unknown minigame: {activeMinigame}</div>
-          </div>
-        )}
+      <div className="w-screen h-screen relative">
+        <MinigameLoader id={activeMinigame} config={minigameConfig} onComplete={handleMinigameComplete} />
+
+        {/* Temporary test button for devs: simulate minigame completion (success) */}
+        <div className="absolute top-4 right-4 z-50">
+          <button
+            onClick={() => handleMinigameComplete(true)}
+            className="px-3 py-2 bg-green-600 text-white rounded-md shadow-lg hover:bg-green-500 transition"
+            title="Dev-only: simulate successful completion of the minigame"
+          >
+            Test: Complete (Success)
+          </button>
+        </div>
       </div>
     );
   }

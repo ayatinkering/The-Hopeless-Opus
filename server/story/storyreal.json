@@ -139,7 +139,7 @@
       "text": ["Music Club Rep: …uhh, right. Anyway! Sign up here. Aaaand if you play our little game, you could win a shiny whistle.", "Player 1: Say less, I’m in.", "Player 2: (sighs) If this turns into karaoke, I’m suing."],
       "backgroundImg": "forest.png",
       "backgroundMusic": "mystic.mp3",
-      "nextID": ["M1a"],
+      "nextID": ["M1"],
       "levelEnd": true,
       "choice": []
     },
@@ -166,7 +166,7 @@
       "text": ["Art Club Rep: Great, you can sign up here. Aaaand you have the chance to win handmade neon band if you play our game."],
       "backgroundImg": "forest.png",
       "backgroundMusic": "mystic.mp3",
-      "nextID": ["M1b"],
+      "nextID": ["M1"],
       "levelEnd": true,
       "choice": []
     },
@@ -202,12 +202,12 @@
       "text": ["Player 1: (already scribbling name) Too late.", "Drama Club Rep: Great, you can sign up here. Aaaand you have the chance to win masks if you play our game."],
       "backgroundImg": "forest.png",
       "backgroundMusic": "mystic.mp3",
-      "nextID": ["M1c"],
+      "nextID": ["M1"],
       "levelEnd": true,
       "choice": []
     },
     {
-      "storyID": "M1a",
+      "storyID": "M1",
       "text": ["", ""],
       "backgroundImg": "",
       "backgroundMusic": "mystic.mp3",
@@ -216,7 +216,7 @@
       "choice": ["1", "2"]
     },
     {
-      "storyID": "M1b",
+      "storyID": "M1",
       "text": ["", ""],
       "backgroundImg": "",
       "backgroundMusic": "mystic.mp3",
@@ -225,7 +225,7 @@
       "choice": ["1", "2"]
     },
     {
-      "storyID": "M1c",
+      "storyID": "M1",
       "text": ["", ""],
       "backgroundImg": "",
       "backgroundMusic": "mystic.mp3",

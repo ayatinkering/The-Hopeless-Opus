@@ -312,7 +312,7 @@ export default function M2({ config, onComplete }) {
             </AnimatePresence>
 
             <motion.div className="relative z-10 text-center mb-8" initial={{ y: -50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.5 }}>
-                <h1 className="text-4xl md:text-5xl font-bold text-slate-800 mb-2 bg-clip-text text-transparent bg-gradient-to-r from-pink-500 to-blue-500">
+                <h1 className="text-4xl md:text-5xl font-bold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-pink-500 to-blue-500">
                     🎂 Cake Matching Game
                 </h1>
                 <p className="text-slate-600 max-w-2xl mx-auto">
