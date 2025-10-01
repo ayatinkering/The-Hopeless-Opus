@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { RotateCw } from 'lucide-react';
+import lightbg from "../assets/lightbg.png";
+import mirror from "../assets/mirrorltor.png";
 
 const MirrorPuzzleGame = () => {
   // Mirror positions (row, col) - 0-indexed
@@ -154,18 +156,15 @@ const MirrorPuzzleGame = () => {
     setHasWon(false);
   };
 
-  const getRotationAngle = (orientation) => {
-  if (orientation === undefined) return 0;
-
+  const getRotationDegrees = (orientation) => {
   switch (orientation) {
-    case 0: return -15; // \
-    case 1: return 0;   // -
-    case 2: return 90;  // |
-    case 3: return 15;  // /
+    case 3: return 0;     // '/' - default image orientation
+    case 1: return -135;    // '—' - horizontal
+    case 2: return -225;   // '|' - vertical
+    case 0: return -90;   // '\' - backslash
     default: return 0;
   }
 };
-
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 p-8">
@@ -185,7 +184,14 @@ const MirrorPuzzleGame = () => {
         </div>
 
 
-          <div className="inline-block bg-gray-900/50 p-4 rounded-xl relative">
+          <div
+            className="inline-block p-4 rounded-xl relative"
+            style={{
+              backgroundImage: `url(${lightbg})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+            }}
+          >
             {/* SVG for continuous light beam */}
             <svg 
               className="absolute top-4 left-4 pointer-events-none" 
@@ -270,20 +276,25 @@ const MirrorPuzzleGame = () => {
                   return (
                     <div
                       key={col}
-                      className={`w-14 h-14 border border-gray-600 relative flex items-center justify-center
-                        ${isTarget ? 'bg-green-500/30' : 'bg-gray-800/30'}
-                      `}
+                      className={`w-14 h-14 border border-gray-600 relative flex items-center justify-center`}
                       style={{ zIndex: 2 }}
                     >
                       {hasMirror && (
-                              <button
-                                  onClick={() => rotateMirror(row, col)}
-                                  className="w-full h-full flex items-center justify-center text-3xl font-bold text-blue-400 hover:text-blue-300 hover:bg-white/10 transition-all cursor-pointer"
-                                  title="Click to rotate"
-                              >
-                                  {getMirrorSymbol(mirrors[key])}
-                              </button>
-
+                        <button
+                          onClick={() => rotateMirror(row, col)}
+                          className="w-full h-full flex items-center justify-center bg-transparent cursor-pointer group"
+                          title="Click to rotate"
+                        >
+                          <img
+                            src={mirror}
+                            alt="Mirror"
+                            className="w-10 h-10 transition-transform duration-300 ease-in-out"
+                            style={{
+                              transform: `rotate(${getRotationDegrees(mirrors[key])}deg)`,
+                              transformOrigin: 'center center'
+                            }}
+                          />
+                        </button>
                       )}
                       
                       {pathPoint && pathPoint.type === 'target' && (
