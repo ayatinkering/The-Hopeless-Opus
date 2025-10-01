@@ -5,6 +5,7 @@ import {
   getCurrentStory,
   makeChoice,
   updateUserStoryOnLevelEnd
+  , awardMinigameReward
   
 //   getLocalStoryById,
 //   getLocalStoryAll
@@ -21,6 +22,7 @@ router.get("/:storyId", getStoryById);               // MongoDB story
 // Player routes
 router.get("/current/me", protect, getCurrentStory);
 router.post("/current/choice", protect, makeChoice);
+router.post("/current/minigame-reward", protect, awardMinigameReward);
 router.post("/level-end", protect, updateUserStoryOnLevelEnd);
 
 export default router;

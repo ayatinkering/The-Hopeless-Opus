@@ -3,6 +3,7 @@ import axios from 'axios';
 
 // Import your minigame components
 import MinigameLoader from './MinigameLoader';
+import UserHUD from './UserHUD';
 
 // --- Config ---
 const TYPING_SPEED = 30;
@@ -12,6 +13,7 @@ const API_BASE = "http://localhost:5000/api/story";
 
 const VisualNovelInterface = () => {
   const [storyData, setStoryData] = useState(null);
+  const [userState, setUserState] = useState({ points: 0, inventory: {} });
   const [fullDialogue, setFullDialogue] = useState("");
   const [displayedText, setDisplayedText] = useState("");
   const [selectedChoice, setSelectedChoice] = useState(null);
@@ -21,6 +23,8 @@ const VisualNovelInterface = () => {
   const [activeMinigame, setActiveMinigame] = useState(null);
   const [minigameConfig, setMinigameConfig] = useState(null);
   const [pendingStory, setPendingStory] = useState(null);
+  const [awardMessage, setAwardMessage] = useState(null);
+  const [sceneVisible, setSceneVisible] = useState(true);
 
   const getToken = () => {
     const token = localStorage.getItem("token");
@@ -31,13 +35,14 @@ const VisualNovelInterface = () => {
     const fetchCurrentStory = async () => {
       try {
         const res = await axios.get(`${API_BASE}/current/me`, getToken());
-        const { story } = res.data;
+        const { story, userState: serverUserState } = res.data;
 
         if (story) {
           setStoryData(story);
           setFullDialogue(story.text.join("\n"));
           setDisplayedText("");
           setIsSkipping(false);
+          if (serverUserState) setUserState(serverUserState);
         }
       } catch (err) {
         console.error("Error fetching current story:", err);
@@ -77,8 +82,9 @@ const VisualNovelInterface = () => {
         { storyId: storyData.storyID, choiceIndex: index },
         getToken()
       );
-      console.log("Choice response:", res.data);
-      const { nextStory, minigame } = res.data;
+  console.log("Choice response:", res.data);
+  const { nextStory, minigame, userState: serverUserState } = res.data;
+  if (serverUserState) setUserState(serverUserState);
 
       // Check if minigame was triggered
       if (minigame) {
@@ -99,10 +105,33 @@ const VisualNovelInterface = () => {
     }
   };
 
+  // Fade transition for scene changes
+  useEffect(() => {
+    setSceneVisible(false);
+    const t = setTimeout(() => setSceneVisible(true), 60);
+    return () => clearTimeout(t);
+  }, [storyData?.storyID]);
+
   const handleMinigameComplete = async (success) => {
     // Clear minigame state
     setActiveMinigame(null);
     setMinigameConfig(null);
+
+    // If success, call reward endpoint and show award message
+    if (success) {
+      try {
+        const rewardRes = await axios.post(`${API_BASE}/current/minigame-reward`, { storyId: storyData?.storyID || activeMinigame, success: true }, getToken());
+        const { awarded } = rewardRes.data;
+        if (rewardRes.data.userState) setUserState(rewardRes.data.userState);
+        if (awarded) {
+          setAwardMessage(`+${awarded.points} pts${awarded.item ? `, item: ${awarded.item}` : ''}`);
+          // show the award for a short time
+          setTimeout(() => setAwardMessage(null), 3200);
+        }
+      } catch (err) {
+        console.error('Error fetching minigame reward:', err.response?.data || err.message || err);
+      }
+    }
 
     // Instead of advancing automatically based on success/failure, show the choices
     // that are defined after the minigame. Prefer the pendingStory (stored when
@@ -257,17 +286,25 @@ const VisualNovelInterface = () => {
   if (activeMinigame) {
     return (
       <div className="w-screen h-screen relative">
-        <MinigameLoader id={activeMinigame} config={minigameConfig} onComplete={handleMinigameComplete} />
+        <UserHUD userState={userState} />
+        <div style={{ opacity: sceneVisible ? 1 : 0, transition: 'opacity 260ms ease' }}>
+          <MinigameLoader id={activeMinigame} config={minigameConfig} onComplete={handleMinigameComplete} />
 
-        {/* Temporary test button for devs: simulate minigame completion (success) */}
-        <div className="absolute top-4 right-4 z-50">
-          <button
-            onClick={() => handleMinigameComplete(true)}
-            className="px-3 py-2 bg-green-600 text-white rounded-md shadow-lg hover:bg-green-500 transition"
-            title="Dev-only: simulate successful completion of the minigame"
-          >
-            Test: Complete (Success)
-          </button>
+          {/* Temporary test button for devs: simulate minigame completion (success) */}
+          <div className="absolute top-4 right-4 z-50">
+            <button
+              onClick={() => handleMinigameComplete(true)}
+              className="px-3 py-2 bg-green-600 text-white rounded-md shadow-lg hover:bg-green-500 transition"
+              title="Dev-only: simulate successful completion of the minigame"
+            >
+              Test: Complete (Success)
+            </button>
+          </div>
+          {awardMessage && (
+            <div className="absolute top-16 right-4 z-50 px-3 py-2 bg-yellow-500 text-black rounded shadow">
+              {awardMessage}
+            </div>
+          )}
         </div>
       </div>
     );
@@ -283,30 +320,34 @@ const VisualNovelInterface = () => {
         filter: 'brightness(0.85)'
       }}
     >
-      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent"></div>
+      <UserHUD userState={userState} />
 
-      <div className="absolute bottom-[5vh] left-[5%] w-[90%] z-10"> 
-        <div className="absolute right-4 z-20 w-80" style={{ bottom: '180px' }}>
-          {renderChoiceButtons()}
-        </div>
+      <div style={{ opacity: sceneVisible ? 1 : 0, transition: 'opacity 260ms ease' }} className="absolute inset-0">
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent"></div>
 
-        <div 
-          className="absolute z-30 text-white text-3xl italic font-bold" 
-          style={{ textShadow: '0 0 8px rgba(0, 0, 0, 0.9)', bottom: 'calc(180px - 10px)', left: '25px' }}
-        >
-          {storyData?.characterName || " "}
-        </div>
+        <div className="absolute bottom-[5vh] left-[5%] w-[90%] z-10"> 
+          <div className="absolute right-4 z-20 w-80" style={{ bottom: '180px' }}>
+            {renderChoiceButtons()}
+          </div>
 
-        <div className="relative bg-black/50 backdrop-blur-sm w-full p-6 rounded-xl border-[3px] border-gray-500 min-h-[150px]">
-          {renderDialogue()}
-          {displayedText.length < fullDialogue.length && (
-            <button
-              onClick={handleSkip}
-              className="absolute bottom-4 right-6 text-lg italic px-4 py-2 text-white rounded-xl hover:bg-gray-600/25 transition"
-            >
-              Skip &gt;&gt;
-            </button>
-          )}
+          <div 
+            className="absolute z-30 text-white text-3xl italic font-bold" 
+            style={{ textShadow: '0 0 8px rgba(0, 0, 0, 0.9)', bottom: 'calc(180px - 10px)', left: '25px' }}
+          >
+            {storyData?.characterName || " "}
+          </div>
+
+          <div className="relative bg-black/50 backdrop-blur-sm w-full p-6 rounded-xl border-[3px] border-gray-500 min-h-[150px]">
+            {renderDialogue()}
+            {displayedText.length < fullDialogue.length && (
+              <button
+                onClick={handleSkip}
+                className="absolute bottom-4 right-6 text-lg italic px-4 py-2 text-white rounded-xl hover:bg-gray-600/25 transition"
+              >
+                Skip &gt;&gt;
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>
