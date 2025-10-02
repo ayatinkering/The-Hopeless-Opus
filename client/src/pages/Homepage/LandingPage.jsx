@@ -1,12 +1,16 @@
 import React from "react";
 import "./LandingPage.css"; 
 import DecryptedText from "../../components/DecryptedText"; 
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 const LandingPage = () => {
+  const [user, setUser] = useState(JSON.parse(localStorage.getItem("user")));
+  const [token,setToken] = useState(localStorage.getItem("token"))
   const Navigate = useNavigate();
   const handlePlayClick = () => {
-    Navigate("/play");
+    (user && token) ? Navigate("/play") : Navigate("/login")
+    
   }
   return (
     <div className="h-screen w-full flex items-center justify-between flex-col relative px-14 sm:px-0 md:justify-start md:flex-row md:px-0">
