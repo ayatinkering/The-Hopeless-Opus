@@ -15,6 +15,7 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import Profile from "./pages/Profile";
 import GameSlide from "./components/GameSlide";
+import M2 from "./Minigames/M2";
 function App() {
   // Top-level user state
   const [user, setUser] = useState(JSON.parse(localStorage.getItem("user")));
@@ -69,6 +70,7 @@ function App() {
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/profile" element={<Profile setUser={setUser} />} />
+          <Route path="/play/m2" element={<M2 user={user} token={token} />} />
         </Routes>
       </>
     );
