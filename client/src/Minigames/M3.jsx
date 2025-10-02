@@ -11,8 +11,8 @@ const M3 = ({ config, onComplete }) => {
     { row: 2, col: 3, value: 2 }, { row: 2, col: 6, value: 3 }, { row: 2, col: 8, value: 2 },
     { row: 3, col: 1, value: 2 }, { row: 3, col: 2, value: 4 }, { row: 3, col: 5, value: 3 }, { row: 3, col: 7, value: 3 }, { row: 3, col: 9, value: 4 },
     { row: 4, col: 0, value: 4 }, { row: 4, col: 6, value: 1 },
-    { row: 5, col: 2, value: 1 }, { row: 5, col: 5, value: 2 }, { row: 5, col: 8, value: 2 },
-    { row: 6, col: 0, value: 3 }, { row: 6, col: 4, value: 2 }, { row: 6, col: 6, value: 3 }, { row: 6, col: 9, value: 2 }
+    { row: 5, col: 2, value: 1 }, { row: 5, col: 5, value: 2 }, { row: 5, col: 9, value: 2 },
+    { row: 6, col: 0, value: 3 }, { row: 6, col: 4, value: 2 }, { row: 6, col: 6, value: 3 }, { row: 6, col: 8, value: 2 }
   ];
 
   const [chips, setChips] = useState(() => {
@@ -23,13 +23,65 @@ const M3 = ({ config, onComplete }) => {
     });
     return chipMap;
   });
+  
+  const defaultConnections = [
+  { from: '0-5', to: '0-6' },
+  { from: '0-5', to: '0-6' },
+  { from: '0-6', to: '0-9' },
+  { from: '0-6', to: '0-9' },
+  { from: '0-6', to: '2-6' },
+  { from: '1-0', to: '4-0' },
+  { from: '4-0', to: '6-0' },
+  { from: '4-0', to: '4-6' }
+];
 
-  const [connections, setConnections] = useState([]);
+  const [connections, setConnections] = useState(() => {
+    const initial = defaultConnections.map((conn, idx) => ({
+      ...conn,
+      isDefault: true,
+      id: `default-${idx}`,
+    }));
+
+    const updatedChips = { ...chips };
+    for (const conn of initial) {
+      updatedChips[conn.from].currentConnections += 1;
+      updatedChips[conn.to].currentConnections += 1;
+    }
+
+    setChips(updatedChips);
+    return initial;
+  });
+
   const [selectedChip, setSelectedChip] = useState(null);
   const [isComplete, setIsComplete] = useState(false);
-  const [moves, setMoves] = useState(50);
   const [isGameOver, setIsGameOver] = useState(false);
   const [gridSize, setGridSize] = useState({ width: 0, height: 0 });
+
+  const TOTAL_TIME = 300; // 5 minutes in seconds
+  const [timeLeft, setTimeLeft] = useState(TOTAL_TIME);
+
+  useEffect(() => {
+    if (isComplete) return;
+
+    const interval = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          setIsGameOver(true);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [isComplete]);
+
+  const formatTime = (seconds) => {
+    const min = Math.floor(seconds / 60);
+    const sec = seconds % 60;
+    return `${min}:${sec < 10 ? '0' : ''}${sec}`;
+  };
 
   const romanNumerals = ['', 'I', 'II', 'III', 'IV', 'V'];
 
@@ -38,18 +90,56 @@ const M3 = ({ config, onComplete }) => {
   const isValidConnection = (chip1Key, chip2Key) => {
     const chip1 = chips[chip1Key];
     const chip2 = chips[chip2Key];
-    
+
+    // 1. Don't connect if any chip is already at its limit
     if (chip1.currentConnections >= chip1.value || chip2.currentConnections >= chip2.value) {
       return false;
     }
 
     const [row1, col1] = chip1Key.split('-').map(Number);
     const [row2, col2] = chip2Key.split('-').map(Number);
-    
-    if (row1 !== row2 && col1 !== col2) {
+
+    // 2. Must be on the same row or same column
+    const isSameRow = row1 === row2;
+    const isSameCol = col1 === col2;
+    if (!isSameRow && !isSameCol) {
       return false;
     }
 
+    // 3. Check for chips between them (no skipping over other chips)
+    if (isSameRow) {
+      const minCol = Math.min(col1, col2);
+      const maxCol = Math.max(col1, col2);
+      for (let col = minCol + 1; col < maxCol; col++) {
+        const key = `${row1}-${col}`;
+        if (chips[key]) {
+          return false; // blocked by another chip
+        }
+      }
+    } else if (isSameCol) {
+      const minRow = Math.min(row1, row2);
+      const maxRow = Math.max(row1, row2);
+      for (let row = minRow + 1; row < maxRow; row++) {
+        const key = `${row}-${col1}`;
+        if (chips[key]) {
+          return false; // blocked by another chip
+        }
+      }
+    }
+
+    // 4. Check if already 2 connections between the same chips
+    const existingConnections = connections.filter(conn => {
+      return (
+        (conn.from === chip1Key && conn.to === chip2Key) ||
+        (conn.from === chip2Key && conn.to === chip1Key)
+      );
+    });
+
+    if (existingConnections.length >= 2) {
+      return false;
+    }
+
+    // Valid connection
     return true;
   };
 
@@ -79,7 +169,6 @@ const M3 = ({ config, onComplete }) => {
   };
 
   const handleChipClick = (chipKey) => {
-    if (moves <= 0) return;
 
     if (!selectedChip) {
       setSelectedChip(chipKey);
@@ -96,7 +185,6 @@ const M3 = ({ config, onComplete }) => {
             [selectedChip]: { ...prev[selectedChip], currentConnections: prev[selectedChip].currentConnections + 1 },
             [chipKey]: { ...prev[chipKey], currentConnections: prev[chipKey].currentConnections + 1 }
           }));
-          setMoves(prev => prev - 1);
         }
       }
       setSelectedChip(null);
@@ -104,17 +192,17 @@ const M3 = ({ config, onComplete }) => {
   };
 
   const handleWireClick = (connectionIndex) => {
-    if (moves <= 0) return;
-
     const connection = connections[connectionIndex];
-    
+    if (connection.isDefault) return; // Prevent removing default wires
+
+    if (timeLeft <= 0) return;
+
     setConnections(prev => prev.filter((_, index) => index !== connectionIndex));
     setChips(prev => ({
       ...prev,
       [connection.from]: { ...prev[connection.from], currentConnections: prev[connection.from].currentConnections - 1 },
       [connection.to]: { ...prev[connection.to], currentConnections: prev[connection.to].currentConnections - 1 }
     }));
-    setMoves(prev => prev - 1);
   };
 
   const checkGameComplete = useCallback(() => {
@@ -123,17 +211,14 @@ const M3 = ({ config, onComplete }) => {
     if (allChipsConnected && onComplete) {
       setTimeout(() => onComplete(true), 2000);
     }
+    if (allChipsConnected && onComplete) {
+      setTimeout(() => onComplete(true), 2000);
+    }
   }, [chips, onComplete]);
 
   useEffect(() => {
     checkGameComplete();
   }, [checkGameComplete]);
-
-  useEffect(() => {
-    if (moves <= 0 && !isComplete) {
-      setIsGameOver(true);
-    }
-  }, [moves, isComplete]);
 
   useEffect(() => {
     const updateGridSize = () => {
@@ -278,7 +363,7 @@ const M3 = ({ config, onComplete }) => {
           
           <div className="flex justify-center items-center gap-3 sm:gap-6 mb-4">
             <div className="bg-slate-800/50 px-3 sm:px-4 py-2 rounded-lg border border-cyan-500/30">
-              <span className="text-cyan-300 font-bold text-sm sm:text-base">Moves: {moves}</span>
+              <span className="text-cyan-300 font-bold text-sm sm:text-base">⏱️ Time Left: {formatTime(timeLeft)}</span>
             </div>
             {isComplete && (
               <div className="bg-green-500/20 px-3 sm:px-4 py-2 rounded-lg border border-green-400">
@@ -291,6 +376,7 @@ const M3 = ({ config, onComplete }) => {
             <p className="text-cyan-100 text-xs sm:text-sm">
               Tap chips to select and connect them. Each chip must have exactly the number of connections shown.
               Tap wires to remove them. Only horizontal and vertical connections allowed! Multiple wires can connect the same chips, but wires cannot cross each other.
+              You cannot connect two chips more than twice. Good luck!
             </p>
           </div>
         </div>
