@@ -43,6 +43,7 @@ const equations = [
     { id: 6, text: "Red + Yellow + Blue", expected: ["red", "yellow", "blue"], total: 10, description: "Primary Mix" },
     { id: 7, text: "Green + Purple + Orange", expected: ["green", "purple", "orange"], total: 17, description: "Deep Colors" }
 ]
+    
 
 function useWindowSize() {
     const [size, setSize] = useState([0, 0]);
