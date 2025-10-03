@@ -1,47 +1,128 @@
 // ============================================
-// M5.jsx - Morse Code Game
+// M5.jsx - Morse Code Game (3 attempts, total 90s, persistent tries, tamper-proof)
 // ============================================
 import React, { useState, useEffect, useRef } from "react";
 import morseAudio from "../assets/morse.wav";
 import morseBg from "../assets/morse.png";
 
-const M5 = ({ config, onComplete }) => {
-  const [input, setInput] = useState("");
-  const [message, setMessage] = useState("");
-  const [timeLeft, setTimeLeft] = useState(90);
-  const [gameOver, setGameOver] = useState(false);
-  const [audioPlaying, setAudioPlaying] = useState(false);
+const TOTAL_TIME = 90; // total game time in seconds
+const MAX_TRIES = 3;
 
+const M5 = ({ config, onComplete }) => {
   const audioRef = useRef(null);
   const objectUrlRef = useRef(null);
 
-  useEffect(() => {
-    if (timeLeft > 0 && !gameOver) {
-      const timer = setInterval(() => setTimeLeft((prev) => prev - 1), 1000);
-      return () => clearInterval(timer);
+  // Initialize triesLeft from localStorage
+  const getInitialTries = () => { 
+    const storedTries = localStorage.getItem("morseTriesLeft");
+    if (storedTries !== null) {
+      return parseInt(storedTries, 10);
     }
-    if (timeLeft === 0 && !gameOver) {
-      setMessage("ACCESS DENIED");
+    localStorage.setItem("morseTriesLeft", MAX_TRIES);
+    return MAX_TRIES;
+  };
+
+  // Initialize total timeLeft from localStorage
+  const getInitialTime = () => {
+    let endTime = localStorage.getItem("morseEndTime");
+    if (!endTime) {
+      endTime = Date.now() + TOTAL_TIME * 1000;
+      localStorage.setItem("morseEndTime", endTime);
+    }
+    return Math.max(0, Math.floor((parseInt(endTime, 10) - Date.now()) / 1000));
+  };
+
+  // Check if tampering has occurred
+  const [tampered, setTampered] = useState(() => {
+    return localStorage.getItem("morseTampered") === "true";
+  });
+
+  const [timeLeft, setTimeLeft] = useState(getInitialTime());
+  const [input, setInput] = useState("");
+  const [message, setMessage] = useState("");
+  const [gameOver, setGameOver] = useState(tampered);
+  const [audioPlaying, setAudioPlaying] = useState(false);
+  const [triesLeft, setTriesLeft] = useState(getInitialTries);
+
+  // Immediately enforce tampering if detected
+  useEffect(() => {
+    if (tampered) {
+      setMessage("GAME OVER - TAMPERING DETECTED");
       setGameOver(true);
       if (audioRef.current) audioRef.current.pause();
     }
-  }, [timeLeft, gameOver]);
+  }, [tampered]);
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!gameOver) {
-      if (input.trim().toLowerCase() === "unlock") {
-        setMessage("ACCESS GRANTED");
-        setGameOver(true);
-        if (audioRef.current) audioRef.current.pause();
-        if (onComplete) {
-          setTimeout(() => onComplete(true), 2000);
-        }
-      } else {
+  // Timer effect
+  useEffect(() => {
+    if (gameOver) return;
+    const interval = setInterval(() => {
+      const endTime = parseInt(localStorage.getItem("morseEndTime"), 10);
+      const diff = Math.max(0, Math.floor((endTime - Date.now()) / 1000));
+      setTimeLeft(diff);
+
+      if (diff <= 0) {
+        clearInterval(interval);
         setMessage("ACCESS DENIED");
         setGameOver(true);
         if (audioRef.current) audioRef.current.pause();
       }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [gameOver]);
+
+  // Detect localStorage tampering
+  useEffect(() => {
+    const checkTampering = () => {
+      const storedTries = parseInt(localStorage.getItem("morseTriesLeft") || "0", 10);
+      const endTime = parseInt(localStorage.getItem("morseEndTime") || "0", 10);
+      if (storedTries > MAX_TRIES || endTime > Date.now() + TOTAL_TIME * 1000) {
+        return true;
+      }
+      return false;
+    };
+
+    const tamperInterval = setInterval(() => {
+      if (checkTampering() && !gameOver) {
+        localStorage.setItem("morseTampered", "true"); // mark permanently
+        setTampered(true);
+        setMessage("ACCESS DENIED - TAMPERING DETECTED");
+        setGameOver(true);
+        if (audioRef.current) audioRef.current.pause();
+        clearInterval(tamperInterval);
+      }
+    }, 1000);
+
+    return () => clearInterval(tamperInterval);
+  }, [gameOver]);
+
+  const handleFail = () => {
+    const remaining = triesLeft - 1;
+    localStorage.setItem("morseTriesLeft", remaining);
+    if (remaining > 0) {
+      setTriesLeft(remaining);
+      setMessage("ACCESS DENIED");
+      setInput("");
+    } else {
+      setTriesLeft(0);
+      setMessage("ACCESS DENIED - GAME OVER"); //  updated message
+      setGameOver(true);
+      if (audioRef.current) audioRef.current.pause();
+    }
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (gameOver) return;
+
+    if (input.trim().toLowerCase() === "unlock") {
+      setMessage("ACCESS GRANTED");
+      setGameOver(true);
+      if (audioRef.current) audioRef.current.pause();
+      if (onComplete) setTimeout(() => onComplete(true), 2000);
+    } else {
+      handleFail();
     }
   };
 
@@ -90,6 +171,9 @@ const M5 = ({ config, onComplete }) => {
     >
       <div className="absolute top-4 right-6 text-xl font-bold text-red-400">
         {timeLeft}s
+      </div>
+      <div className="absolute top-4 left-6 text-xl font-normal text-gray-300">
+        Tries left: {triesLeft}
       </div>
 
       <div className="absolute top-[50%] left-[47%] transform -translate-x-1/2 flex items-center gap-3">
