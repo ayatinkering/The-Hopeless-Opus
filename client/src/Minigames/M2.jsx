@@ -16,14 +16,15 @@ const colorPalette = {
 };
 
 const equations = [
-  { id: "c1", expected: ["red", "blue", "green"], total: 14, label: "Primary Colors" },
-  { id: "c2", expected: ["blue", "yellow", "purple"], total: 12, label: "Cool Tones" },
-  { id: "c3", expected: ["green", "yellow", "orange"], total: 16, label: "Nature Colors" },
-  { id: "c4", expected: ["red", "purple", "orange"], total: 12, label: "Warm Mix" },
-  { id: "c5", expected: ["blue", "green", "purple"], total: 16, label: "Jewel Tones" },
-  { id: "c6", expected: ["red", "yellow", "blue"], total: 10, label: "Primary Mix" },
-  { id: "c7", expected: ["green", "purple", "orange"], total: 17, label: "Deep Colors" },
-];
+    { id: 1, text: "Red + Blue + Green", expected: ["red", "blue", "green"], total: 14, description: "Primary Colors" },
+    { id: 2, text: "Blue + Yellow + Purple", expected: ["blue", "yellow", "purple"], total: 12, description: "Cool Tones" },
+    { id: 3, text: "Green + Yellow + Orange", expected: ["green", "yellow", "orange"], total: 16, description: "Nature Colors" },
+    { id: 4, text: "Red + Purple + Orange", expected: ["red", "purple", "orange"], total: 12, description: "Warm Mix" },
+    { id: 5, text: "Blue + Green + Purple", expected: ["blue", "green", "purple"], total: 16, description: "Jewel Tones" },
+    { id: 6, text: "Red + Yellow + Blue", expected: ["red", "yellow", "blue"], total: 10, description: "Primary Mix" },
+    { id: 7, text: "Green + Purple + Orange", expected: ["green", "purple", "orange"], total: 17, description: "Deep Colors" }
+]
+    
 
 const computeCakeValue = (cake) =>
   cake?.expected?.reduce((s, k) => s + (hiddenMapping[k] || 0), 0) ?? 0;

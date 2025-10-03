@@ -1,34 +1,41 @@
 // ============================================
-// M1.jsx - KnobPuzzle
+// M1.jsx - KnobPuzzle 4x5 with black row
 // ============================================
 import React, { useState, useEffect } from "react";
-import valImg from "../assets/tiles2image.jpg";
+import valImg from "../assets/TilesWall.jpg";
 
 export default function M1({
-  gridSize = 6,
-  tileSize = 125.5,
+  tileSize = 106.25,
   imageSrc = valImg,
-  onComplete
+  onComplete,
+  showNumbers = true,
 }) {
+  const cols = 4;
+  const rows = 5; // hardcoded 5 rows (20 tiles)
+  const totalTiles = cols * rows; // 20
+  const imageTiles = 16; // top 4x4 only
+
   const [tiles, setTiles] = useState([]);
   const [won, setWon] = useState(false);
 
-  const sizePx = tileSize * gridSize;
+  const sizePx = tileSize * cols; // width and height of 4x4 image portion
 
   useEffect(() => {
-    const initial = Array.from({ length: gridSize * gridSize }, (_, i) => i);
+    // initial ordering 0..19
+    const initial = Array.from({ length: totalTiles }, (_, i) => i);
 
+    // scramble with random knob rotations
     let scrambled = [...initial];
-    const scrambleMoves = Math.max(30, gridSize * gridSize * 6);
+    const scrambleMoves = Math.max(30, totalTiles * 6);
     for (let m = 0; m < scrambleMoves; m++) {
-      const r = Math.floor(Math.random() * (gridSize - 1));
-      const c = Math.floor(Math.random() * (gridSize - 1));
-      scrambled = rotate2x2(scrambled, r, c, gridSize);
+      const r = Math.floor(Math.random() * (rows - 1));
+      const c = Math.floor(Math.random() * (cols - 1));
+      scrambled = rotate2x2(scrambled, r, c, cols);
     }
 
     setTiles(scrambled);
     setWon(false);
-  }, [gridSize, tileSize, imageSrc]);
+  }, [tileSize, imageSrc]);
 
   useEffect(() => {
     if (won && onComplete) {
@@ -54,12 +61,24 @@ export default function M1({
     return newBoard;
   }
 
+  function isSolved(board) {
+    // first 16 must be in exact order
+    for (let i = 0; i < imageTiles; i++) {
+      if (board[i] !== i) return false;
+    }
+    // last 4 just need to be {16,17,18,19} in any order
+    const lastFour = board.slice(16, 20);
+    return (
+      new Set(lastFour).size === 4 &&
+      lastFour.every((x) => [16, 17, 18, 19].includes(x))
+    );
+  }
+
   function handleKnobClick(row, col) {
     if (won) return;
-    const newTiles = rotate2x2(tiles, row, col, gridSize);
+    const newTiles = rotate2x2(tiles, row, col, cols);
     setTiles(newTiles);
-    const solved = newTiles.every((v, i) => v === i);
-    if (solved) setWon(true);
+    if (isSolved(newTiles)) setWon(true);
   }
 
   return (
@@ -96,76 +115,67 @@ export default function M1({
       <div
         style={{
           position: "relative",
-          width: `${sizePx}px`,
-          height: `${sizePx}px`,
+          width: `${cols * tileSize}px`,
+          height: `${rows * tileSize}px`,
           display: "grid",
-          gridTemplateColumns: `repeat(${gridSize}, ${tileSize}px)`,
-          gridTemplateRows: `repeat(${gridSize}, ${tileSize}px)`,
-          boxSizing: "content-box",
+          gridTemplateColumns: `repeat(${cols}, ${tileSize}px)`,
+          gridTemplateRows: `repeat(${rows}, ${tileSize}px)`,
           background: "#111",
-          overflow: "hidden",
         }}
       >
         {tiles.map((tileIndex, i) => {
-          const imgRow = Math.floor(tileIndex / gridSize);
-          const imgCol = tileIndex % gridSize;
+          const isBottomRow = tileIndex >= imageTiles; // last 4
+          const imgRow = Math.floor(tileIndex / cols);
+          const imgCol = tileIndex % cols;
+
           return (
             <div
               key={i}
               style={{
                 width: `${tileSize}px`,
                 height: `${tileSize}px`,
-                backgroundImage: `url(${imageSrc})`,
+                background: isBottomRow
+                  ? "black"
+                  : `url(${imageSrc})`,
                 backgroundSize: `${sizePx}px ${sizePx}px`,
-                backgroundPosition: `-${imgCol * tileSize}px -${imgRow * tileSize}px`,
-                boxSizing: "border-box",
-                border: "1px solid rgba(255,255,255,0.03)",
+                backgroundPosition: isBottomRow
+                  ? "center"
+                  : `-${imgCol * tileSize}px -${imgRow * tileSize}px`,
+                border: "1px solid rgba(255,255,255,0.05)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: "14px",
+                color: isBottomRow ? "white" : "red",
               }}
-            />
+            >
+              {showNumbers && tileIndex + 1}
+            </div>
           );
         })}
 
-        {Array.from({ length: gridSize - 1 }).map((_, r) =>
-          Array.from({ length: gridSize - 1 }).map((_, c) => {
-            const leftPct = ((c + 1) / gridSize) * 100;
-            const topPct = ((r + 1) / gridSize) * 100;
+        {Array.from({ length: rows - 1 }).map((_, r) =>
+          Array.from({ length: cols - 1 }).map((_, c) => {
+            const leftPct = ((c + 1) / cols) * 100;
+            const topPct = ((r + 1) / rows) * 100;
             return (
               <button
                 key={`knob-${r}-${c}`}
                 onClick={() => handleKnobClick(r, c)}
-                aria-label={`Rotate block at ${r},${c}`}
                 style={{
                   position: "absolute",
                   left: `${leftPct}%`,
                   top: `${topPct}%`,
                   transform: "translate(-50%, -50%)",
-                  width: 26,
-                  height: 26,
+                  width: 24,
+                  height: 24,
                   borderRadius: "50%",
-                  border: "2px solid rgba(60,40,20,0.85)",
+                  border: "2px solid black",
                   background:
-                    "radial-gradient(circle at 35% 30%, rgba(255,255,255,0.12), rgba(0,0,0,0.6))",
-                  boxShadow:
-                    "0 2px 6px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.06)",
+                    "radial-gradient(circle at 35% 30%, white, rgba(200,200,200,0.8))",
                   cursor: "pointer",
-                  zIndex: 5,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  padding: 0,
                 }}
-              >
-                <span
-                  style={{
-                    display: "block",
-                    width: 8,
-                    height: 8,
-                    borderRadius: "50%",
-                    background: "#cfa97a",
-                    boxShadow: "0 0 8px rgba(207,169,122,0.6)",
-                  }}
-                />
-              </button>
+              />
             );
           })
         )}
