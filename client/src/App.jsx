@@ -15,15 +15,70 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import Profile from "./pages/Profile";
 import GameSlide from "./components/GameSlide";
-import PuzzleGame from "./Minigames/M7";
-import M6 from "./Minigames/M6";
-import M1 from "./Minigames/M1";
-import M3 from "./Minigames/M3";
-
 function App() {
-  return(
-    <M1/>
-  )
+  // Top-level user state
+  const [user, setUser] = useState(JSON.parse(localStorage.getItem("user")));
+  const [token,setToken] = useState(localStorage.getItem("token"))
+
+  // render inside Router so we can access location to hide navbar on /play
+  const AppContent = () => {
+    const location = useLocation();
+    const navigate = useNavigate();
+    const hideNavbar = location.pathname === '/play' || location.pathname.startsWith('/play/');
+
+    // Global axios interceptor for token expiry handling (401)
+    useEffect(() => {
+      const interceptor = axios.interceptors.response.use(
+        res => res,
+        err => {
+          if (err.response && err.response.status === 401) {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            // redirect to login
+            navigate('/login');
+          }
+          return Promise.reject(err);
+        }
+      );
+
+      return () => axios.interceptors.response.eject(interceptor);
+    }, [navigate]);
+
+    return (
+      <>
+        {!hideNavbar && <Navbar user={user} />}
+
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/about" element={<About />} />
+          <Route
+            path="/leaderboard"
+            element={
+              user ? (
+                <Leaderboard currentUserId={user._id} token={token} />
+              ) : (
+                <Leaderboard />
+              )
+            }
+          />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/rules" element={<Rules />} />
+          <Route path="/login" element={<LoginPage setUser={setUser} />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/play" element={<GameSlide />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/profile" element={<Profile setUser={setUser} />} />
+        </Routes>
+      </>
+    );
+  };
+
+  return (
+    <Router>
+      <AppContent />
+    </Router>
+  );
 }
 
 export default App;
