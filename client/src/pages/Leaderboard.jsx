@@ -12,10 +12,9 @@ export default function Leaderboard({ currentUserId, token}) {
         const headers = {};
 
         if (currentUserId && token) {
-          url = "http://localhost:5000/api/leaderboard/current";
+          url = "http://localhost:5000/api/leaderboard/current"; 
           headers.Authorization = `Bearer ${token}`;
         }
-
         const res = await fetch(url, { headers });
         const data = await res.json();
 
@@ -141,3 +140,12 @@ export default function Leaderboard({ currentUserId, token}) {
     </div>
   );
 }
+
+
+
+
+
+
+
+
+
