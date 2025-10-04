@@ -1,5 +1,6 @@
 import { useState } from "react"
 import axios from "axios"
+import API_BASE from '../lib/api_endpoint';
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -84,7 +85,7 @@ export default function RegisterForm() {
 
     try {
       setLoading(true)
-      const res = await axios.post("http://localhost:5000/api/users/register", {
+      const res = await axios.post(`${API_BASE}/users/register`, {
         teamId: formData.teamId,
         teamLeader: formData.teamLeader,
         player2: formData.player2,

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
+import API_BASE from '../lib/api_endpoint';
 
 export default function ResetPassword() {
   const location = useLocation();
@@ -29,7 +30,7 @@ export default function ResetPassword() {
     setMessage("");
 
     try {
-      const res = await axios.post("http://localhost:5000/api/forgotpwd/reset-password", formData);
+  const res = await axios.post(`${API_BASE}/forgotpwd/reset-password`, formData);
       setMessage(res.data.message || "Password reset successful!");
 
       // Auto redirect to login after success

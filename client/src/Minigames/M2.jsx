@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import Confetti from "react-confetti";
 import { motion, AnimatePresence } from "framer-motion";
 import { BsTrash } from "react-icons/bs";
+import MinigameTimer from "../components/MinigameTimer";
 
 /* ---------- Constants ---------- */
 const hiddenMapping = { red: 2, blue: 5, green: 7, yellow: 3, purple: 4, orange: 6 };
@@ -67,7 +68,7 @@ function CakeVisual({ cake, small = false, highlight = false }) {
 }
 
 /* ---------- Main Component ---------- */
-export default function M2SelectPlace() {
+export default function M2SelectPlace({ onComplete, session, sessionApi }) {
   const [placed, setPlaced] = useState({});
   const [pieces, setPieces] = useState([]);
   const [selected, setSelected] = useState(null);
@@ -77,9 +78,7 @@ export default function M2SelectPlace() {
   const [allCakes, setAllCakes] = useState([]);
   const [slots, setSlots] = useState(equations);
 
-  // Timer state
-  const [timeLeft, setTimeLeft] = useState(300); // 5 minutes in seconds
-  const [intervalId, setIntervalId] = useState(null);
+  // We now rely on backend session timer; local states removed
 
   useEffect(() => {
     const resize = () => {
@@ -129,26 +128,22 @@ export default function M2SelectPlace() {
   };
 
   const checkAnswers = () => {
-  // Stop the timer when answers are checked
-  if (intervalId) clearInterval(intervalId);
-
-  let correctCount = 0;
-  equations.forEach((eq) => {
-    if (placed[eq.id] === eq.answer) {
-      correctCount++;
+    let correctCount = 0;
+    equations.forEach((eq) => {
+      if (placed[eq.id] === eq.answer) {
+        correctCount++;
+      }
+    });
+    if (correctCount === equations.length) {
+      setShowConfetti(true);
+      onComplete && onComplete(true);
+    } else {
+      alert(`You got ${correctCount} out of ${equations.length} correct!`);
     }
-  });
-
-  if (correctCount === equations.length) {
-    setShowConfetti(true);
-  } else {
-    alert(`You got ${correctCount} out of ${equations.length} correct!`);
-  }
-};
+  };
 
 
   const resetGame = () => {
-    if (intervalId) clearInterval(intervalId);
 
     // create fresh slots
     const newSlots = equations.map((s) => ({ ...s }));
@@ -190,26 +185,15 @@ export default function M2SelectPlace() {
     setSelected(null);
     setShowConfetti(false);
 
-    // Reset timer
-    setTimeLeft(300);
-    const newInterval = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev <= 1) {
-          clearInterval(newInterval);
-          checkAnswers();
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-    setIntervalId(newInterval);
   };
 
+  // Auto-fail on timer expiry
   useEffect(() => {
-    return () => {
-      if (intervalId) clearInterval(intervalId);
-    };
-  }, [intervalId]);
+    if (!session || session.completed) return;
+    if (session.remainingSeconds === 0) {
+      onComplete && onComplete(false);
+    }
+  }, [session, onComplete]);
 
   return (
     <div className="min-h-screen p-8 bg-gradient-to-br from-pink-50 to-blue-50">
@@ -218,10 +202,8 @@ export default function M2SelectPlace() {
         <p className="text-sm text-slate-600 mt-2">
           Click a cake in the tray, then click a slot to place it. Click a filled slot (with no selection) to pick it up.
         </p>
-        {/* Timer */}
-        <div className="mt-3 text-lg font-semibold text-rose-600">
-          ⏳ Time Left: {Math.floor(timeLeft / 60)}:
-          {String(timeLeft % 60).padStart(2, "0")}
+        <div className="mt-3 flex justify-center">
+          <MinigameTimer remainingSeconds={session?.remainingSeconds ?? null} />
         </div>
       </div>
 

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import MinigameTimer from '../components/MinigameTimer';
 import { ChevronLeft, ChevronRight, ChevronUp } from 'lucide-react';
 import { Map as MapIcon, X as CloseIcon } from 'lucide-react'; 
 import choice1 from '../assets/choice1.jpg';
@@ -15,7 +16,7 @@ import img777 from '../assets/img777.png';
 import img911 from '../assets/img911.png';
 import map from '../assets/map.png';
 
-export default function MazeGame() {
+export default function MazeGame({ onComplete, session }) {
   // ---------------- Maze Setup ----------------
   const nodes = {
     1: { images: choice1, connections: { up: 2 } },
@@ -52,24 +53,16 @@ export default function MazeGame() {
   const [currentNode, setCurrentNode] = useState(1);
   const [fadeState, setFadeState] = useState('fade-in');
   const [showMap, setShowMap] = useState(false);
-  const [seconds, setSeconds] = useState(0);
   const [gameStarted, setGameStarted] = useState(false);
 
   // ---------------- Timer Effect ----------------
+  // Session based expiry
   useEffect(() => {
-    if (!gameStarted) return;
-    const timer = setInterval(() => {
-      setSeconds((prev) => prev + 1);
-    }, 1000);
-    return () => clearInterval(timer);
-  }, [gameStarted]);
-
-  // Format timer as mm:ss
-  const formatTime = (s) => {
-    const m = Math.floor(s / 60).toString().padStart(2, '0');
-    const sec = (s % 60).toString().padStart(2, '0');
-    return `${m}:${sec}`;
-  };
+    if (!session || session.completed) return;
+    if (session.remainingSeconds === 0 && gameStarted) {
+      onComplete && onComplete(false);
+    }
+  }, [session, gameStarted, onComplete]);
 
   // ---------------- Navigation ----------------
   const handleNavigation = (direction) => {
@@ -193,7 +186,7 @@ export default function MazeGame() {
               <MapIcon className="w-8 h-8 text-white" />
             </button>
             {/* Timer */}
-            <p className="text-white text-lg font-bold">{formatTime(seconds)}</p>
+            <MinigameTimer remainingSeconds={session?.remainingSeconds ?? null} />
           </div>
 
           {/* Map Overlay */}
