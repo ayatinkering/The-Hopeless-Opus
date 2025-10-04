@@ -2,8 +2,9 @@
 // M3.jsx - Electrical Chip Connection
 // ============================================
 import React, { useState, useCallback, useEffect } from 'react';
+import MinigameTimer from '../components/MinigameTimer';
 
-const M3 = ({ config, onComplete }) => {
+const M3 = ({ config, onComplete, session }) => {
   const BOARD_SIZE = 10;
   const CHIP_POSITIONS = [
     { row: 0, col: 1, value: 1 }, { row: 0, col: 3, value: 4 }, { row: 0, col: 5, value: 3 }, { row: 0, col: 6, value: 5 }, { row: 0, col: 9, value: 4 },
@@ -57,31 +58,14 @@ const M3 = ({ config, onComplete }) => {
   const [isGameOver, setIsGameOver] = useState(false);
   const [gridSize, setGridSize] = useState({ width: 0, height: 0 });
 
-  const TOTAL_TIME = 300; // 5 minutes in seconds
-  const [timeLeft, setTimeLeft] = useState(TOTAL_TIME);
-
+  // Session based expiry
   useEffect(() => {
-    if (isComplete) return;
-
-    const interval = setInterval(() => {
-      setTimeLeft(prev => {
-        if (prev <= 1) {
-          clearInterval(interval);
-          setIsGameOver(true);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [isComplete]);
-
-  const formatTime = (seconds) => {
-    const min = Math.floor(seconds / 60);
-    const sec = seconds % 60;
-    return `${min}:${sec < 10 ? '0' : ''}${sec}`;
-  };
+    if (!session || session.completed) return;
+    if (session.remainingSeconds === 0) {
+      setIsGameOver(true);
+      onComplete && onComplete(false);
+    }
+  }, [session, onComplete]);
 
   const romanNumerals = ['', 'I', 'II', 'III', 'IV', 'V'];
 
@@ -362,9 +346,7 @@ const M3 = ({ config, onComplete }) => {
           </p>
           
           <div className="flex justify-center items-center gap-3 sm:gap-6 mb-4">
-            <div className="bg-slate-800/50 px-3 sm:px-4 py-2 rounded-lg border border-cyan-500/30">
-              <span className="text-cyan-300 font-bold text-sm sm:text-base">⏱️ Time Left: {formatTime(timeLeft)}</span>
-            </div>
+            <MinigameTimer remainingSeconds={session?.remainingSeconds ?? null} />
             {isComplete && (
               <div className="bg-green-500/20 px-3 sm:px-4 py-2 rounded-lg border border-green-400">
                 <span className="text-green-300 font-bold text-sm sm:text-base">🎉 Completed!</span>

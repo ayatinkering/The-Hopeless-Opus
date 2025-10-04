@@ -7,7 +7,8 @@ import UserHUD from './UserHUD';
 
 // --- Config ---
 const TYPING_SPEED = 30;
-const API_BASE = "http://localhost:5000/api/story";
+import API_BASE from '../lib/api_endpoint';
+const API_STORY = `${API_BASE}/story`;
 
 // Minigame rendering is delegated to MinigameLoader
 
@@ -34,7 +35,7 @@ const VisualNovelInterface = () => {
   useEffect(() => {
     const fetchCurrentStory = async () => {
       try {
-        const res = await axios.get(`${API_BASE}/current/me`, getToken());
+        const res = await axios.get(`${API_STORY}/current/me`, getToken());
         const { story, userState: serverUserState } = res.data;
 
         if (story) {
@@ -65,7 +66,7 @@ const VisualNovelInterface = () => {
 
   const fetchStoryById = async (storyId) => {
     try {
-      const res = await axios.get(`${API_BASE}/${storyId}`, getToken());
+      const res = await axios.get(`${API_STORY}/${storyId}`, getToken());
       return res.data;
     } catch (err) {
       console.error("Error fetching story by ID:", err);
@@ -78,7 +79,7 @@ const VisualNovelInterface = () => {
 
     try {
       const res = await axios.post(
-        `${API_BASE}/current/choice`,
+        `${API_STORY}/current/choice`,
         { storyId: storyData.storyID, choiceIndex: index },
         getToken()
       );
@@ -113,35 +114,29 @@ const VisualNovelInterface = () => {
   }, [storyData?.storyID]);
 
   const handleMinigameComplete = async (success) => {
-    // Clear minigame state
     setActiveMinigame(null);
     setMinigameConfig(null);
 
-    // If success, call reward endpoint and show award message
-    if (success) {
-      try {
-        const rewardRes = await axios.post(`${API_BASE}/current/minigame-reward`, { storyId: storyData?.storyID || activeMinigame, success: true }, getToken());
-        const { awarded } = rewardRes.data;
-        if (rewardRes.data.userState) setUserState(rewardRes.data.userState);
-        if (awarded) {
-          setAwardMessage(`+${awarded.points} pts${awarded.item ? `, item: ${awarded.item}` : ''}`);
-          // show the award for a short time
-          setTimeout(() => setAwardMessage(null), 3200);
-        }
-      } catch (err) {
-        console.error('Error fetching minigame reward:', err.response?.data || err.message || err);
-      }
+    // Refresh user state (reward claimed already if success)
+    try {
+      const res = await axios.get(`${API_STORY}/current/me`, getToken());
+      if (res.data?.userState) setUserState(res.data.userState);
+    } catch (e) {
+      console.warn('User state refresh failed after minigame', e.response?.data || e.message || e);
     }
 
-    // Instead of advancing automatically based on success/failure, show the choices
-    // that are defined after the minigame. Prefer the pendingStory (stored when
-    // the minigame was triggered). If not available, try to fetch the next node(s)
-    // from the current minigame story's nextID.
+    // Branching logic: success -> nextID[0], failure -> nextID[1]
+    // Priority order:
+    // 1. If explicit pendingStory (returned from choice that launched minigame), use that (overrides generic nextID branching).
+    // 2. Else use storyData.nextID based on success/fail.
+    // 3. Fallback to first available nextID if selected index missing.
+    // 4. Final fallback: reload current story from server.
 
-    // If we had a pendingStory (returned earlier by choice) use it
+    // 1. Pending story override
     if (pendingStory) {
-      setStoryData(pendingStory);
-      setFullDialogue((pendingStory.text && pendingStory.text.length) ? pendingStory.text.join('\n') : '');
+      const ps = pendingStory;
+      setStoryData(ps);
+      setFullDialogue(ps.text?.length ? ps.text.join('\n') : '');
       setDisplayedText('');
       setIsSkipping(false);
       setPendingStory(null);
@@ -149,46 +144,48 @@ const VisualNovelInterface = () => {
       return;
     }
 
-    // If the current storyData is the minigame node and it contains choices, show it
-    // so users can pick which path to take next (do NOT auto-advance).
-    try {
-      if (storyData?.storyID?.startsWith('M')) {
-        if (storyData.choice && storyData.choice.length > 0) {
-          // Show the minigame node itself (choices are on the node)
-          setStoryData(storyData);
-          setFullDialogue((storyData.text && storyData.text.length) ? storyData.text.join('\n') : '');
+    const nextIDs = storyData?.nextID || [];
+    let targetId = null;
+    if (nextIDs.length) {
+      if (success) {
+        targetId = nextIDs[0];
+      } else if (nextIDs.length > 1) {
+        targetId = nextIDs[1];
+      } else {
+        // failure but only one branch; fall back to the sole nextID
+        targetId = nextIDs[0];
+      }
+    }
+
+    if (targetId) {
+      try {
+        const node = await fetchStoryById(targetId);
+        if (node) {
+          setStoryData(node);
+          setFullDialogue(node.text?.length ? node.text.join('\n') : '');
           setDisplayedText('');
           setIsSkipping(false);
           setSelectedChoice(null);
           return;
         }
-
-        // No choices on the minigame node itself: fetch the first next node so users see the follow-up
-        if (storyData.nextID?.length > 0) {
-          const nextNode = await fetchStoryById(storyData.nextID[0]);
-          if (nextNode) {
-            setStoryData(nextNode);
-            setFullDialogue((nextNode.text && nextNode.text.length) ? nextNode.text.join('\n') : '');
-            setDisplayedText('');
-            setIsSkipping(false);
-            setSelectedChoice(null);
-            return;
-          }
-        }
+      } catch (e) {
+        console.error('Failed to fetch branched node', e);
       }
+    }
 
-      // Final fallback: refresh current story from server
-      const res = await axios.get(`${API_BASE}/current/me`, getToken());
-      const { story } = res.data;
+    // 4. Final fallback: reload current story
+    try {
+      const res = await axios.get(`${API_STORY}/current/me`, getToken());
+      const { story } = res.data || {};
       if (story) {
         setStoryData(story);
-        setFullDialogue((story.text && story.text.length) ? story.text.join('\n') : '');
+        setFullDialogue(story.text?.length ? story.text.join('\n') : '');
         setDisplayedText('');
         setIsSkipping(false);
         setSelectedChoice(null);
       }
     } catch (err) {
-      console.error('Error fetching story after minigame:', err);
+      console.error('Final fallback failed after minigame', err);
     }
   };
 
@@ -205,7 +202,7 @@ const VisualNovelInterface = () => {
 
       if (storyData.levelEnd) {
         const res = await axios.post(
-          `${API_BASE}/level-end`,
+          `${API_STORY}/level-end`,
           { storyId: storyData.storyID },
           getToken()
         );

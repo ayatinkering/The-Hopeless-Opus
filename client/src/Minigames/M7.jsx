@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import MinigameTimer from '../components/MinigameTimer';
 
 // --- Helper Component for the Token Image Display ---
 // Import all images from assets
@@ -39,7 +40,7 @@ const TokenDisplay = ({ imageName }) => {
 
 // 🚨 CONFIGURATION 🚨
 const GAME_VERSION = 8;
-const TIMER_DURATION_MINUTES = 2; // Customisable time: 2 minutes
+const TIMER_DURATION_MINUTES = 2; // (legacy local timer – now replaced by session timer)
 
 // ---------------------------------------------------
 
@@ -57,7 +58,7 @@ const generateChecksum = (value, version) => {
     return Math.abs(hash);
 };
 
-const PuzzleGame = () => {
+const PuzzleGame = ({ onComplete, session, sessionApi }) => {
     const initialTokens = [
         { id: 1, image: 'BlueSilver', symbols: ['symbol1', 'symbol2'] },
         { id: 2, image: 'BlueSilver', symbols: ['symbol1', 'symbol2'] },
@@ -97,110 +98,18 @@ const PuzzleGame = () => {
     const [pathColors, setPathColors] = useState({});
     const [greenPathsCount, setGreenPathsCount] = useState(0);
 
-    // --- ⏲️ TIMER STATE & LOGIC ADDITION ⏲️ ---
-    const totalTimeMs = TIMER_DURATION_MINUTES * 60 * 1000;
-    const [timeRemainingMs, setTimeRemainingMs] = useState(totalTimeMs);
-    const [isTimeUp, setIsTimeUp] = useState(false);
+    // Timer refs / flags (session-driven)
     const timerRef = useRef(null);
-    
-    // 🚨 NEW: Combined state for game end condition (either time or tampering) 🚨
     const isGameOver = useRef(false);
+    const isTimeUp = !!(session && session.remainingSeconds === 0);
 
-    // Function to handle the game ending due to time or tampering
-    const endGame = useCallback(() => {
-        if (isGameOver.current) return;
-        
-        clearInterval(timerRef.current);
-        setTimeRemainingMs(0);
-        setIsTimeUp(true);
-        isGameOver.current = true;
-    }, []);
-
-
-    // Function to initialize the timer based on localStorage and version
-    const initializeTimer = useCallback(() => {
-        const storedVersion = localStorage.getItem('puzzleGameVersion');
-        const storedStartTime = localStorage.getItem('puzzleGameStartTime');
-        const storedChecksum = localStorage.getItem('puzzleGameChecksum');
-        const currentTime = Date.now();
-
-        if (storedVersion !== String(GAME_VERSION) || !storedStartTime) {
-            // New game version or no timer started, so start a fresh timer
-            const newStartTime = currentTime;
-            const newChecksum = generateChecksum(newStartTime, GAME_VERSION);
-            
-            localStorage.setItem('puzzleGameVersion', String(GAME_VERSION));
-            localStorage.setItem('puzzleGameStartTime', newStartTime);
-            localStorage.setItem('puzzleGameChecksum', newChecksum);
-
-            setTimeRemainingMs(totalTimeMs);
-            setIsTimeUp(false);
-            isGameOver.current = false;
-            return totalTimeMs;
-        } else {
-            const startTime = Number(storedStartTime);
-
-            // 🚨 INTEGRITY CHECK ON LOAD 🚨
-            const expectedChecksum = generateChecksum(startTime, GAME_VERSION);
-            if (Number(storedChecksum) !== expectedChecksum) {
-                 // Tampering detected! Treat as time running out.
-                endGame();
-                return 0; 
-            }
-
-            const elapsedTime = currentTime - startTime;
-            const remaining = totalTimeMs - elapsedTime;
-
-            if (remaining <= 0) {
-                endGame();
-                return 0;
-            } else {
-                setTimeRemainingMs(remaining);
-                setIsTimeUp(false);
-                isGameOver.current = false;
-                return remaining;
-            }
-        }
-    }, [totalTimeMs, endGame]);
-
-    // Initial timer setup and version check on mount
+    // Session-driven timer: fail when remainingSeconds hits 0
     useEffect(() => {
-        const initialRemainingTime = initializeTimer();
-
-        if (initialRemainingTime > 0) {
-            timerRef.current = setInterval(() => {
-                const storedStartTime = Number(localStorage.getItem('puzzleGameStartTime'));
-                const storedChecksum = localStorage.getItem('puzzleGameChecksum');
-
-                // 🚨 INTEGRITY CHECK ON INTERVAL 🚨
-                const expectedChecksum = generateChecksum(storedStartTime, GAME_VERSION);
-                if (Number(storedChecksum) !== expectedChecksum) {
-                    // Tampering detected! Treat as time running out.
-                    endGame();
-                    return;
-                }
-
-                const elapsedTime = Date.now() - storedStartTime;
-                const remaining = totalTimeMs - elapsedTime;
-
-                if (remaining <= 0) {
-                    endGame();
-                } else {
-                    setTimeRemainingMs(remaining);
-                }
-            }, 1000);
+        if (!session || session.completed) return;
+        if (session.remainingSeconds === 0) {
+            onComplete && onComplete(false);
         }
-
-        return () => clearInterval(timerRef.current);
-    }, [initializeTimer, totalTimeMs, endGame]);
-
-    // Format time remaining for display
-    const formatTime = (ms) => {
-        const totalSeconds = Math.floor(ms / 1000);
-        const minutes = Math.floor(totalSeconds / 60);
-        const seconds = totalSeconds % 60;
-        return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-    };
+    }, [session, onComplete]);
     // ---------------------------------------------------
 
     const gameBoardRef = useRef(null);
@@ -362,7 +271,7 @@ const PuzzleGame = () => {
         <div className="flex flex-col items-center justify-start min-h-screen bg-gray-900 text-gray-100 p-4 font-sans relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-br from-gray-800 to-gray-950 z-0"></div>
 
-            {(isWin || isTimeUp) && (
+            {(isWin || (session && session.remainingSeconds === 0)) && (
                 <div className="absolute inset-0 z-50 flex items-center justify-center bg-gray-900 bg-opacity-80 rounded-lg shadow-lg backdrop-blur-sm">
                     <div className="text-center p-8 bg-gray-900 rounded-xl shadow-2xl transform scale-105 transition-transform duration-500 border-4"
                         style={{ borderColor: isWin ? '#10B981' : '#EF4444' }}>
@@ -403,16 +312,7 @@ const PuzzleGame = () => {
         ))
     )}
 
-    {/* Timer Display inside token bar, bottom-right */}
-    <div className="absolute bottom-2 right-2 text-2xl font-bold p-2 rounded-lg"
-        style={{
-            backgroundColor: 'rgba(55, 65, 81, 0.8)',
-            color: isTimeUp ? '#EF4444' : timeRemainingMs <= 10000 ? '#FBBF24' : '#34D399',
-            border: `2px solid ${isTimeUp ? '#EF4444' : '#34D399'}`,
-        }}
-    >
-        {formatTime(timeRemainingMs)}
-    </div>
+    <div className="absolute bottom-2 right-2"><MinigameTimer remainingSeconds={session?.remainingSeconds ?? null} /></div>
 </div>
 
 

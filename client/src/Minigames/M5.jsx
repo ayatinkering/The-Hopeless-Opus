@@ -2,13 +2,14 @@
 // M5.jsx - Morse Code Game (3 attempts, total 90s, persistent tries, tamper-proof)
 // ============================================
 import React, { useState, useEffect, useRef } from "react";
+import MinigameTimer from "../components/MinigameTimer";
 import morseAudio from "../assets/morse.wav";
 import morseBg from "../assets/morse.png";
 
 const TOTAL_TIME = 90; // total game time in seconds
 const MAX_TRIES = 3;
 
-const M5 = ({ config, onComplete }) => {
+const M5 = ({ config, onComplete, session, sessionApi }) => {
   const audioRef = useRef(null);
   const objectUrlRef = useRef(null);
 
@@ -164,16 +165,29 @@ const M5 = ({ config, onComplete }) => {
     };
   }, []);
 
+  // Session-driven expiry / tries
+  useEffect(() => {
+    if (!session || session.completed) return;
+    if (session.remainingSeconds === 0) {
+      onComplete && onComplete(false);
+    }
+    if (typeof session.triesLeft === 'number' && session.triesLeft <= 0) {
+      onComplete && onComplete(false);
+    }
+  }, [session, onComplete]);
+
+  const failAndDecrement = () => {
+    if (sessionApi?.decrementTry) sessionApi.decrementTry();
+    handleFail();
+  };
+
   return (
     <div
       className="relative flex items-center justify-center min-h-screen bg-black bg-cover bg-center"
       style={{ backgroundImage: `url(${morseBg})` }}
     >
-      <div className="absolute top-4 right-6 text-xl font-bold text-red-400">
-        {timeLeft}s
-      </div>
-      <div className="absolute top-4 left-6 text-xl font-normal text-gray-300">
-        Tries left: {triesLeft}
+      <div className="absolute top-4 left-1/2 -translate-x-1/2">
+        <MinigameTimer remainingSeconds={session?.remainingSeconds ?? timeLeft} triesLeft={session?.triesLeft ?? triesLeft} />
       </div>
 
       <div className="absolute top-[50%] left-[47%] transform -translate-x-1/2 flex items-center gap-3">
@@ -205,6 +219,15 @@ const M5 = ({ config, onComplete }) => {
         >
           Enter
         </button>
+        {!gameOver && (
+          <button
+            type="button"
+            onClick={failAndDecrement}
+            className="ml-3 px-4 py-2 rounded-md bg-red-700 hover:bg-red-600 text-white text-sm"
+          >
+            Fail Attempt
+          </button>
+        )}
       </div>
 
       <p
