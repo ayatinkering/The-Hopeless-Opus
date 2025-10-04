@@ -14,8 +14,8 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import Profile from "./pages/Profile";
 import GameSlide from "./components/GameSlide";
-import Toggle from "./Minigames/Toggle";
-import M3 from "./Minigames/M3";
+import Visual from "./Minigames/Visual.jsx";
+import Wave from "./Minigames/Wave.jsx";
 
 function App() {
   // Top-level user state
@@ -49,8 +49,8 @@ function App() {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/profile" element={<Profile setUser={setUser} />} />
-        <Route path="/Toggle" element={<Toggle />} />
-        <Route path="/M3" element={<M3 />} />
+        <Route path="/Visual" element={<Visual />} />
+        <Route path="/Wave" element={<Wave />} />
       </Routes>
     </Router>
   );
