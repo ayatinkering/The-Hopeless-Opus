@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import MinigameTimer from "../components/MinigameTimer";
-
+import bg from '../assets/bgforM4.png';
 // ConcentricToggleGame.jsx
 // Game using only JavaScript, React and Tailwind CSS
 
@@ -185,55 +185,68 @@ export default function ConcentricToggleGame({ onComplete, session, sessionApi }
   }, [winner, onComplete]);
 
   return (
-    <div className="p-6 min-h-screen bg-gray-50 flex flex-col items-center gap-6">
-      <MinigameTimer remainingSeconds={session?.remainingSeconds ?? null} triesLeft={session?.triesLeft ?? null} />
-      <h1 className="text-xl font-bold">Concentric Toggle Game</h1>
-      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-        {sectors.map((s, i) => (
-          <path
-            key={`outer-${i}`}
-            d={s.pathOuter}
-            fill={outer[i] ? "#60A5FA" : "white"}
+  <div className="relative mt-20 w-full max-w-4xl mx-auto">
+    {/* Background Image Layer */}
+    <div 
+      className="absolute inset-0 bg-center bg-no-repeat bg-cover rounded-2xl"
+      style={{ backgroundImage: `url(${bg})` }}
+    />
+    
+    {/* Content Layer */}
+    <div className="relative flex flex-col items-center justify-between gap-4 rounded-2xl shadow-lg p-4 min-h-[600px]">
+      {/* SVG Game */}
+      <div className="flex-1 w-full flex justify-center items-center">
+        <svg
+          className="w-[85%] max-w-md h-auto"
+          viewBox={`0 0 ${size} ${size}`}
+        >
+          {sectors.map((s, i) => (
+            <path
+              key={`outer-${i}`}
+              d={s.pathOuter}
+              fill={outer[i] ? "#34D399" : "white"}
+              stroke="black"
+            />
+          ))}
+          {sectors.map((s, i) => (
+            <path
+              key={`inner-${i}`}
+              d={s.pathInner}
+              fill={inner[i] ? "#34D399" : "white"}
+              stroke="black"
+            />
+          ))}
+          {/* Lines */}
+          <line x1={cx - outerR} y1={cy} x2={cx + outerR} y2={cy} stroke="black" />
+          <line x1={cx} y1={cy - outerR} x2={cx} y2={cy + outerR} stroke="black" />
+          <line
+            x1={cx - outerR * Math.SQRT1_2}
+            y1={cy - outerR * Math.SQRT1_2}
+            x2={cx + outerR * Math.SQRT1_2}
+            y2={cy + outerR * Math.SQRT1_2}
             stroke="black"
           />
-        ))}
-        {sectors.map((s, i) => (
-          <path
-            key={`inner-${i}`}
-            d={s.pathInner}
-            fill={inner[i] ? "#34D399" : "white"}
+          <line
+            x1={cx - outerR * Math.SQRT1_2}
+            y1={cy + outerR * Math.SQRT1_2}
+            x2={cx + outerR * Math.SQRT1_2}
+            y2={cy - outerR * Math.SQRT1_2}
             stroke="black"
           />
-        ))}
-        {/* Lines */}
-        <line x1={cx - outerR} y1={cy} x2={cx + outerR} y2={cy} stroke="black" />
-        <line x1={cx} y1={cy - outerR} x2={cx} y2={cy + outerR} stroke="black" />
-        <line
-          x1={cx - outerR * Math.SQRT1_2}
-          y1={cy - outerR * Math.SQRT1_2}
-          x2={cx + outerR * Math.SQRT1_2}
-          y2={cy + outerR * Math.SQRT1_2}
-          stroke="black"
-        />
-        <line
-          x1={cx - outerR * Math.SQRT1_2}
-          y1={cy + outerR * Math.SQRT1_2}
-          x2={cx + outerR * Math.SQRT1_2}
-          y2={cy - outerR * Math.SQRT1_2}
-          stroke="black"
-        />
-        {/* Token */}
-        {(() => {
-          const [tx, ty] = tokenCoords(token.ring, token.idx);
-          return (
-            <text x={tx} y={ty + 5} textAnchor="middle" fontSize="20">
-              *
-            </text>
-          );
-        })()}
-      </svg>
+          {/* Token */}
+          {(() => {
+            const [tx, ty] = tokenCoords(token.ring, token.idx);
+            return (
+              <text x={tx} y={ty + 5} textAnchor="middle" fontSize="20">
+                *
+              </text>
+            );
+          })()}
+        </svg>
+      </div>
 
-      <div className="flex gap-2">
+      {/* Buttons */}
+      <div className="flex flex-wrap gap-2 justify-center mb-2">
         <button
           className="px-3 py-2 bg-blue-500 text-white rounded"
           onClick={autoMove}
@@ -251,15 +264,19 @@ export default function ConcentricToggleGame({ onComplete, session, sessionApi }
           onClick={resetGame}
           disabled={session?.triesLeft !== null && session?.triesLeft <= 0}
         >
-          {session?.triesLeft !== null && session?.triesLeft <= 0 ? 'No Tries' : 'Reset'}
+          {session?.triesLeft !== null && session?.triesLeft <= 0
+            ? "No Tries"
+            : "Reset"}
         </button>
       </div>
 
-          {winner && (
-              <div className="mt-4 text-2xl font-bold text-green-600">
-                  🎉 You Won! 🎉
-              </div>
-          )}
+      {/* Win Message */}
+      {winner && (
+        <div className="mt-2 text-2xl font-bold text-white-600">
+           You Won! 
+        </div>
+      )}
     </div>
-  );
+  </div>
+);
 }
