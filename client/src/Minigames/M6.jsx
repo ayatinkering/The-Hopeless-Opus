@@ -2,9 +2,10 @@
 // M6.jsx - Cipher Riddle Game with Timer & Wrong Answer Counter
 // ============================================
 import React, { useState, useEffect, useRef, useCallback } from "react";
+import MinigameTimer from "../components/MinigameTimer";
 import backgroundImage from "../assets/cipherimage.jpg";
 
-export default function M6({ config, onComplete }) {
+export default function M6({ config, onComplete, session, sessionApi }) {
   const cipherText = "Zvuv Whgga Xbhzap Vvthup";
   const correctAnswer = "theseromansarecrazy";
   const TIMER_DURATION_MINUTES = 2; // Customize timer here
@@ -97,6 +98,25 @@ const handleSubmit = () => {
 };
 
 
+  // Session integration for expiry and tries decrement on wrong attempts
+  useEffect(() => {
+    if (!session || session.completed) return;
+    if (session.remainingSeconds === 0) {
+      setGameEnded(true);
+      onComplete && onComplete(false);
+    }
+    if (typeof session.triesLeft === 'number' && session.triesLeft <= 0) {
+      setGameEnded(true);
+      onComplete && onComplete(false);
+    }
+  }, [session, onComplete]);
+
+  useEffect(() => {
+    if (wrongCount > 0 && !isCorrect && sessionApi?.decrementTry) {
+      sessionApi.decrementTry();
+    }
+  }, [wrongCount, isCorrect, sessionApi]);
+
   return (
     <div
       className="min-h-screen relative font-serif"
@@ -110,18 +130,8 @@ const handleSubmit = () => {
       <div className="absolute inset-0"></div>
 
       {/* --- Timer Display Top-Left --- */}
-      <div
-        className="absolute top-4 left-4 text-2xl font-bold p-2 rounded-lg"
-        style={{
-          backgroundColor: "rgba(255,255,255,0.7)",
-          color:
-            isTimeUp || timeRemainingMs <= 0
-              ? "#7B3F00" // brownish for time up
-              : "#8B4513", // dark brown
-          border: "2px solid #5C3317",
-        }}
-      >
-        ⏳ {formatTime(timeRemainingMs)}
+      <div className="absolute top-4 left-4">
+        <MinigameTimer remainingSeconds={session?.remainingSeconds ?? Math.floor(timeRemainingMs/1000)} triesLeft={session?.triesLeft ?? null} />
       </div>
 
       {/* --- Wrong Answer Counter --- */}

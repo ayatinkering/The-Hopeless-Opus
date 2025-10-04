@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import MinigameTimer from '../components/MinigameTimer';
 import { RotateCw } from 'lucide-react';
 import lightbg from "../assets/lightbg.png";
 import mirror from "../assets/mirrorltor.png";
 
-const MirrorPuzzleGame = () => {
+const MirrorPuzzleGame = ({ onComplete, session }) => {
   // Mirror positions (row, col) - 0-indexed
   const mirrorPositions = [
     [0, 0], [0, 2], [0, 4], [0, 7],
@@ -166,11 +167,20 @@ const MirrorPuzzleGame = () => {
   }
 };
 
+  // Auto fail on expiry
+  useEffect(() => {
+    if (!session || session.completed) return;
+    if (session.remainingSeconds === 0) {
+      onComplete && onComplete(false);
+    }
+  }, [session, onComplete]);
+
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 p-8">
+      <div className="absolute top-4 right-4"><MinigameTimer remainingSeconds={session?.remainingSeconds ?? null} /></div>
       <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 shadow-2xl">
         <h1 className="text-4xl font-bold text-white mb-2 text-center">Mirror Puzzle</h1>
-        <p className="text-white/80 mb-4 text-center mb-15">Guide the light to the bottom-right corner!</p>
+  <p className="text-white/80 mb-4 text-center">Guide the light to the bottom-right corner!</p>
 
         <div className="mb-6 relative">
           {/* Light source indicator */}

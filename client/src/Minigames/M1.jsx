@@ -3,12 +3,15 @@
 // ============================================
 import React, { useState, useEffect } from "react";
 import valImg from "../assets/TilesWall.jpg";
+import MinigameTimer from "../components/MinigameTimer";
 
 export default function M1({
   tileSize = 106.25,
   imageSrc = valImg,
   onComplete,
   showNumbers = true,
+  session,
+  sessionApi,
 }) {
   const cols = 4;
   const rows = 5; // hardcoded 5 rows (20 tiles)
@@ -42,6 +45,14 @@ export default function M1({
       setTimeout(() => onComplete(true), 2000);
     }
   }, [won, onComplete]);
+
+  // Fail when timer expires (handled locally instead of loader)
+  useEffect(() => {
+    if (!session || session.completed) return;
+    if (session.remainingSeconds === 0) {
+      onComplete(false);
+    }
+  }, [session, onComplete]);
 
   function rotate2x2(board, row, col, N) {
     const newBoard = board.slice();
@@ -94,7 +105,13 @@ export default function M1({
         padding: 20,
       }}
     >
-      <h1 style={{ marginBottom: 18 }}>Knob Rotation Puzzle</h1>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 18 }}>
+        <h1 style={{ margin: 0 }}>Knob Rotation Puzzle</h1>
+        <MinigameTimer
+          remainingSeconds={session?.remainingSeconds ?? null}
+          triesLeft={undefined}
+        />
+      </div>
 
       {won && (
         <div

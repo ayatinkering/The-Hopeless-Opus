@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import API_BASE from '../lib/api_endpoint';
 import { useNavigate } from "react-router-dom";
 
 export default function Profile({ setUser }) {
@@ -14,7 +15,7 @@ export default function Profile({ setUser }) {
 
       try {
         const res = await axios.get(
-          `http://localhost:5000/api/users/${storedUser._id}`,
+          `${API_BASE}/users/${storedUser._id}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         setProfileData(res.data);

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import API_BASE from '../lib/api_endpoint';
 
 export default function Leaderboard({ currentUserId, token}) {
   const [teams, setTeams] = useState([]);
@@ -8,11 +9,11 @@ export default function Leaderboard({ currentUserId, token}) {
   useEffect(() => {
     const fetchLeaderboard = async () => {
       try {
-        let url = "http://localhost:5000/api/leaderboard";
+        let url = `${API_BASE}/leaderboard`;
         const headers = {};
 
         if (currentUserId && token) {
-          url = "http://localhost:5000/api/leaderboard/current"; 
+          url = `${API_BASE}/leaderboard/current`; 
           headers.Authorization = `Bearer ${token}`;
         }
         const res = await fetch(url, { headers });
