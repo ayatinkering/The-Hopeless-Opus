@@ -26,8 +26,6 @@ app.use("/api/story", storyRoutes);
 app.use("/api/users", userRoutes);  
 app.use("/api/leaderboard", leaderboardRoutes);  
 app.use("/api/forgotpwd", forgotpwdRoutes);
-app.use("/api/contactus", contactRoutes);
-app.use("/api/minigame", minigameRoutes);
 
 // Root route
 app.get("/", (req, res) => {
