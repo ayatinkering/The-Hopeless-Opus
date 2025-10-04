@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
+import API_BASE from '../lib/api_endpoint';
 
 export default function Login({ setUser }) {  // ✅ receive setUser from App.jsx
   const Navigate = useNavigate();
@@ -29,7 +30,7 @@ export default function Login({ setUser }) {  // ✅ receive setUser from App.js
 
     try {
       const res = await axios.post(
-        "http://localhost:5000/api/users/login",
+        `${API_BASE}/users/login`,
         formData,
         {
           headers: { "Content-Type": "application/json" },

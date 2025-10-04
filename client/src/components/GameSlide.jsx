@@ -2,31 +2,19 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
 // Import your minigame components
-import M1 from '../Minigames/M1'; // KnobPuzzle
-import M2 from '../Minigames/M2'; // Cake Matching
-import M3 from '../Minigames/M3'; // Chip Connection
-import M4 from '../Minigames/M4'; // Cake Slicing
-import M5 from '../Minigames/M5'; // Morse Code
-import M6 from '../Minigames/M6'; // Cipher
-import M7 from '../Minigames/M7'; // Token Puzzle
+import MinigameLoader from './MinigameLoader';
+import UserHUD from './UserHUD';
 
 // --- Config ---
 const TYPING_SPEED = 30;
-const API_BASE = "http://localhost:5000/api/story";
+import API_BASE from '../lib/api_endpoint';
+const API_STORY = `${API_BASE}/story`;
 
-// --- Minigame Mapper ---
-const MINIGAME_COMPONENTS = {
-  M1: M1,
-  M2: M2,
-  M3: M3,
-  M4: M4,
-  M5: M5,
-  M6: M6,
-  M7: M7,
-};
+// Minigame rendering is delegated to MinigameLoader
 
 const VisualNovelInterface = () => {
   const [storyData, setStoryData] = useState(null);
+  const [userState, setUserState] = useState({ points: 0, inventory: {} });
   const [fullDialogue, setFullDialogue] = useState("");
   const [displayedText, setDisplayedText] = useState("");
   const [selectedChoice, setSelectedChoice] = useState(null);
@@ -36,6 +24,8 @@ const VisualNovelInterface = () => {
   const [activeMinigame, setActiveMinigame] = useState(null);
   const [minigameConfig, setMinigameConfig] = useState(null);
   const [pendingStory, setPendingStory] = useState(null);
+  const [awardMessage, setAwardMessage] = useState(null);
+  const [sceneVisible, setSceneVisible] = useState(true);
 
   const getToken = () => {
     const token = localStorage.getItem("token");
@@ -45,14 +35,15 @@ const VisualNovelInterface = () => {
   useEffect(() => {
     const fetchCurrentStory = async () => {
       try {
-        const res = await axios.get(`${API_BASE}/current/me`, getToken());
-        const { story } = res.data;
+        const res = await axios.get(`${API_STORY}/current/me`, getToken());
+        const { story, userState: serverUserState } = res.data;
 
         if (story) {
           setStoryData(story);
           setFullDialogue(story.text.join("\n"));
           setDisplayedText("");
           setIsSkipping(false);
+          if (serverUserState) setUserState(serverUserState);
         }
       } catch (err) {
         console.error("Error fetching current story:", err);
@@ -75,7 +66,7 @@ const VisualNovelInterface = () => {
 
   const fetchStoryById = async (storyId) => {
     try {
-      const res = await axios.get(`${API_BASE}/${storyId}`, getToken());
+      const res = await axios.get(`${API_STORY}/${storyId}`, getToken());
       return res.data;
     } catch (err) {
       console.error("Error fetching story by ID:", err);
@@ -88,12 +79,13 @@ const VisualNovelInterface = () => {
 
     try {
       const res = await axios.post(
-        `${API_BASE}/current/choice`,
+        `${API_STORY}/current/choice`,
         { storyId: storyData.storyID, choiceIndex: index },
         getToken()
       );
-
-      const { nextStory, minigame } = res.data;
+  console.log("Choice response:", res.data);
+  const { nextStory, minigame, userState: serverUserState } = res.data;
+  if (serverUserState) setUserState(serverUserState);
 
       // Check if minigame was triggered
       if (minigame) {
@@ -114,35 +106,86 @@ const VisualNovelInterface = () => {
     }
   };
 
+  // Fade transition for scene changes
+  useEffect(() => {
+    setSceneVisible(false);
+    const t = setTimeout(() => setSceneVisible(true), 60);
+    return () => clearTimeout(t);
+  }, [storyData?.storyID]);
+
   const handleMinigameComplete = async (success) => {
-    // Clear minigame state
     setActiveMinigame(null);
     setMinigameConfig(null);
 
-    // If there's a pending story after the minigame, show it
+    // Refresh user state (reward claimed already if success)
+    try {
+      const res = await axios.get(`${API_STORY}/current/me`, getToken());
+      if (res.data?.userState) setUserState(res.data.userState);
+    } catch (e) {
+      console.warn('User state refresh failed after minigame', e.response?.data || e.message || e);
+    }
+
+    // Branching logic: success -> nextID[0], failure -> nextID[1]
+    // Priority order:
+    // 1. If explicit pendingStory (returned from choice that launched minigame), use that (overrides generic nextID branching).
+    // 2. Else use storyData.nextID based on success/fail.
+    // 3. Fallback to first available nextID if selected index missing.
+    // 4. Final fallback: reload current story from server.
+
+    // 1. Pending story override
     if (pendingStory) {
-      setStoryData(pendingStory);
-      setFullDialogue(pendingStory.text.join("\n"));
-      setDisplayedText("");
+      const ps = pendingStory;
+      setStoryData(ps);
+      setFullDialogue(ps.text?.length ? ps.text.join('\n') : '');
+      setDisplayedText('');
       setIsSkipping(false);
       setPendingStory(null);
       setSelectedChoice(null);
-    } else {
-      // Otherwise fetch the current story from the backend
-      try {
-        const res = await axios.get(`${API_BASE}/current/me`, getToken());
-        const { story } = res.data;
+      return;
+    }
 
-        if (story) {
-          setStoryData(story);
-          setFullDialogue(story.text.join("\n"));
-          setDisplayedText("");
+    const nextIDs = storyData?.nextID || [];
+    let targetId = null;
+    if (nextIDs.length) {
+      if (success) {
+        targetId = nextIDs[0];
+      } else if (nextIDs.length > 1) {
+        targetId = nextIDs[1];
+      } else {
+        // failure but only one branch; fall back to the sole nextID
+        targetId = nextIDs[0];
+      }
+    }
+
+    if (targetId) {
+      try {
+        const node = await fetchStoryById(targetId);
+        if (node) {
+          setStoryData(node);
+          setFullDialogue(node.text?.length ? node.text.join('\n') : '');
+          setDisplayedText('');
           setIsSkipping(false);
           setSelectedChoice(null);
+          return;
         }
-      } catch (err) {
-        console.error("Error fetching story after minigame:", err);
+      } catch (e) {
+        console.error('Failed to fetch branched node', e);
       }
+    }
+
+    // 4. Final fallback: reload current story
+    try {
+      const res = await axios.get(`${API_STORY}/current/me`, getToken());
+      const { story } = res.data || {};
+      if (story) {
+        setStoryData(story);
+        setFullDialogue(story.text?.length ? story.text.join('\n') : '');
+        setDisplayedText('');
+        setIsSkipping(false);
+        setSelectedChoice(null);
+      }
+    } catch (err) {
+      console.error('Final fallback failed after minigame', err);
     }
   };
 
@@ -159,7 +202,7 @@ const VisualNovelInterface = () => {
 
       if (storyData.levelEnd) {
         const res = await axios.post(
-          `${API_BASE}/level-end`,
+          `${API_STORY}/level-end`,
           { storyId: storyData.storyID },
           getToken()
         );
@@ -169,11 +212,25 @@ const VisualNovelInterface = () => {
       }
 
       if (nextStory) {
-        setStoryData(nextStory);
-        setFullDialogue(nextStory.text.join("\n"));
-        setDisplayedText("");
-        setIsSkipping(false);
-        setSelectedChoice(null);
+        // If the next story node is a minigame, trigger the minigame UI
+        if (nextStory.storyID && nextStory.storyID.startsWith('M')) {
+          console.log('Next story is a minigame, launching:', nextStory.storyID);
+          setStoryData(nextStory);
+          setFullDialogue(nextStory.text?.join('\n') || '');
+          setDisplayedText('');
+          setIsSkipping(false);
+          setSelectedChoice(null);
+          setActiveMinigame(nextStory.storyID);
+          // If the story provides a minigame config, use it; otherwise leave null
+          if (nextStory.minigameConfig) setMinigameConfig(nextStory.minigameConfig);
+          else setMinigameConfig(null);
+        } else {
+          setStoryData(nextStory);
+          setFullDialogue(nextStory.text.join("\n"));
+          setDisplayedText("");
+          setIsSkipping(false);
+          setSelectedChoice(null);
+        }
       }
     } catch (err) {
       console.error("Error updating user story on level end:", err);
@@ -222,22 +279,30 @@ const VisualNovelInterface = () => {
     </div>
   );
 
-  // If minigame is active, render it instead
+  // If minigame is active, render it via MinigameLoader
   if (activeMinigame) {
-    const MinigameComponent = MINIGAME_COMPONENTS[activeMinigame];
-    
     return (
-      <div className="w-screen h-screen">
-        {MinigameComponent ? (
-          <MinigameComponent 
-            config={minigameConfig} 
-            onComplete={handleMinigameComplete}
-          />
-        ) : (
-          <div className="flex items-center justify-center h-full bg-gray-900">
-            <div className="text-white text-2xl">Unknown minigame: {activeMinigame}</div>
+      <div className="w-screen h-screen relative">
+        <UserHUD userState={userState} />
+        <div style={{ opacity: sceneVisible ? 1 : 0, transition: 'opacity 260ms ease' }}>
+          <MinigameLoader id={activeMinigame} config={minigameConfig} onComplete={handleMinigameComplete} />
+
+          {/* Temporary test button for devs: simulate minigame completion (success) */}
+          <div className="absolute top-4 right-4 z-50">
+            <button
+              onClick={() => handleMinigameComplete(true)}
+              className="px-3 py-2 bg-green-600 text-white rounded-md shadow-lg hover:bg-green-500 transition"
+              title="Dev-only: simulate successful completion of the minigame"
+            >
+              Test: Complete (Success)
+            </button>
           </div>
-        )}
+          {awardMessage && (
+            <div className="absolute top-16 right-4 z-50 px-3 py-2 bg-yellow-500 text-black rounded shadow">
+              {awardMessage}
+            </div>
+          )}
+        </div>
       </div>
     );
   }
@@ -252,30 +317,34 @@ const VisualNovelInterface = () => {
         filter: 'brightness(0.85)'
       }}
     >
-      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent"></div>
+      <UserHUD userState={userState} />
 
-      <div className="absolute bottom-[5vh] left-[5%] w-[90%] z-10"> 
-        <div className="absolute right-4 z-20 w-80" style={{ bottom: '180px' }}>
-          {renderChoiceButtons()}
-        </div>
+      <div style={{ opacity: sceneVisible ? 1 : 0, transition: 'opacity 260ms ease' }} className="absolute inset-0">
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent"></div>
 
-        <div 
-          className="absolute z-30 text-white text-3xl italic font-bold" 
-          style={{ textShadow: '0 0 8px rgba(0, 0, 0, 0.9)', bottom: 'calc(180px - 10px)', left: '25px' }}
-        >
-          {storyData?.characterName || " "}
-        </div>
+        <div className="absolute bottom-[5vh] left-[5%] w-[90%] z-10"> 
+          <div className="absolute right-4 z-20 w-80" style={{ bottom: '180px' }}>
+            {renderChoiceButtons()}
+          </div>
 
-        <div className="relative bg-black/50 backdrop-blur-sm w-full p-6 rounded-xl border-[3px] border-gray-500 min-h-[150px]">
-          {renderDialogue()}
-          {displayedText.length < fullDialogue.length && (
-            <button
-              onClick={handleSkip}
-              className="absolute bottom-4 right-6 text-lg italic px-4 py-2 text-white rounded-xl hover:bg-gray-600/25 transition"
-            >
-              Skip &gt;&gt;
-            </button>
-          )}
+          <div 
+            className="absolute z-30 text-white text-3xl italic font-bold" 
+            style={{ textShadow: '0 0 8px rgba(0, 0, 0, 0.9)', bottom: 'calc(180px - 10px)', left: '25px' }}
+          >
+            {storyData?.characterName || " "}
+          </div>
+
+          <div className="relative bg-black/50 backdrop-blur-sm w-full p-6 rounded-xl border-[3px] border-gray-500 min-h-[150px]">
+            {renderDialogue()}
+            {displayedText.length < fullDialogue.length && (
+              <button
+                onClick={handleSkip}
+                className="absolute bottom-4 right-6 text-lg italic px-4 py-2 text-white rounded-xl hover:bg-gray-600/25 transition"
+              >
+                Skip &gt;&gt;
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>

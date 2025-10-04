@@ -6,6 +6,7 @@ import userRoutes from "./routes/userRoutes.js";
 import leaderboardRoutes from "./routes/leaderboardRoutes.js"
 import forgotpwdRoutes from "./routes/forgotpwdRoutes.js"
 import contactRoutes from "./routes/contactRoutes.js"
+import minigameRoutes from "./routes/minigameRoutes.js";
 import cors from "cors"
 
 dotenv.config();
@@ -26,6 +27,7 @@ app.use("/api/users", userRoutes);
 app.use("/api/leaderboard", leaderboardRoutes);  
 app.use("/api/forgotpwd", forgotpwdRoutes);
 app.use("/api/contactus", contactRoutes);
+app.use("/api/minigame", minigameRoutes);
 
 // Root route
 app.get("/", (req, res) => {

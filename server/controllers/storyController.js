@@ -24,6 +24,65 @@ export const getStoryById = async (req, res) => {
   }
 };
 
+/** Award user points/inventory for minigame completion (success only) */
+export const awardMinigameReward = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { storyId, success, rewardConfig } = req.body; // rewardConfig optional override
+
+    if (!storyId) return res.status(400).json({ message: 'storyId is required' });
+
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    // Only award on success
+    if (!success) {
+      return res.json({ message: 'No reward: minigame not successful', awarded: null, userState: { points: user.points, inventory: user.inventory } });
+    }
+
+    // Default per-minigame reward map - tweak as required
+    const defaultRewards = {
+      M1: { pointsRange: [10, 30], item: 'script' },
+      M2: { pointsRange: [5, 20], item: 'journal' },
+      M3: { pointsRange: [15, 35], item: 'kumbh' },
+      M4: { pointsRange: [20, 50], item: 'sword' },
+      M5: { pointsRange: [8, 25], item: 'pickaxe' },
+      M6: { pointsRange: [12, 28], item: 'axe' },
+      M7: { pointsRange: [25, 60], item: 'script' },
+    };
+
+    const cfg = (rewardConfig && typeof rewardConfig === 'object') ? rewardConfig : (defaultRewards[storyId] || { pointsRange: [5, 10], item: null });
+
+    // Random points between inclusive range
+    const [minP, maxP] = cfg.pointsRange || [5, 10];
+    const awardedPoints = Math.floor(Math.random() * (maxP - minP + 1)) + minP;
+
+    // Award item if specified and not already owned
+    const awardedItemKey = cfg.item || null;
+    let awardedItem = null;
+    if (awardedItemKey && user.inventory && Object.prototype.hasOwnProperty.call(user.inventory, awardedItemKey)) {
+      if (!user.inventory[awardedItemKey].value) {
+        user.inventory[awardedItemKey].value = true;
+        user.inventory[awardedItemKey].description = `Awarded from ${storyId}`;
+        awardedItem = awardedItemKey;
+      }
+    }
+
+    // Apply points
+    user.points = (user.points || 0) + awardedPoints;
+    await user.save();
+
+    return res.json({
+      message: 'Minigame reward applied',
+      awarded: { points: awardedPoints, item: awardedItem },
+      userState: { points: user.points, inventory: user.inventory }
+    });
+  } catch (err) {
+    console.error('Award minigame reward error:', err);
+    return res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};
+
 /** Local JSON: Get story by ID 
 export const getLocalStoryById = (req, res) => {
   const { storyId } = req.params;
