@@ -16,7 +16,7 @@ import ResetPassword from "./pages/ResetPassword";
 import Profile from "./pages/Profile";
 import GameSlide from "./components/GameSlide";
 import Visual from "./Minigames/Visual.jsx";
-import M4 from "./Minigames/M4.jsx";
+import Steps from "./Minigames/steps.jsx";
 
 function App() {
   // Top-level user state
@@ -73,7 +73,7 @@ function App() {
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/profile" element={<Profile setUser={setUser} />} />
           <Route path="/Visual" element={<Visual />} />
-          <Route path="/M4" element={<M4 />} />
+          <Route path="/Steps" element={<Steps />} />
         </Routes>
       </>
     );
