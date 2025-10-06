@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import Logo from '../assets/Logo.png';
+import logo from '../assets/logo.png';
 
 const About = () => {
   const [formData, setFormData] = useState({
