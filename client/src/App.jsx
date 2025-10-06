@@ -14,8 +14,7 @@ import Play from "./pages/Play";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import Profile from "./pages/Profile";
-import GameSlide from "./components/GameSlide";
-import LightGrid from "./Minigames/LightGrid"
+import Letter from "./Minigames/Letter";
 
 function App() {
   // Top-level user state
@@ -47,13 +46,38 @@ function App() {
     }, [navigate]);
 
     return (
-      <LightGrid/>
+      <>
+        {!hideNavbar && <Navbar user={user} />}
+
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/about" element={<About />} />
+          <Route
+            path="/leaderboard"
+            element={
+              user ? (
+                <Leaderboard currentUserId={user._id} token={token} />
+              ) : (
+                <Leaderboard />
+              )
+            }
+          />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/rules" element={<Rules />} />
+          <Route path="/login" element={<LoginPage setUser={setUser} />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/play" element={<GameSlide />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/profile" element={<Profile setUser={setUser} />} />
+        </Routes>
+      </>
     );
   };
 
   return (
     <Router>
-      <AppContent />
+      <Letter />
     </Router>
   );
 }
