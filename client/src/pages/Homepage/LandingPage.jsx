@@ -3,6 +3,8 @@ import "./LandingPage.css";
 import DecryptedText from "../../components/DecryptedText"; 
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+// NEW: Import the video file
+import burnVideo from "../../assets/burn.mp4"; 
 
 const LandingPage = () => {
   const [user, setUser] = useState(JSON.parse(localStorage.getItem("user")));
@@ -14,11 +16,19 @@ const LandingPage = () => {
   }
   return (
     <div className="h-screen w-full flex items-center justify-between flex-col relative px-14 sm:px-0 md:justify-start md:flex-row md:px-0">
+      
+      {/* NEW: Video Background Element */}
+      <video className="background-video" autoPlay loop muted playsInline>
+        {/* Use the imported variable 'burnVideo' as the source */}
+        <source src={burnVideo} type="video/mp4" /> 
+        Your browser does not support the video tag.
+      </video>
+
       {/* Content goes above overlay */}
       <div
         className="
           relative
-          mt-50 lg:mt-20  /* Phone: push down, Laptop/desktop unchanged */
+          mt-50 lg:mt-20 	/* Phone: push down, Laptop/desktop unchanged */
           md:mt-16 md:ml-16
           lg:ml-34
           w-full lg:w-[65%]
@@ -29,7 +39,7 @@ const LandingPage = () => {
       >
         {/* Heading */}
         <h1 className="text-6xl lg:text-7xl drop-shadow-lg leading-none text-center lg:text-left
-                       mb-10 lg:mb-6 ">
+                      mb-10 lg:mb-6 ">
           <span className="block">HOPELESS</span>
           <span className="block">OPUS</span>
         </h1>
