@@ -1,286 +1,323 @@
-import React, { useState, useEffect } from "react";
-import Confetti from "react-confetti";
-import { motion, AnimatePresence } from "framer-motion";
-import { BsTrash } from "react-icons/bs";
-import MinigameTimer from "../components/MinigameTimer";
+import React, { useState } from "react";
 
-/* ---------- Constants ---------- */
-const hiddenMapping = { red: 2, blue: 5, green: 7, yellow: 3, purple: 4, orange: 6 };
-
-const colorPalette = {
-  red: { label: "Red", bg: "from-red-500 to-red-600", text: "text-white" },
-  blue: { label: "Blue", bg: "from-blue-500 to-blue-600", text: "text-white" },
-  green: { label: "Green", bg: "from-green-500 to-green-600", text: "text-white" },
-  yellow: { label: "Yellow", bg: "from-yellow-400 to-yellow-500", text: "text-gray-800" },
-  purple: { label: "Purple", bg: "from-purple-500 to-purple-600", text: "text-white" },
-  orange: { label: "Orange", bg: "from-orange-400 to-orange-500", text: "text-white" },
-};
-
-const equations = [
-    { id: 1, text: "Red + Blue + Green", expected: ["red", "blue", "green"], total: 14, description: "Primary Colors" },
-    { id: 2, text: "Blue + Yellow + Purple", expected: ["blue", "yellow", "purple"], total: 12, description: "Cool Tones" },
-    { id: 3, text: "Green + Yellow + Orange", expected: ["green", "yellow", "orange"], total: 16, description: "Nature Colors" },
-    { id: 4, text: "Red + Purple + Orange", expected: ["red", "purple", "orange"], total: 12, description: "Warm Mix" },
-    { id: 5, text: "Blue + Green + Purple", expected: ["blue", "green", "purple"], total: 16, description: "Jewel Tones" },
-    { id: 6, text: "Red + Yellow + Blue", expected: ["red", "yellow", "blue"], total: 10, description: "Primary Mix" },
-    { id: 7, text: "Green + Purple + Orange", expected: ["green", "purple", "orange"], total: 17, description: "Deep Colors" }
-]
-    
-
-const computeCakeValue = (cake) =>
-  cake?.expected?.reduce((s, k) => s + (hiddenMapping[k] || 0), 0) ?? 0;
-
-/* ---------- Cake Visual ---------- */
-function CakeVisual({ cake, small = false, highlight = false }) {
-  if (!cake) return null;
-  return (
-    <div
-      className={`flex flex-col items-center ${small ? "text-xs" : "text-sm"} ${
-        highlight ? "ring-2 ring-blue-400 rounded-lg" : ""
-      }`}
-    >
-      <div className="relative flex flex-col-reverse items-center">
-        {cake.expected.map((colorKey, idx) => {
-          const width = small ? 60 - idx * 8 : 120 - idx * 16;
-          const height = small ? 18 - idx * 2 : 36 - idx * 4;
-          const cp = colorPalette[colorKey];
-          const bgClass = cp ? `bg-gradient-to-br ${cp.bg}` : "bg-gray-300";
-          const textClass = cp ? cp.text : "text-black";
-          return (
-            <div
-              key={idx}
-              className={`rounded-t-lg flex items-center justify-center font-bold ${bgClass} ${textClass}`}
-              style={{
-                width: `${width}px`,
-                height: `${height}px`,
-                marginBottom: idx < cake.expected.length - 1 ? `-${Math.round(height * 0.36)}px` : "0",
-                border: "2px solid rgba(255,255,255,0.7)",
-                boxShadow: "0 4px 8px rgba(0,0,0,0.06)",
-              }}
-            >
-              {colorKey[0].toUpperCase()}
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-/* ---------- Main Component ---------- */
-export default function M2SelectPlace({ onComplete, session, sessionApi }) {
-  const [placed, setPlaced] = useState({});
-  const [pieces, setPieces] = useState([]);
-  const [selected, setSelected] = useState(null);
-  const [showConfetti, setShowConfetti] = useState(false);
-  const [width, setWidth] = useState(typeof window !== "undefined" ? window.innerWidth : 800);
-  const [height, setHeight] = useState(typeof window !== "undefined" ? window.innerHeight : 600);
-  const [allCakes, setAllCakes] = useState([]);
-  const [slots, setSlots] = useState(equations);
-
-  // We now rely on backend session timer; local states removed
-
-  useEffect(() => {
-    const resize = () => {
-      setWidth(window.innerWidth);
-      setHeight(window.innerHeight);
-    };
-    window.addEventListener("resize", resize);
-    return () => window.removeEventListener("resize", resize);
-  }, []);
-
-  useEffect(() => {
-    resetGame();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const handleTrayClick = (cakeId) => {
-    if (selected === cakeId) setSelected(null);
-    else setSelected(cakeId);
+export default function M2SelectPlace() {
+  // State to track which cakes are available at the bottom
+  const [availableCakes, setAvailableCakes] = useState([1, 2, 3, 4, 5]);
+  
+  // State to track selected cake
+  const [selectedCake, setSelectedCake] = useState(null);
+  
+  // State to track placed cakes on plates (plate position -> cake number)
+  const [placedCakes, setPlacedCakes] = useState({});
+  
+  // State to track game status
+  const [gameStatus, setGameStatus] = useState(null); // null, 'success', or 'incorrect'
+  
+  // Correct order: plate1->2, plate2->1, plate3->4, plate4->3, plate5->5
+  const correctOrder = {
+    plate1: 2,
+    plate2: 5,
+    plate3: 3,
+    plate4: 1,
+    plate5: 4
   };
 
-  const handleSlotClick = (slotId) => {
-    const currentPlacedCake = placed[slotId];
-    if (!selected) {
-      if (!currentPlacedCake) return;
-      setPlaced((prev) => {
-        const next = { ...prev };
-        delete next[slotId];
-        return next;
-      });
-      setPieces((prev) => [...prev, currentPlacedCake]);
-      setSelected(currentPlacedCake);
-      return;
+  // Define plate positions based on the image (5 positions matching the empty plates)
+  const plates = [
+    { id: 'plate1', top: '33%', left: '32%' },
+    { id: 'plate2', top: '33%', left: '46.5555%' },
+    { id: 'plate3', top: '33%', left: '62%' },
+    { id: 'plate4', top: '52%', left: '36.5%' },
+    { id: 'plate5', top: '52%', left: '56%' },
+  ];
+
+  const containerStyle = {
+    position: "relative",
+    width: "100%",
+    height: "100vh",
+    overflow: "hidden",
+    backgroundColor: "#f8f4e9",
+  };
+
+  const backgroundStyle = {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    width: "100%",
+    height: "100%",
+    backgroundImage: `url('/images/cake-game-bg.png')`,
+    backgroundSize: "contain",
+    backgroundPosition: "center",
+    backgroundRepeat: "no-repeat",
+    zIndex: 1,
+  };
+
+  const cakeContainerStyle = {
+    position: "absolute",
+    bottom: "12%",
+    left: "50%",
+    transform: "translateX(-50%)",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "flex-end",
+    gap: "25px",
+    zIndex: 2,
+  };
+
+  const cakeStyle = (isSelected) => ({
+    width: "90px",
+    height: "90px",
+    objectFit: "contain",
+    cursor: "pointer",
+    transition: "transform 0.2s",
+    border: isSelected ? "3px solid #ffd700" : "none",
+    borderRadius: "10px",
+    transform: isSelected ? "scale(1.1)" : "scale(1)",
+  });
+
+  const plateStyle = (plateId) => ({
+    position: "absolute",
+    width: "90px",
+    height: "90px",
+    cursor: selectedCake && !placedCakes[plateId] ? "pointer" : "default",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 2,
+    transition: "transform 0.2s",
+    border: selectedCake && !placedCakes[plateId] ? "2px dashed #ffd700" : "none",
+    borderRadius: "50%",
+  });
+
+  const handleCakeClick = (cakeNum) => {
+    if (availableCakes.includes(cakeNum)) {
+      setSelectedCake(selectedCake === cakeNum ? null : cakeNum);
     }
-    const cakeId = selected;
-    setPlaced((prev) => {
-      const newPlaced = { ...prev };
-      const prevCake = prev[slotId];
-      newPlaced[slotId] = cakeId;
-      setPieces((prevPieces) => {
-        let next = prevPieces.filter((p) => p !== cakeId);
-        if (prevCake) next = [...next, prevCake];
-        return next;
-      });
-      return newPlaced;
-    });
-    setSelected(null);
   };
 
-  const checkAnswers = () => {
-    let correctCount = 0;
-    equations.forEach((eq) => {
-      if (placed[eq.id] === eq.answer) {
-        correctCount++;
+  const handlePlateClick = (plateId) => {
+    if (selectedCake && !placedCakes[plateId]) {
+      // Place the cake on the plate
+      const newPlacedCakes = { ...placedCakes, [plateId]: selectedCake };
+      setPlacedCakes(newPlacedCakes);
+      
+      // Remove the cake from available cakes
+      setAvailableCakes(availableCakes.filter(c => c !== selectedCake));
+      
+      // Clear selection
+      setSelectedCake(null);
+      
+      // Check if all plates are filled
+      if (Object.keys(newPlacedCakes).length === 5) {
+        checkWinCondition(newPlacedCakes);
       }
-    });
-    if (correctCount === equations.length) {
-      setShowConfetti(true);
-      onComplete && onComplete(true);
+    }
+  };
+  
+  const checkWinCondition = (placedCakesObj) => {
+    const isCorrect = Object.keys(correctOrder).every(
+      plateId => placedCakesObj[plateId] === correctOrder[plateId]
+    );
+    
+    if (isCorrect) {
+      setTimeout(() => {
+        setGameStatus('success');
+      }, 300);
     } else {
-      alert(`You got ${correctCount} out of ${equations.length} correct!`);
+      // Reset for incorrect answer
+      setTimeout(() => {
+        handleRetry();
+      }, 500);
     }
   };
-
-
-  const resetGame = () => {
-
-    // create fresh slots
-    const newSlots = equations.map((s) => ({ ...s }));
-    const shuffled = [...equations].sort(() => Math.random() - 0.5);
-    const newPlaced = {};
-    const trayPieces = [];
-
-    const firstSlotId = newSlots[0].id;
-    const cake1 = shuffled[0];
-    const modifiedCake1 = {
-      ...cake1,
-      id: cake1.id,
-      expected: [cake1.expected[0], cake1.expected[0], cake1.expected[2]],
-    };
-    newPlaced[firstSlotId] = modifiedCake1.id;
-    newSlots[0].total = computeCakeValue(modifiedCake1);
-
-    const secondSlotId = newSlots[1].id;
-    const cake2 = shuffled[1];
-    const modifiedCake2 = {
-      ...cake2,
-      id: cake2.id,
-      expected: [cake2.expected[0], cake2.expected[0], cake2.expected[2]],
-    };
-    newPlaced[secondSlotId] = modifiedCake2.id;
-    newSlots[1].total = computeCakeValue(modifiedCake2);
-
-    for (let i = 2; i < shuffled.length; i++) {
-      trayPieces.push(shuffled[i].id);
-    }
-    const last = shuffled[shuffled.length - 1];
-    const extraCake = { ...last, id: "extra-" + last.id };
-    trayPieces.push(extraCake.id);
-
-    setPlaced(newPlaced);
-    setPieces(trayPieces);
-    setAllCakes([modifiedCake1, modifiedCake2, ...shuffled.slice(2), extraCake]);
-    setSlots(newSlots);
-    setSelected(null);
-    setShowConfetti(false);
-
+  
+  const handleRetry = () => {
+    setAvailableCakes([1, 2, 3, 4, 5]);
+    setSelectedCake(null);
+    setPlacedCakes({});
+    setGameStatus(null);
   };
-
-  // Auto-fail on timer expiry
-  useEffect(() => {
-    if (!session || session.completed) return;
-    if (session.remainingSeconds === 0) {
-      onComplete && onComplete(false);
-    }
-  }, [session, onComplete]);
 
   return (
-    <div className="min-h-screen p-8 bg-gradient-to-br from-pink-50 to-blue-50">
-      <div className="max-w-6xl mx-auto text-center mb-6">
-        <h1 className="text-3xl font-bold">🎂 Cake Matching — Select & Place</h1>
-        <p className="text-sm text-slate-600 mt-2">
-          Click a cake in the tray, then click a slot to place it. Click a filled slot (with no selection) to pick it up.
-        </p>
-        <div className="mt-3 flex justify-center">
-          <MinigameTimer remainingSeconds={session?.remainingSeconds ?? null} />
+    <div style={containerStyle}>
+      <div style={backgroundStyle}></div>
+      
+      {/* Plates overlay */}
+      {plates.map((plate) => (
+        <div
+          key={plate.id}
+          style={{
+            ...plateStyle(plate.id),
+            top: plate.top,
+            left: plate.left,
+          }}
+          onClick={() => handlePlateClick(plate.id)}
+          onMouseEnter={(e) => {
+            if (selectedCake && !placedCakes[plate.id]) {
+              e.currentTarget.style.transform = "scale(1.1)";
+            }
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = "scale(1)";
+          }}
+        >
+          {placedCakes[plate.id] && (
+            <img
+              src={`/images/cake${placedCakes[plate.id]}-removebg-preview.png`}
+              alt={`Cake ${placedCakes[plate.id]}`}
+              style={{
+                width: "90px",
+                height: "90px",
+                objectFit: "contain",
+              }}
+              draggable="false"
+            />
+          )}
         </div>
-      </div>
+      ))}
 
-      {/* Slots */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 max-w-6xl mx-auto mb-8">
-        {slots.map((slot) => (
-          <div
-            key={slot.id}
-            onClick={() => handleSlotClick(slot.id)}
-            className={`bg-white/90 p-4 rounded-2xl shadow flex flex-col items-center justify-between min-h-[180px] cursor-pointer transition ${
-              selected ? "hover:ring-2 hover:ring-blue-400" : ""
-            }`}
-          >
-            <div className="w-full">
-              <div className="text-sm font-semibold text-slate-700 mb-2 text-center">{slot.label}</div>
-              {placed[slot.id] ? (
-                <div className="flex items-center justify-center mb-3">
-                  <CakeVisual cake={allCakes.find((c) => c.id === placed[slot.id])} />
-                </div>
-              ) : (
-                <div className="h-[72px] mb-3 flex items-center justify-center text-gray-400">Empty</div>
-              )}
-              <div className="text-xs text-slate-600 text-center">
-                Target: <span className="font-bold">{slot.total}</span>
-              </div>
-            </div>
-          </div>
+      {/* Available cakes at the bottom */}
+      <div style={cakeContainerStyle}>
+        {availableCakes.map((num) => (
+          <img
+            key={num}
+            src={`/images/cake${num}-removebg-preview.png`}
+            alt={`Cake ${num}`}
+            style={cakeStyle(selectedCake === num)}
+            draggable="false"
+            onClick={() => handleCakeClick(num)}
+            onMouseEnter={(e) => {
+              if (selectedCake !== num) {
+                e.currentTarget.style.transform = "scale(1.1)";
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (selectedCake !== num) {
+                e.currentTarget.style.transform = "scale(1)";
+              }
+            }}
+          />
         ))}
       </div>
-
-      {/* Tray */}
-      <div className="max-w-6xl mx-auto bg-white/80 p-4 rounded-2xl shadow mb-6">
-        <div className="mb-3 text-sm font-medium text-slate-700 text-center">Tray — Click to select</div>
-        <div className="flex flex-wrap gap-4 p-3 min-h-[84px] items-center justify-center">
-          {pieces.map((id) => {
-            const cake = allCakes.find((c) => c.id === id);
-            return (
+      
+      {/* Success/Incorrect Message Modal */}
+      {gameStatus && (
+        <>
+          {/* Confetti Effect */}
+          <div style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            pointerEvents: 'none',
+            zIndex: 9,
+            overflow: 'hidden',
+          }}>
+            {[...Array(50)].map((_, i) => (
               <div
-                key={id}
-                onClick={() => handleTrayClick(id)}
-                className={`p-2 rounded-lg cursor-pointer transition ${
-                  selected === id ? "ring-2 ring-blue-400" : "hover:bg-gray-100"
-                }`}
-              >
-                <CakeVisual cake={cake} small highlight={selected === id} />
-                <div className="text-center text-xs mt-1">Value: {computeCakeValue(cake)}</div>
+                key={i}
+                style={{
+                  position: 'absolute',
+                  width: '10px',
+                  height: '10px',
+                  backgroundColor: ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff'][i % 6],
+                  left: `${Math.random() * 100}%`,
+                  top: '-10px',
+                  opacity: 0.8,
+                  animation: `fall ${2 + Math.random() * 3}s linear infinite`,
+                  animationDelay: `${Math.random() * 2}s`,
+                }}
+              />
+            ))}
+          </div>
+          
+          {/* Success Modal */}
+          <div style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            backgroundColor: 'rgba(0, 0, 0, 0.7)',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 10,
+          }}>
+            <div style={{
+              backgroundColor: 'white',
+              padding: '40px 60px',
+              borderRadius: '20px',
+              textAlign: 'center',
+              boxShadow: '0 10px 40px rgba(0, 0, 0, 0.3)',
+              animation: 'popIn 0.3s ease-out',
+            }}>
+              <div style={{
+                fontSize: '64px',
+                marginBottom: '20px',
+              }}>
+                🎉
               </div>
-            );
-          })}
-          {pieces.length === 0 && <div className="text-sm text-gray-500">No pieces in tray</div>}
-        </div>
-      </div>
-
-      {/* Actions */}
-      <div className="max-w-6xl mx-auto flex justify-center gap-4">
-        <button
-          onClick={checkAnswers}
-          className="px-6 py-2 rounded-lg bg-emerald-500 text-white font-semibold shadow hover:bg-emerald-600"
-        >
-          Check Answers
-        </button>
-        <button
-          onClick={resetGame}
-          className="px-6 py-2 rounded-lg bg-gray-100 font-medium shadow hover:bg-gray-200 flex items-center gap-2"
-        >
-          <BsTrash /> Reset
-        </button>
-      </div>
-
-      {/* Confetti */}
-      <AnimatePresence>
-        {showConfetti && (
-          <motion.div initial={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 pointer-events-none z-50">
-            <Confetti width={width} height={height} recycle={false} numberOfPieces={400} />
-          </motion.div>
-        )}
-      </AnimatePresence>
+              <h2 style={{
+                fontSize: '32px',
+                marginBottom: '20px',
+                color: '#4CAF50',
+              }}>
+                Success!
+              </h2>
+              <p style={{
+                fontSize: '18px',
+                marginBottom: '30px',
+                color: '#666',
+              }}>
+                You placed all the cakes correctly!
+              </p>
+              <button
+                onClick={handleRetry}
+                style={{
+                  padding: '15px 40px',
+                  fontSize: '18px',
+                  backgroundColor: '#4CAF50',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '10px',
+                  cursor: 'pointer',
+                  fontWeight: 'bold',
+                  transition: 'background-color 0.2s',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#45a049';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = '#4CAF50';
+                }}
+              >
+                Play Again
+              </button>
+            </div>
+          </div>
+          
+          <style>{`
+            @keyframes fall {
+              to {
+                transform: translateY(100vh) rotate(360deg);
+              }
+            }
+            
+            @keyframes popIn {
+              from {
+                transform: scale(0.5);
+                opacity: 0;
+              }
+              to {
+                transform: scale(1);
+                opacity: 1;
+              }
+            }
+          `}</style>
+        </>
+      )}
     </div>
   );
 }

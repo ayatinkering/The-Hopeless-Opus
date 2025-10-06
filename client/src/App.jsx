@@ -14,7 +14,13 @@ import Play from "./pages/Play";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import Profile from "./pages/Profile";
+<<<<<<< HEAD
 import Letter from "./Minigames/Letter";
+=======
+import GameSlide from "./components/GameSlide";
+import Visual from "./Minigames/Visual.jsx";
+import M4 from "./Minigames/M4.jsx";
+>>>>>>> 3ee1369508e5a52e63a1624cd000f58909f5a57a
 
 function App() {
   // Top-level user state
@@ -70,6 +76,11 @@ function App() {
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/profile" element={<Profile setUser={setUser} />} />
+<<<<<<< HEAD
+=======
+          <Route path="/Visual" element={<Visual />} />
+          <Route path="/M4" element={<M4 />} />
+>>>>>>> 3ee1369508e5a52e63a1624cd000f58909f5a57a
         </Routes>
       </>
     );
