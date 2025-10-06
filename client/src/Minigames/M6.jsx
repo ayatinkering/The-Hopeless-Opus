@@ -1,14 +1,10 @@
-// ============================================
-// M6.jsx - Cipher Riddle Game with Timer & Wrong Answer Counter
-// ============================================
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import MinigameTimer from "../components/MinigameTimer";
 import backgroundImage from "../assets/cipherimage.jpg";
 
 export default function M6({ config, onComplete, session, sessionApi }) {
   const cipherText = "Zvuv Whgga Xbhzap Vvthup";
   const correctAnswer = "theseromansarecrazy";
-  const TIMER_DURATION_MINUTES = 2; // Customize timer here
 
   const [input, setInput] = useState("");
   const [isCorrect, setIsCorrect] = useState(false);
@@ -16,87 +12,25 @@ export default function M6({ config, onComplete, session, sessionApi }) {
   const [wrongCount, setWrongCount] = useState(0);
   const [gameEnded, setGameEnded] = useState(false);
 
-  // --- Timer Setup ---
-  const totalTimeMs = TIMER_DURATION_MINUTES * 60 * 1000;
-  const [timeRemainingMs, setTimeRemainingMs] = useState(totalTimeMs);
-  const [isTimeUp, setIsTimeUp] = useState(false);
   const timerRef = useRef(null);
 
-  const initializeTimer = useCallback(() => {
-    const storedStartTime = localStorage.getItem("m6StartTime");
-    const currentTime = Date.now();
+  // --- Handle Submission ---
+  const handleSubmit = () => {
+    if (gameEnded) return; // Stop submitting after game ends
 
-    if (!storedStartTime) {
-      localStorage.setItem("m6StartTime", currentTime);
-      setTimeRemainingMs(totalTimeMs);
-      setIsTimeUp(false);
-      return totalTimeMs;
-    } else {
-      const elapsed = currentTime - Number(storedStartTime);
-      const remaining = totalTimeMs - elapsed;
-      if (remaining <= 0) {
-        setTimeRemainingMs(0);
-        setIsTimeUp(true);
-        setGameEnded(true);
-        return 0;
-      } else {
-        setTimeRemainingMs(remaining);
-        setIsTimeUp(false);
-        return remaining;
+    setSubmitted(true);
+    if (input.toLowerCase().replace(/\s+/g, "") === correctAnswer) {
+      setIsCorrect(true);
+      setGameEnded(true); // End the game immediately
+      clearInterval(timerRef.current); // Stop the timer
+      if (onComplete) {
+        setTimeout(() => onComplete(true), 1000);
       }
+    } else {
+      setIsCorrect(false);
+      setWrongCount((prev) => prev + 1);
     }
-  }, [totalTimeMs]);
-
-  useEffect(() => {
-    const initialRemaining = initializeTimer();
-
-    if (initialRemaining > 0) {
-      timerRef.current = setInterval(() => {
-        const storedStartTime = Number(localStorage.getItem("m6StartTime"));
-        const elapsed = Date.now() - storedStartTime;
-        const remaining = totalTimeMs - elapsed;
-
-        if (remaining <= 0) {
-          clearInterval(timerRef.current);
-          setTimeRemainingMs(0);
-          setIsTimeUp(true);
-          setGameEnded(true);
-        } else {
-          setTimeRemainingMs(remaining);
-        }
-      }, 1000);
-    }
-
-    return () => clearInterval(timerRef.current);
-  }, [initializeTimer, totalTimeMs]);
-
-  const formatTime = (ms) => {
-    const totalSeconds = Math.floor(ms / 1000);
-    const minutes = Math.floor(totalSeconds / 60);
-    const seconds = totalSeconds % 60;
-    return `${minutes.toString().padStart(2, "0")}:${seconds
-      .toString()
-      .padStart(2, "0")}`;
   };
-
- // --- Handle Submission ---
-const handleSubmit = () => {
-  if (gameEnded) return; // Stop submitting after game ends
-
-  setSubmitted(true);
-  if (input.toLowerCase().replace(/\s+/g, "") === correctAnswer) {
-    setIsCorrect(true);
-    setGameEnded(true); // End the game immediately
-    clearInterval(timerRef.current); // ⬅️ Stop the timer
-    if (onComplete) {
-      setTimeout(() => onComplete(true), 1000);
-    }
-  } else {
-    setIsCorrect(false);
-    setWrongCount((prev) => prev + 1);
-  }
-};
-
 
   // Session integration for expiry and tries decrement on wrong attempts
   useEffect(() => {
@@ -131,7 +65,10 @@ const handleSubmit = () => {
 
       {/* --- Timer Display Top-Left --- */}
       <div className="absolute top-4 left-4">
-        <MinigameTimer remainingSeconds={session?.remainingSeconds ?? Math.floor(timeRemainingMs/1000)} triesLeft={session?.triesLeft ?? null} />
+        <MinigameTimer 
+          remainingSeconds={session?.remainingSeconds ?? 0} 
+          triesLeft={session?.triesLeft ?? null} 
+        />
       </div>
 
       {/* --- Wrong Answer Counter --- */}
@@ -151,6 +88,11 @@ const handleSubmit = () => {
         placeholder="Enter your answer"
         value={input}
         onChange={(e) => setInput(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" && !gameEnded) {
+            handleSubmit();
+          }
+        }}
         disabled={gameEnded}
         className="absolute top-[50%] left-[57%] p-3 rounded-lg w-[20%] border border-[#a07855] focus:outline-none focus:ring-2 focus:ring-[#a07855] focus:border-[#a07855] shadow-md"
         style={{ color: "#8B0000" }}
@@ -176,7 +118,7 @@ const handleSubmit = () => {
           Congratulations, the veil is lifted.
         </p>
       )}
-      {gameEnded && isTimeUp && !isCorrect && (
+      {gameEnded && session?.remainingSeconds === 0 && !isCorrect && (
         <p
           className="absolute top-[70%] left-[52.5%] text-2xl font-bold animate-pulse"
           style={{

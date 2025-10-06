@@ -16,7 +16,7 @@ import ResetPassword from "./pages/ResetPassword";
 import Profile from "./pages/Profile";
 import GameSlide from "./components/GameSlide";
 import Visual from "./Minigames/Visual.jsx";
-import Pravar from "./Minigames/Pravar'sGloriousGame.jsx";
+import M1 from "./Minigames/M1.jsx"
 
 
 function App() {
@@ -73,7 +73,7 @@ function App() {
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/profile" element={<Profile setUser={setUser} />} />
-          <Route path="/Pravar" element={<Pravar />} />
+          <Route path="/M1" element={<M1 />} />
         </Routes>
       </>
     );

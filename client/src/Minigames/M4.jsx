@@ -1,282 +1,203 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
+import valImg from "../assets/TilesWall.jpg";
 import MinigameTimer from "../components/MinigameTimer";
-import bg from '../assets/bgforM4.png';
-// ConcentricToggleGame.jsx
-// Game using only JavaScript, React and Tailwind CSS
 
-const SEGMENTS = 8; // 4 lines -> 8 sectors
-const TAU = Math.PI * 2;
+export default function M4({
+  tileSize = 106.25,
+  imageSrc = valImg,
+  onComplete,
+  showNumbers = true,
+  session,
+  sessionApi,
+}) {
+  const cols = 4;
+  const rows = 5; // hardcoded 5 rows (20 tiles)
+  const totalTiles = cols * rows; // 20
+  const imageTiles = 16; // top 4x4 only
 
-function polarToCartesian(cx, cy, r, angleRad) {
-  return [cx + r * Math.cos(angleRad), cy + r * Math.sin(angleRad)];
-}
+  const [tiles, setTiles] = useState([]);
+  const [won, setWon] = useState(false);
 
-function sectorPath(cx, cy, r1, r2, startAngle, endAngle) {
-  const [x1, y1] = polarToCartesian(cx, cy, r2, startAngle);
-  const [x2, y2] = polarToCartesian(cx, cy, r2, endAngle);
-  const [x3, y3] = polarToCartesian(cx, cy, r1, endAngle);
-  const [x4, y4] = polarToCartesian(cx, cy, r1, startAngle);
+  const sizePx = tileSize * cols; // width and height of 4x4 image portion
 
-  const largeArc = endAngle - startAngle <= Math.PI ? "0" : "1";
-
-  return `M ${x1} ${y1} A ${r2} ${r2} 0 ${largeArc} 1 ${x2} ${y2} L ${x3} ${y3} A ${r1} ${r1} 0 ${largeArc} 0 ${x4} ${y4} Z`;
-}
-
-export default function ConcentricToggleGame({ onComplete, session, sessionApi }) {
-    // Outer: sectors 1, 4, and 6 colored
-    const [outer, setOuter] = useState(() => {
-        const arr = Array(SEGMENTS).fill(false);
-        arr[1] = true;
-        arr[4] = true;
-        arr[6] = true;
-        return arr;
-    });
-
-    // Inner: sectors 1 and 6 colored
-    const [inner, setInner] = useState(() => {
-        const arr = Array(SEGMENTS).fill(false);
-        arr[1] = true;
-        arr[6] = true;
-        return arr;
-    });
-
-    // Token starts at outer ring, index 4
-    const [token, setToken] = useState({ ring: "outer", idx: 4 });
-
-  function toggleSegment(ring, idx) {
-    if (ring === "outer") {
-      setOuter((prev) => prev.map((val, i) => (i === idx ? !val : val)));
-    } else {
-      setInner((prev) => prev.map((val, i) => (i === idx ? !val : val)));
-    }
-  }
-
-    function autoMove() {
-  let current = { ...token };
-  for (let step = 0; step < 3; step++) {
-    current.idx = (current.idx + 1) % SEGMENTS;
-  }
-  setToken(current);
-  toggleSegment(current.ring, current.idx);
-
-  setTimeout(() => {
-    if (checkWin(outer, inner)) setWinner(true);
-  }, 0);
-}
-
-    function doSwitch() {
-        const idx = token.idx;
-        if (token.ring === "outer") {
-            setInner((prev) => {
-                const newInner = prev.map((val, i) => (i === idx ? !val : val));
-                if (checkWin(outer, newInner)) setWinner(true);
-                return newInner;
-            });
-            setToken({ ring: "inner", idx });
-        } else {
-            setOuter((prev) => {
-                const newOuter = prev.map((val, i) => (i === idx ? !val : val));
-                if (checkWin(newOuter, inner)) setWinner(true);
-                return newOuter;
-            });
-            setToken({ ring: "outer", idx });
-        }
-    }
-
-  function autoMove() {
-    let current = { ...token };
-    for (let step = 0; step < 3; step++) {
-      // simple rule: move clockwise in same ring (outer only)
-      current.idx = (current.idx + 1) % SEGMENTS;
-    }
-    setToken(current);
-    toggleSegment(current.ring, current.idx);
-  }
-
-  const size = 400;
-  const cx = size / 2;
-  const cy = size / 2;
-  const outerR = 180;
-  const innerR = 80;
-  const [winner, setWinner] = useState(false);
-
-    function checkWin(outer, inner) {
-        return outer.every(Boolean) && inner.every(Boolean);
-    }
-  const sectors = Array.from({ length: SEGMENTS }, (_, i) => {
-    const startAngle = (i * TAU) / SEGMENTS - Math.PI / 2;
-    const endAngle = ((i + 1) * TAU) / SEGMENTS - Math.PI / 2;
-    return {
-      pathOuter: sectorPath(cx, cy, innerR, outerR, startAngle, endAngle),
-      pathInner: sectorPath(cx, cy, 0, innerR, startAngle, endAngle),
-      startAngle,
-      endAngle,
-    };
-  });
-
-    function tokenCoords(ring, idx) {
-        const sector = sectors[idx];
-        const angle = (sector.startAngle + sector.endAngle) / 2;
-
-        let r;
-        if (ring === "outer") {
-            r = (innerR + outerR) / 2; // middle of outer ring
-        } else {
-            r = innerR / 2; // middle of inner ring
-        }
-
-        return polarToCartesian(cx, cy, r, angle);
-    }
-
-    async function resetGame() {
-        // Decrement a try on reset if we still have tries and session API available
-        if (session?.triesLeft > 0 && sessionApi?.decrementTry) {
-          try {
-            await sessionApi.decrementTry();
-          } catch (e) {
-            // Non-fatal; log only
-            console.warn('Failed to decrement try on reset', e);
-          }
-        }
-        // Reset outer ring: sectors 1, 4, and 6 colored
-        setOuter(() => {
-            const arr = Array(SEGMENTS).fill(false);
-            arr[1] = true;
-            arr[4] = true;
-            arr[6] = true;
-            return arr;
-        });
-
-        // Reset inner ring: sectors 1 and 6 colored
-        setInner(() => {
-            const arr = Array(SEGMENTS).fill(false);
-            arr[1] = true;
-            arr[6] = true;
-            return arr;
-        });
-
-        // Reset token to outer ring, index 4
-        setToken({ ring: "outer", idx: 4 });
-
-        // Reset winner flag
-        setWinner(false);
-    }
-
-  const failedRef = useRef(false);
-  // Fail on expiry or triesLeft depletion (triesLeft from session for M4)
   useEffect(() => {
-    if (!session || session.completed || failedRef.current) return;
-    if (session.remainingSeconds === 0) {
-      failedRef.current = true;
-      onComplete && onComplete(false);
+    // initial ordering 0..19
+    const initial = Array.from({ length: totalTiles }, (_, i) => i);
+
+    // scramble with random knob rotations
+    let scrambled = [...initial];
+    const scrambleMoves = Math.max(30, totalTiles * 6);
+    for (let m = 0; m < scrambleMoves; m++) {
+      const r = Math.floor(Math.random() * (rows - 1));
+      const c = Math.floor(Math.random() * (cols - 1));
+      scrambled = rotate2x2(scrambled, r, c, cols);
     }
-    if (typeof session.triesLeft === 'number' && session.triesLeft <= 0) {
-      failedRef.current = true;
-      onComplete && onComplete(false);
+
+    setTiles(scrambled);
+    setWon(false);
+  }, [tileSize, imageSrc]);
+
+  useEffect(() => {
+    if (won && onComplete) {
+      setTimeout(() => onComplete(true), 2000);
+    }
+  }, [won, onComplete]);
+
+  // Fail when timer expires (handled locally instead of loader)
+  useEffect(() => {
+    if (!session || session.completed) return;
+    if (session.remainingSeconds === 0) {
+      onComplete(false);
     }
   }, [session, onComplete]);
 
-  // When player wins, notify backend complete
-  useEffect(() => {
-    if (winner && !failedRef.current) {
-      failedRef.current = true;
-      onComplete && onComplete(true);
+  function rotate2x2(board, row, col, N) {
+    const newBoard = board.slice();
+    const idx = (r, c) => r * N + c;
+
+    const a = idx(row, col);
+    const b = idx(row, col + 1);
+    const cIdx = idx(row + 1, col);
+    const d = idx(row + 1, col + 1);
+
+    const tmp = newBoard[a];
+    newBoard[a] = newBoard[cIdx];
+    newBoard[cIdx] = newBoard[d];
+    newBoard[d] = newBoard[b];
+    newBoard[b] = tmp;
+
+    return newBoard;
+  }
+
+  function isSolved(board) {
+    // first 16 must be in exact order
+    for (let i = 0; i < imageTiles; i++) {
+      if (board[i] !== i) return false;
     }
-  }, [winner, onComplete]);
+    // last 4 just need to be {16,17,18,19} in any order
+    const lastFour = board.slice(16, 20);
+    return (
+      new Set(lastFour).size === 4 &&
+      lastFour.every((x) => [16, 17, 18, 19].includes(x))
+    );
+  }
+
+  function handleKnobClick(row, col) {
+    if (won) return;
+    const newTiles = rotate2x2(tiles, row, col, cols);
+    setTiles(newTiles);
+    if (isSolved(newTiles)) setWon(true);
+  }
 
   return (
-  <div className="relative mt-20 w-full max-w-4xl mx-auto">
-    {/* Background Image Layer */}
-    <div 
-      className="absolute inset-0 bg-center bg-no-repeat bg-cover rounded-2xl"
-      style={{ backgroundImage: `url(${bg})` }}
-    />
-    
-    {/* Content Layer */}
-    <div className="relative flex flex-col items-center justify-between gap-4 rounded-2xl shadow-lg p-4 min-h-[600px]">
-      {/* SVG Game */}
-      <div className="flex-1 w-full flex justify-center items-center">
-        <svg
-          className="w-[85%] max-w-md h-auto"
-          viewBox={`0 0 ${size} ${size}`}
-        >
-          {sectors.map((s, i) => (
-            <path
-              key={`outer-${i}`}
-              d={s.pathOuter}
-              fill={outer[i] ? "#34D399" : "white"}
-              stroke="black"
-            />
-          ))}
-          {sectors.map((s, i) => (
-            <path
-              key={`inner-${i}`}
-              d={s.pathInner}
-              fill={inner[i] ? "#34D399" : "white"}
-              stroke="black"
-            />
-          ))}
-          {/* Lines */}
-          <line x1={cx - outerR} y1={cy} x2={cx + outerR} y2={cy} stroke="black" />
-          <line x1={cx} y1={cy - outerR} x2={cx} y2={cy + outerR} stroke="black" />
-          <line
-            x1={cx - outerR * Math.SQRT1_2}
-            y1={cy - outerR * Math.SQRT1_2}
-            x2={cx + outerR * Math.SQRT1_2}
-            y2={cy + outerR * Math.SQRT1_2}
-            stroke="black"
-          />
-          <line
-            x1={cx - outerR * Math.SQRT1_2}
-            y1={cy + outerR * Math.SQRT1_2}
-            x2={cx + outerR * Math.SQRT1_2}
-            y2={cy - outerR * Math.SQRT1_2}
-            stroke="black"
-          />
-          {/* Token */}
-          {(() => {
-            const [tx, ty] = tokenCoords(token.ring, token.idx);
-            return (
-              <text x={tx} y={ty + 5} textAnchor="middle" fontSize="20">
-                *
-              </text>
-            );
-          })()}
-        </svg>
+    <div
+      style={{
+        background: "#0D1A2F",
+        minHeight: "100vh",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        color: "white",
+        padding: 20,
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 18 }}>
+        <h1 style={{ margin: 0 }}>Knob Rotation Puzzle</h1>
+        <MinigameTimer
+          remainingSeconds={session?.remainingSeconds ?? null}
+          triesLeft={undefined}
+        />
       </div>
 
-      {/* Buttons */}
-      <div className="flex flex-wrap gap-2 justify-center mb-2">
-        <button
-          className="px-3 py-2 bg-blue-500 text-white rounded"
-          onClick={autoMove}
+      {won && (
+        <div
+          style={{
+            marginBottom: 12,
+            padding: "8px 16px",
+            borderRadius: 8,
+            background: "rgba(196,164,132,0.12)",
+            color: "#c4a484",
+            boxShadow: "0 0 18px rgba(196,164,132,0.25)",
+            fontWeight: "700",
+          }}
         >
-          Move (3 steps clockwise)
-        </button>
-        <button
-          className="px-3 py-2 bg-green-500 text-white rounded"
-          onClick={doSwitch}
-        >
-          Switch
-        </button>
-        <button
-          className="px-3 py-2 bg-red-500 text-white rounded"
-          onClick={resetGame}
-          disabled={session?.triesLeft !== null && session?.triesLeft <= 0}
-        >
-          {session?.triesLeft !== null && session?.triesLeft <= 0
-            ? "No Tries"
-            : "Reset"}
-        </button>
-      </div>
-
-      {/* Win Message */}
-      {winner && (
-        <div className="mt-2 text-2xl font-bold text-white-600">
-           You Won! 
+          🎉 Congratulations — the image is restored! 🎉
         </div>
       )}
+
+      <div
+        style={{
+          position: "relative",
+          width: `${cols * tileSize}px`,
+          height: `${rows * tileSize}px`,
+          display: "grid",
+          gridTemplateColumns: `repeat(${cols}, ${tileSize}px)`,
+          gridTemplateRows: `repeat(${rows}, ${tileSize}px)`,
+          background: "#111",
+        }}
+      >
+        {tiles.map((tileIndex, i) => {
+          const isBottomRow = tileIndex >= imageTiles; // last 4
+          const imgRow = Math.floor(tileIndex / cols);
+          const imgCol = tileIndex % cols;
+
+          return (
+            <div
+              key={i}
+              style={{
+                width: `${tileSize}px`,
+                height: `${tileSize}px`,
+                background: isBottomRow
+                  ? "black"
+                  : `url(${imageSrc})`,
+                backgroundSize: `${sizePx}px ${sizePx}px`,
+                backgroundPosition: isBottomRow
+                  ? "center"
+                  : `-${imgCol * tileSize}px -${imgRow * tileSize}px`,
+                border: "1px solid rgba(255,255,255,0.05)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: "14px",
+                color: isBottomRow ? "white" : "red",
+              }}
+            >
+              {showNumbers && tileIndex + 1}
+            </div>
+          );
+        })}
+
+        {Array.from({ length: rows - 1 }).map((_, r) =>
+          Array.from({ length: cols - 1 }).map((_, c) => {
+            const leftPct = ((c + 1) / cols) * 100;
+            const topPct = ((r + 1) / rows) * 100;
+            return (
+              <button
+                key={`knob-${r}-${c}`}
+                onClick={() => handleKnobClick(r, c)}
+                style={{
+                  position: "absolute",
+                  left: `${leftPct}%`,
+                  top: `${topPct}%`,
+                  transform: "translate(-50%, -50%)",
+                  width: 24,
+                  height: 24,
+                  borderRadius: "50%",
+                  border: "2px solid black",
+                  background:
+                    "radial-gradient(circle at 35% 30%, white, rgba(200,200,200,0.8))",
+                  cursor: "pointer",
+                }}
+              />
+            );
+          })
+        )}
+      </div>
+
+      <div style={{ marginTop: 16, color: "#bbb", fontSize: 13 }}>
+        Click any knob to rotate the 2×2 block clockwise.
+      </div>
     </div>
-  </div>
-);
+  );
 }
