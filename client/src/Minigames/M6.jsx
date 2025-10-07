@@ -76,6 +76,11 @@ export default function M6({ config, onComplete, session, sessionApi }) {
         placeholder="Enter your answer"
         value={input}
         onChange={(e) => setInput(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" && !gameEnded) {
+            handleSubmit();
+          }
+        }}
         disabled={gameEnded}
         className="absolute top-[50%] left-[57%] p-3 rounded-lg w-[20%] border border-[#a07855] focus:outline-none focus:ring-2 focus:ring-[#a07855] focus:border-[#a07855] shadow-md"
         style={{ color: "#8B0000" }}

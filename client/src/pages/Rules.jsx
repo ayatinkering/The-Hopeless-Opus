@@ -1,5 +1,7 @@
 import React from 'react';
 import background from "../assets/background.jpg";
+import React from 'react';
+import background from "../assets/background.jpg";
 
 function Rules() {
   return (
@@ -11,7 +13,7 @@ function Rules() {
       ></div>
 
       {/* Translucent Overlay with Responsive Styling */}
-      <div className="relative z-10 bg-white/1 bg-opacity-70 backdrop-blur-md rounded-lg max-w-4xl mx-auto p-6 sm:p-8 lg:p-10 shadow-xl">
+      <div className="relative z-10 bg-white/10 bg-opacity-70 backdrop-blur-md rounded-lg max-w-4xl mx-auto p-6 sm:p-8 lg:p-10 shadow-xl">
         <h1 className="text-2xl sm:text-3xl font-bold mb-6 text-center text-gray-900">
           Community Rules
         </h1>
