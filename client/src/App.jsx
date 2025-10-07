@@ -15,7 +15,6 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import Profile from "./pages/Profile";
 import GameSlide from "./components/GameSlide";
-import PatternsP3game from "./Minigames/PatternsP3game";
 
 
 function App() {
@@ -72,7 +71,6 @@ function App() {
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/profile" element={<Profile setUser={setUser} />} />
-          <Route path="/play/patterns-p3" element={<PatternsP3game user={user} token={token} />} />
         </Routes>
       </>
     );
