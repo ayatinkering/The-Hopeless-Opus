@@ -99,17 +99,16 @@ const handleSubmit = () => {
 
 
   // Session integration for expiry and tries decrement on wrong attempts
+  // Do not call onComplete(false) here — loader finalizes.
   useEffect(() => {
     if (!session || session.completed) return;
     if (session.remainingSeconds === 0) {
       setGameEnded(true);
-      onComplete && onComplete(false);
     }
     if (typeof session.triesLeft === 'number' && session.triesLeft <= 0) {
       setGameEnded(true);
-      onComplete && onComplete(false);
     }
-  }, [session, onComplete]);
+  }, [session]);
 
   useEffect(() => {
     if (wrongCount > 0 && !isCorrect && sessionApi?.decrementTry) {
@@ -130,7 +129,7 @@ const handleSubmit = () => {
       <div className="absolute inset-0"></div>
 
       {/* --- Timer Display Top-Left --- */}
-      <div className="absolute top-4 left-4">
+      <div className="absolute top-4 left-1/2 -translate-x-1/2">
         <MinigameTimer remainingSeconds={session?.remainingSeconds ?? Math.floor(timeRemainingMs/1000)} triesLeft={session?.triesLeft ?? null} />
       </div>
 

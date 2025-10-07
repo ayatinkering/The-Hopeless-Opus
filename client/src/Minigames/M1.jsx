@@ -12,6 +12,7 @@ export default function M1({
   showNumbers = true,
   session,
   sessionApi,
+  config,
 }) {
   const cols = 4;
   const rows = 5; // hardcoded 5 rows (20 tiles)
@@ -20,6 +21,7 @@ export default function M1({
 
   const [tiles, setTiles] = useState([]);
   const [won, setWon] = useState(false);
+  const [levelend, setLevelend] = useState(false);
 
   const sizePx = tileSize * cols; // width and height of 4x4 image portion
 
@@ -41,18 +43,22 @@ export default function M1({
   }, [tileSize, imageSrc]);
 
   useEffect(() => {
-    if (won && onComplete) {
+    if (won && onComplete && !levelend) {
+      setLevelend(true);
       setTimeout(() => onComplete(true), 2000);
     }
-  }, [won, onComplete]);
+  }, [won, onComplete, levelend]);
 
   // Fail when timer expires (handled locally instead of loader)
   useEffect(() => {
-    if (!session || session.completed) return;
+    if (!session || session.completed || levelend) return;
     if (session.remainingSeconds === 0) {
-      onComplete(false);
+      setLevelend(true);
     }
-  }, [session, onComplete]);
+    if (typeof session.triesLeft === 'number' && session.triesLeft <= 0) {
+      setLevelend(true);
+    }
+  }, [session, levelend]);
 
   function rotate2x2(board, row, col, N) {
     const newBoard = board.slice();
@@ -107,10 +113,14 @@ export default function M1({
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 18 }}>
         <h1 style={{ margin: 0 }}>Knob Rotation Puzzle</h1>
-        <MinigameTimer
-          remainingSeconds={session?.remainingSeconds ?? null}
-          triesLeft={undefined}
-        />
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50">
+          <div className="bg-slate-800/60 rounded-full px-2 py-1 inline-block">
+            <MinigameTimer
+              remainingSeconds={session?.remainingSeconds ?? null}
+              triesLeft={session?.triesLeft ?? null}
+            />
+          </div>
+        </div>
       </div>
 
       {won && (
@@ -179,6 +189,7 @@ export default function M1({
               <button
                 key={`knob-${r}-${c}`}
                 onClick={() => handleKnobClick(r, c)}
+                disabled={levelend}
                 style={{
                   position: "absolute",
                   left: `${leftPct}%`,
@@ -190,7 +201,7 @@ export default function M1({
                   border: "2px solid black",
                   background:
                     "radial-gradient(circle at 35% 30%, white, rgba(200,200,200,0.8))",
-                  cursor: "pointer",
+                  cursor: levelend ? "not-allowed" : "pointer",
                 }}
               />
             );

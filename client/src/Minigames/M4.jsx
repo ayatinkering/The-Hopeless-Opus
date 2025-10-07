@@ -22,7 +22,7 @@ function sectorPath(cx, cy, r1, r2, startAngle, endAngle) {
   return `M ${x1} ${y1} A ${r2} ${r2} 0 ${largeArc} 1 ${x2} ${y2} L ${x3} ${y3} A ${r1} ${r1} 0 ${largeArc} 0 ${x4} ${y4} Z`;
 }
 
-export default function ConcentricToggleGame({ onComplete, session, sessionApi }) {
+export default function ConcentricToggleGame({ config, onComplete, session, sessionApi }) {
     // Outer: sectors 1, 4, and 6 colored
     const [outer, setOuter] = useState(() => {
         const arr = Array(SEGMENTS).fill(false);
@@ -42,6 +42,8 @@ export default function ConcentricToggleGame({ onComplete, session, sessionApi }
 
     // Token starts at outer ring, index 4
     const [token, setToken] = useState({ ring: "outer", idx: 4 });
+
+    const [levelend, setLevelend] = useState(false);
 
   function toggleSegment(ring, idx) {
     if (ring === "outer") {
@@ -163,29 +165,38 @@ export default function ConcentricToggleGame({ onComplete, session, sessionApi }
     }
 
   const failedRef = useRef(false);
-  // Fail on expiry or triesLeft depletion (triesLeft from session for M4)
+  // Fail on expiry or triesLeft depletion (session is authoritative)
+  // Don't call onComplete(false) directly here; let the loader finalize.
   useEffect(() => {
     if (!session || session.completed || failedRef.current) return;
     if (session.remainingSeconds === 0) {
+      // mark locally as failed and let loader's effect (or guard) handle finalization
       failedRef.current = true;
-      onComplete && onComplete(false);
+      setLevelend(true);
     }
     if (typeof session.triesLeft === 'number' && session.triesLeft <= 0) {
       failedRef.current = true;
-      onComplete && onComplete(false);
+      setLevelend(true);
     }
-  }, [session, onComplete]);
+  }, [session]);
 
   // When player wins, notify backend complete
   useEffect(() => {
     if (winner && !failedRef.current) {
       failedRef.current = true;
+      setLevelend(true);
       onComplete && onComplete(true);
     }
   }, [winner, onComplete]);
 
   return (
   <div className="relative mt-20 w-full max-w-4xl mx-auto">
+    {/* Timer Overlay */}
+    <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50">
+      <div className="bg-slate-800/60 rounded-full px-2 py-1 inline-block">
+        <MinigameTimer remainingSeconds={session?.remainingSeconds ?? null} triesLeft={session?.triesLeft ?? null} />
+      </div>
+    </div>
     {/* Background Image Layer */}
     <div 
       className="absolute inset-0 bg-center bg-no-repeat bg-cover rounded-2xl"
@@ -250,23 +261,23 @@ export default function ConcentricToggleGame({ onComplete, session, sessionApi }
         <button
           className="px-3 py-2 bg-blue-500 text-white rounded"
           onClick={autoMove}
+          disabled={levelend}
         >
           Move (3 steps clockwise)
         </button>
         <button
           className="px-3 py-2 bg-green-500 text-white rounded"
           onClick={doSwitch}
+          disabled={levelend}
         >
           Switch
         </button>
         <button
           className="px-3 py-2 bg-red-500 text-white rounded"
           onClick={resetGame}
-          disabled={session?.triesLeft !== null && session?.triesLeft <= 0}
+          disabled={levelend || (session?.triesLeft !== null && session?.triesLeft <= 0)}
         >
-          {session?.triesLeft !== null && session?.triesLeft <= 0
-            ? "No Tries"
-            : "Reset"}
+          {levelend ? "Game Over" : (session?.triesLeft !== null && session?.triesLeft <= 0 ? "No Tries" : "Reset")}
         </button>
       </div>
 
@@ -274,6 +285,12 @@ export default function ConcentricToggleGame({ onComplete, session, sessionApi }
       {winner && (
         <div className="mt-2 text-2xl font-bold text-white-600">
            You Won! 
+        </div>
+      )}
+      {/* Fail Message */}
+      {levelend && !winner && (
+        <div className="mt-2 text-2xl font-bold text-red-600">
+           Game Over
         </div>
       )}
     </div>
