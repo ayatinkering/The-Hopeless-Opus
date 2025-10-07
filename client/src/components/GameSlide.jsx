@@ -280,10 +280,10 @@ const VisualNovelInterface = () => {
   );
 
   // If minigame is active, render it via MinigameLoader
-  if (activeMinigame) {
+    if (activeMinigame) {
     return (
       <div className="w-screen h-screen relative">
-        <UserHUD userState={userState} />
+        <UserHUD userState={userState} activeMinigame={activeMinigame} />
         <div style={{ opacity: sceneVisible ? 1 : 0, transition: 'opacity 260ms ease' }}>
           <MinigameLoader id={activeMinigame} config={minigameConfig} onComplete={handleMinigameComplete} />
 
@@ -307,6 +307,20 @@ const VisualNovelInterface = () => {
     );
   }
 
+  useEffect(() => {
+  const handleKeyDown = (e) => {
+    if (e.key === "ArrowRight") {
+      // Only advance if the dialogue is fully displayed and no choices exist
+      if (displayedText.length === fullDialogue.length && !storyData?.choice?.length) {
+        handleNext();
+      }
+    }
+  };
+
+  window.addEventListener("keydown", handleKeyDown);
+  return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [displayedText, fullDialogue, storyData]);
+
   return (
     <div
       className="relative w-screen h-screen overflow-hidden bg-black flex items-end justify-center font-inter"
@@ -317,7 +331,7 @@ const VisualNovelInterface = () => {
         filter: 'brightness(0.85)'
       }}
     >
-      <UserHUD userState={userState} />
+  <UserHUD userState={userState} activeMinigame={activeMinigame} />
 
       <div style={{ opacity: sceneVisible ? 1 : 0, transition: 'opacity 260ms ease' }} className="absolute inset-0">
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent"></div>

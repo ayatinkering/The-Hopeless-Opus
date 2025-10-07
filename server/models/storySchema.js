@@ -9,7 +9,8 @@ const StorySchema = new Schema({
   backgroundMusic: { type: String},
   nextID: { type: [String], required: true },
   levelEnd: { type: Boolean, required: true },
-  choice: { type: [String]}
+  choice: { type: [String]},
+  characters: { type: [String]}
 });
 
 export default mongoose.model("Story", StorySchema);
