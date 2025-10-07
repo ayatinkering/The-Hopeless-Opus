@@ -60,7 +60,7 @@ function Home() {
           ref={countdownRef}
           className="w-full flex justify-center items-center"
         >
-          <Countdown targetDateProp={new Date("2025-10-08T00:00:00")} />
+          <Countdown targetDateProp={new Date("2025-10-08T18:30:00")} />
         </div>
 
         <CardSlider />

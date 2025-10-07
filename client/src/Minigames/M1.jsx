@@ -1,31 +1,26 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
+import valImg from "../assets/TilesWall.jpg";
 import MinigameTimer from "../components/MinigameTimer";
+import useMinigameSession from "../lib/useMinigameSession"; // ✅ your hook
 
-export default function M1({
-  tileSize = 106.25,
-  imageSrc = valImg,
-  onComplete,
-  showNumbers = true,
-  session,
-  sessionApi,
-  config,
-}) {
+export default function M1({ tileSize = 106.25, imageSrc = valImg, onComplete }) {
+  const minigameId = "M1"; // unique backend ID for this minigame
+
+  // ✅ Hook that fetches and polls session from backend
+  const { session, loading, error, remainingSeconds, triesLeft, api: sessionApi } =
+    useMinigameSession(minigameId);
+
   const cols = 4;
-  const rows = 5; // hardcoded 5 rows (20 tiles)
+  const rows = 5;
   const totalTiles = cols * rows; // 20
-  const imageTiles = 16; // top 4x4 only
-
+  const imageTiles = 16; // 4x4 top portion
   const [tiles, setTiles] = useState([]);
   const [won, setWon] = useState(false);
-  const [levelend, setLevelend] = useState(false);
+  const sizePx = tileSize * cols;
 
-  const sizePx = tileSize * cols; // width and height of 4x4 image portion
-
+  // Scramble board on mount
   useEffect(() => {
-    // initial ordering 0..19
     const initial = Array.from({ length: totalTiles }, (_, i) => i);
-
-    // scramble with random knob rotations
     let scrambled = [...initial];
     const scrambleMoves = Math.max(30, totalTiles * 6);
     for (let m = 0; m < scrambleMoves; m++) {
@@ -33,29 +28,30 @@ export default function M1({
       const c = Math.floor(Math.random() * (cols - 1));
       scrambled = rotate2x2(scrambled, r, c, cols);
     }
-
     setTiles(scrambled);
     setWon(false);
   }, [tileSize, imageSrc]);
 
+  // ✅ Fail automatically when timer hits zero
   useEffect(() => {
-    if (won && onComplete && !levelend) {
-      setLevelend(true);
-      setTimeout(() => onComplete(true), 2000);
+    if (!session || session.completed) return;
+    if (remainingSeconds === 0) {
+      sessionApi.completeSession(); // notify backend
+      if (onComplete) onComplete(false);
     }
-  }, [won, onComplete, levelend]);
+  }, [remainingSeconds, session, sessionApi, onComplete]);
 
-  // Fail when timer expires (handled locally instead of loader)
+  // ✅ Auto-complete when solved
   useEffect(() => {
-    if (!session || session.completed || levelend) return;
-    if (session.remainingSeconds === 0) {
-      setLevelend(true);
+    if (won) {
+      setTimeout(async () => {
+        await sessionApi.completeSession(); // mark success
+        if (onComplete) onComplete(true);
+      }, 1500);
     }
-    if (typeof session.triesLeft === 'number' && session.triesLeft <= 0) {
-      setLevelend(true);
-    }
-  }, [session, levelend]);
+  }, [won, onComplete, sessionApi]);
 
+  // Helper functions
   function rotate2x2(board, row, col, N) {
     const newBoard = board.slice();
     const idx = (r, c) => r * N + c;
@@ -75,11 +71,9 @@ export default function M1({
   }
 
   function isSolved(board) {
-    // first 16 must be in exact order
     for (let i = 0; i < imageTiles; i++) {
       if (board[i] !== i) return false;
     }
-    // last 4 just need to be {16,17,18,19} in any order
     const lastFour = board.slice(16, 20);
     return (
       new Set(lastFour).size === 4 &&
@@ -87,11 +81,33 @@ export default function M1({
     );
   }
 
-  function handleKnobClick(row, col) {
-    if (won) return;
+  async function handleKnobClick(row, col) {
+    if (won || loading) return;
+
     const newTiles = rotate2x2(tiles, row, col, cols);
     setTiles(newTiles);
-    if (isSolved(newTiles)) setWon(true);
+
+    if (isSolved(newTiles)) {
+      setWon(true);
+    } 
+    // The 'else' block that decremented tries has been removed.
+  }
+
+  // ================== UI ==================
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen text-white bg-[#0D1A2F]">
+        <p>Loading game session...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen text-red-400 bg-[#0D1A2F]">
+        <p>Error: {error}</p>
+      </div>
+    );
   }
 
   return (
@@ -107,16 +123,12 @@ export default function M1({
         padding: 20,
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 18 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 18 }}>
         <h1 style={{ margin: 0 }}>Knob Rotation Puzzle</h1>
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50">
-          <div className="bg-slate-800/60 rounded-full px-2 py-1 inline-block">
-            <MinigameTimer
-              remainingSeconds={session?.remainingSeconds ?? null}
-              triesLeft={session?.triesLeft ?? null}
-            />
-          </div>
-        </div>
+        {/* ✅ Timer fully connected to backend - triesLeft prop removed */}
+        <MinigameTimer
+          remainingSeconds={remainingSeconds}
+        />
       </div>
 
       {won && (
@@ -135,6 +147,7 @@ export default function M1({
         </div>
       )}
 
+      {/* Game grid */}
       <div
         style={{
           position: "relative",
@@ -147,10 +160,9 @@ export default function M1({
         }}
       >
         {tiles.map((tileIndex, i) => {
-          const isBottomRow = tileIndex >= imageTiles; // last 4
+          const isBottomRow = tileIndex >= imageTiles;
           const imgRow = Math.floor(tileIndex / cols);
           const imgCol = tileIndex % cols;
-
           return (
             <div
               key={i}
@@ -172,7 +184,7 @@ export default function M1({
                 color: isBottomRow ? "white" : "red",
               }}
             >
-              {showNumbers && tileIndex + 1}
+              {tileIndex + 1}
             </div>
           );
         })}
@@ -185,7 +197,6 @@ export default function M1({
               <button
                 key={`knob-${r}-${c}`}
                 onClick={() => handleKnobClick(r, c)}
-                disabled={levelend}
                 style={{
                   position: "absolute",
                   left: `${leftPct}%`,
@@ -197,7 +208,7 @@ export default function M1({
                   border: "2px solid black",
                   background:
                     "radial-gradient(circle at 35% 30%, white, rgba(200,200,200,0.8))",
-                  cursor: levelend ? "not-allowed" : "pointer",
+                  cursor: "pointer",
                 }}
               />
             );
@@ -205,37 +216,9 @@ export default function M1({
         )}
       </div>
 
-      {/* Buttons */}
-      <div className="flex flex-wrap gap-1.5 sm:gap-2 justify-center mb-1 sm:mb-2">
-        <button
-          className="px-2 py-1.5 sm:px-3 sm:py-2 text-xs sm:text-sm md:text-base bg-blue-500 text-white rounded hover:bg-blue-600 transition"
-          onClick={autoMove}
-        >
-          Move (3 steps)
-        </button>
-        <button
-          className="px-2 py-1.5 sm:px-3 sm:py-2 text-xs sm:text-sm md:text-base bg-green-500 text-white rounded hover:bg-green-600 transition"
-          onClick={doSwitch}
-        >
-          Switch
-        </button>
-        <button
-          className="px-2 py-1.5 sm:px-3 sm:py-2 text-xs sm:text-sm md:text-base bg-red-500 text-white rounded hover:bg-red-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
-          onClick={resetGame}
-          disabled={session?.triesLeft !== null && session?.triesLeft <= 0}
-        >
-          {session?.triesLeft !== null && session?.triesLeft <= 0
-            ? "No Tries"
-            : "Reset"}
-        </button>
+      <div style={{ marginTop: 16, color: "#bbb", fontSize: 13 }}>
+        Click any knob to rotate the 2×2 block clockwise.
       </div>
-
-      {/* Win Message */}
-      {winner && (
-        <div className="mt-1 sm:mt-2 text-lg sm:text-xl md:text-2xl font-bold text-white">
-           You Won! 
-        </div>
-      )}
     </div>
   );
 }

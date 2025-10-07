@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
+
 
 // Import your minigame components
 import MinigameLoader from './MinigameLoader';
@@ -41,6 +43,16 @@ const VisualNovelInterface = () => {
   const [pendingStory, setPendingStory] = useState(null);
   const [awardMessage, setAwardMessage] = useState(null);
   const [sceneVisible, setSceneVisible] = useState(true);
+  const navigate = useNavigate();
+  const [isLaptop, setIsLaptop] = useState(window.innerWidth >= 1024);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      navigate("/login");
+    }
+  }, [navigate]);
+  
 
   const getToken = () => {
     const token = localStorage.getItem("token");
@@ -63,15 +75,26 @@ const VisualNovelInterface = () => {
     setDialogueLines(lines);
   };
 
+
   useEffect(() => {
     const fetchCurrentStory = async () => {
       try {
         const res = await axios.get(`${API_STORY}/current/me`, getToken());
         const { story, userState: serverUserState } = res.data;
         if (story) {
-          processStoryNode(story);
-          if (serverUserState) setUserState(serverUserState);
-        }
+  if (story.storyID?.startsWith("M")) {
+    // 🚀 Directly launch minigame if story ID begins with "M"
+    setStoryData(story);
+    setActiveMinigame(story.storyID);
+    setMinigameConfig(story.minigameConfig || null);
+  } else {
+    // Normal story processing
+    processStoryNode(story);
+  }
+
+  if (serverUserState) setUserState(serverUserState);
+}
+
       } catch (err) {
         // console.error("Error fetching current story:", err);
       }
@@ -225,7 +248,7 @@ const VisualNovelInterface = () => {
             ${selectedChoice === idx + 1 ? 'ring-4 ring-blue-500 ring-opacity-70' : ''}
           `}
         >
-          <span className="truncate">{choiceText}</span>
+          <span className=" ">{choiceText}</span>
         </button>
       ))}
     </div>
@@ -420,26 +443,35 @@ const VisualNovelInterface = () => {
     );
   };
 
-  // If minigame is active, render it via MinigameLoader
-    if (activeMinigame) {
-    return (
-      <div className="w-screen h-screen relative">
-        <UserHUD userState={userState} activeMinigame={activeMinigame} />
-        <div style={{ opacity: sceneVisible ? 1 : 0, transition: 'opacity 260ms ease' }}>
-          <MinigameLoader id={activeMinigame} config={minigameConfig} onComplete={handleMinigameComplete} />
+  useEffect(() => {
+  const handleKeyDown = (e) => {
+    if (e.key === "ArrowRight") {
+      if (displayedText.length === fullDialogue.length && !storyData?.choice?.length) {
+        handleNext();
+      }
+    }
+  };
 
-          {/* Temporary test button for devs: simulate minigame completion (success) */}
-          
-          {awardMessage && (
-            <div className="absolute top-16 right-4 z-50 px-3 py-2 bg-yellow-500 text-black rounded shadow">
-              {awardMessage}
-            </div>
-          )}
-        </div>
+  window.addEventListener("keydown", handleKeyDown);
+  return () => window.removeEventListener("keydown", handleKeyDown);
+}, [displayedText, fullDialogue, storyData]);
+
+// ✅ now safe to return conditionally
+if (activeMinigame) {
+  return (
+    <div className="w-screen h-screen relative">
+      <UserHUD userState={userState} activeMinigame={activeMinigame} />
+      <div style={{ opacity: sceneVisible ? 1 : 0, transition: 'opacity 260ms ease' }}>
+        <MinigameLoader id={activeMinigame} config={minigameConfig} onComplete={handleMinigameComplete} />
+        {awardMessage && (
+          <div className="absolute top-16 right-4 z-50 px-3 py-2 bg-yellow-500 text-black rounded shadow">
+            {awardMessage}
+          </div>
+        )}
       </div>
-    );
-  }
-  
+    </div>
+  );
+}
   // Logic based on the new, extensive list of IDs
   const isInvertedBox = storyData?.storyID && INVERTED_STORY_IDS.includes(storyData.storyID);
 
@@ -450,19 +482,6 @@ const VisualNovelInterface = () => {
     // Default colors: black background, gray border
     : 'bg-black/50 backdrop-blur-sm border-[3px] border-gray-500';
 
-  useEffect(() => {
-  const handleKeyDown = (e) => {
-    if (e.key === "ArrowRight") {
-      // Only advance if the dialogue is fully displayed and no choices exist
-      if (displayedText.length === fullDialogue.length && !storyData?.choice?.length) {
-        handleNext();
-      }
-    }
-  };
-
-  window.addEventListener("keydown", handleKeyDown);
-  return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [displayedText, fullDialogue, storyData]);
 
   return (
     <div
@@ -483,39 +502,43 @@ const VisualNovelInterface = () => {
 
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent"></div>
 
-        <div className="absolute bottom-[5vh] left-[5%] w-[90%] z-10"> 
-          <div className="absolute right-4 z-20 w-80" style={{ bottom: '180px' }}>
-            {renderChoiceButtons()}
-          </div>
+        <div className="absolute bottom-[5vh] left-[5%] w-[90%] z-10 flex flex-col items-start space-y-2">
 
-          {/* Speaker name color logic adjusted for the inverted box */}
-          <div 
-            className={`absolute z-30 text-3xl italic font-bold ${isInvertedBox ? 'text-black' : 'text-white'}`} 
-            style={{ 
-              // Adjust text shadow for contrast against the background gradient (white shadow for black text)
-              textShadow: isInvertedBox ? '0 0 8px rgba(255, 255, 255, 0.9)' : '0 0 8px rgba(0, 0, 0, 0.9)', 
-              bottom: 'calc(180px - 10px)', 
-              left: '25px' 
-            }}
-          >
-            {/* Display the dynamically updated current speaker */}
-            {currentSpeaker || " "}
-          </div>
+  {/* Speaker Name now flexes above dialogue box */}
+  <div 
+    className={`text-3xl italic font-bold ${isInvertedBox ? 'text-black' : 'text-white'}`} 
+    style={{ 
+      textShadow: isInvertedBox 
+        ? '0 0 8px rgba(255, 255, 255, 0.9)' 
+        : '0 0 8px rgba(0, 0, 0, 0.9)' 
+    }}
+  >
+    {currentSpeaker || " "}
+  </div>
 
-          <div className={`relative w-full p-6 rounded-xl min-h-[150px] ${dialogueContainerClasses}`}>
-            {renderDialogue()}
-            {/* Skip button text color logic adjusted for contrast against the box */}
-            {displayedText.length < fullDialogue.length && (
-              <button
-                onClick={handleSkip}
-                className={`absolute bottom-4 right-6 text-lg italic px-4 py-2 rounded-xl transition 
-                  ${isInvertedBox ? 'text-black hover:bg-gray-200/50' : 'text-white hover:bg-gray-600/25'}`}
-              >
-                Skip &gt;&gt;
-              </button>
-            )}
-          </div>
-        </div>
+  {/* Dialogue Box */}
+  <div className={`relative w-full p-6 rounded-xl min-h-[150px] ${dialogueContainerClasses}`}>
+    {renderDialogue()}
+    
+    {displayedText.length < fullDialogue.length && (
+      <button
+        onClick={handleSkip}
+        className={`absolute bottom-4 right-6 text-lg italic px-4 py-2 rounded-xl transition 
+          ${isInvertedBox ? 'text-black hover:bg-gray-200/50' : 'text-white hover:bg-gray-600/25'}`}
+      >
+        Skip &gt;&gt;
+      </button>
+    )}
+  </div>
+
+  {/* Choices stay aligned to right */}
+  {displayedText.length === fullDialogue.length && (
+    <div className="flex justify-end w-full mt-3">
+      {renderChoiceButtons()}
+    </div>
+  )}
+</div>
+
       </div>
     </div>
   );

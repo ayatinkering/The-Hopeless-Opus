@@ -12,23 +12,23 @@ const M5 = ({ config, onComplete, session, sessionApi }) => {
   const [gameOver, setGameOver] = useState(false);
   const [audioPlaying, setAudioPlaying] = useState(false);
 
-  // Check for game over conditions from session
+  // --- Game over state based on backend session ---
   useEffect(() => {
     if (!session) return;
-    
+
     if (session.completed) {
       setGameOver(true);
       if (audioRef.current) audioRef.current.pause();
     }
-    
+
     if (session.remainingSeconds === 0) {
       setMessage("ACCESS DENIED");
       setGameOver(true);
       if (audioRef.current) audioRef.current.pause();
       onComplete && onComplete(false);
     }
-    
-    if (typeof session.triesLeft === 'number' && session.triesLeft <= 0) {
+
+    if (typeof session.triesLeft === "number" && session.triesLeft <= 0) {
       setMessage("ACCESS DENIED - GAME OVER");
       setGameOver(true);
       if (audioRef.current) audioRef.current.pause();
@@ -46,9 +46,7 @@ const M5 = ({ config, onComplete, session, sessionApi }) => {
       if (audioRef.current) audioRef.current.pause();
       if (onComplete) setTimeout(() => onComplete(true), 2000);
     } else {
-      if (sessionApi?.decrementTry) {
-        sessionApi.decrementTry();
-      }
+      if (sessionApi?.decrementTry) sessionApi.decrementTry();
       setMessage("ACCESS DENIED");
       setInput("");
     }
@@ -68,27 +66,23 @@ const M5 = ({ config, onComplete, session, sessionApi }) => {
         audioEl.loop = false;
         audioRef.current = audioEl;
 
-        // When the audio finishes naturally, reset state
         audioEl.addEventListener("ended", () => {
           setAudioPlaying(false);
         });
       } catch (err) {
-        // console.error("Audio setup failed:", err);
         return;
       }
     }
 
     if (audioPlaying) {
       audioRef.current.pause();
-      audioRef.current.currentTime = 0; // reset position to start
+      audioRef.current.currentTime = 0;
       setAudioPlaying(false);
     } else {
       try {
         await audioRef.current.play();
         setAudioPlaying(true);
-      } catch (err) {
-        // console.error("Audio playback failed:", err);
-      }
+      } catch (err) {}
     }
   };
 
@@ -97,20 +91,6 @@ const M5 = ({ config, onComplete, session, sessionApi }) => {
       if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current);
     };
   }, []);
-
-  // Session-driven expiry / tries
-  // Do not directly call onComplete(false) here — loader will handle finalization.
-  useEffect(() => {
-    if (!session || session.completed) return;
-    if (session.remainingSeconds === 0) {
-      setMessage('ACCESS DENIED');
-      setGameOver(true);
-    }
-    if (typeof session.triesLeft === 'number' && session.triesLeft <= 0) {
-      setMessage('ACCESS DENIED - GAME OVER');
-      setGameOver(true);
-    }
-  }, [session]);
 
   const failAndDecrement = () => {
     if (sessionApi?.decrementTry) sessionApi.decrementTry();
@@ -123,9 +103,13 @@ const M5 = ({ config, onComplete, session, sessionApi }) => {
       className="relative flex items-center justify-center min-h-screen bg-black bg-cover bg-center"
       style={{ backgroundImage: `url(${morseBg})` }}
     >
+      {/* ✅ Backend-driven timer and tries display */}
       <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50">
         <div className="bg-slate-800/60 rounded-full px-2 py-1 inline-block">
-          <MinigameTimer remainingSeconds={session?.remainingSeconds ?? timeLeft} triesLeft={session?.triesLeft ?? triesLeft} />
+          <MinigameTimer
+            remainingSeconds={session?.remainingSeconds ?? 0}
+            triesLeft={session?.triesLeft ?? 0}
+          />
         </div>
       </div>
 
@@ -134,7 +118,11 @@ const M5 = ({ config, onComplete, session, sessionApi }) => {
           onClick={handleToggleMorse}
           disabled={gameOver}
           className={`px-4 py-2 rounded-md transition duration-300 ease-in-out shadow-md hover:scale-105 cursor-pointer
-                      ${gameOver ? "bg-gray-600 text-gray-300 cursor-not-allowed" : "bg-gray-800 hover:bg-gray-700 text-white"}`}
+                          ${
+                            gameOver
+                              ? "bg-gray-600 text-gray-300 cursor-not-allowed"
+                              : "bg-gray-800 hover:bg-gray-700 text-white"
+                          }`}
         >
           {audioPlaying ? "❚❚" : "▶︎"}
         </button>
@@ -144,14 +132,10 @@ const M5 = ({ config, onComplete, session, sessionApi }) => {
           placeholder="Enter the override code..."
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && !gameOver) {
-              handleSubmit(e);
-            }
-          }}
+          onKeyDown={(e) => e.key === "Enter" && !gameOver && handleSubmit(e)}
           disabled={gameOver}
           className="px-4 py-2 rounded-md bg-neutral-900 border border-gray-600 text-white 
-                     placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-400"
+                       placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-400"
         />
 
         <button
@@ -159,19 +143,10 @@ const M5 = ({ config, onComplete, session, sessionApi }) => {
           onClick={handleSubmit}
           disabled={gameOver}
           className="px-6 py-2 rounded-md bg-gray-800 hover:bg-gray-700 text-white 
-                     transition duration-300 ease-in-out shadow-md hover:scale-105 cursor-pointer"
+                       transition duration-300 ease-in-out shadow-md hover:scale-105 cursor-pointer"
         >
           Enter
         </button>
-        {!gameOver && (
-          <button
-            type="button"
-            onClick={failAndDecrement}
-            className="ml-3 px-4 py-2 rounded-md bg-red-700 hover:bg-red-600 text-white text-sm"
-          >
-            Fail Attempt
-          </button>
-        )}
       </div>
 
       <p

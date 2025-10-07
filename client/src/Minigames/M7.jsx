@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import MinigameTimer from '../components/MinigameTimer';
 
 import PinkCyan from "../assets/PinkCyan.jpg";
@@ -11,6 +11,7 @@ import BlueRed from "../assets/BlueRed.jpg";
 import LavGreen from "../assets/LavGreen.jpg";
 import TokensBg from "../assets/TokensBg.jpg";
 
+// ✅ Static data moved outside component
 const images = {
     PinkCyan,
     RedLavender,
@@ -20,6 +21,38 @@ const images = {
     PinkGreen,
     BlueRed,
     LavGreen,
+};
+
+const initialTokens = [
+    { id: 1, image: 'PinkCyan', symbols: ['symbol1', 'symbol2'] },
+    { id: 2, image: 'PinkCyan', symbols: ['symbol1', 'symbol2'] },
+    { id: 3, image: 'RedLavender', symbols: ['symbol3', 'symbol4'] },
+    { id: 4, image: 'BlueGreen', symbols: ['symbol5', 'symbol6'] },
+    { id: 5, image: 'RedPink', symbols: ['symbol4', 'symbol2'] },
+    { id: 6, image: 'RedPink', symbols: ['symbol2', 'symbol4'] },
+    { id: 7, image: 'LavCyan', symbols: ['symbol3', 'symbol1'] },
+    { id: 8, image: 'PinkGreen', symbols: ['symbol2', 'symbol6'] },
+    { id: 9, image: 'LavCyan', symbols: ['symbol1', 'symbol3'] },
+    { id: 10, image: 'BlueRed', symbols: ['symbol5', 'symbol4'] },
+    { id: 11, image: 'LavGreen', symbols: ['symbol3', 'symbol6'] },
+    { id: 12, image: 'LavCyan', symbols: ['symbol1', 'symbol3'] },
+];
+
+const initialPaths = [
+    { from: 1, to: 3 }, { from: 1, to: 4 }, { from: 2, to: 3 }, { from: 2, to: 4 },
+    { from: 3, to: 4 }, { from: 4, to: 5 }, { from: 5, to: 9 }, { from: 4, to: 6 },
+    { from: 4, to: 9 }, { from: 8, to: 10 }, { from: 9, to: 10 }, { from: 6, to: 11 },
+    { from: 10, to: 11 }, { from: 10, to: 12 }, { from: 8, to: 12 }, { from: 5, to: 7 },
+    { from: 7, to: 6 }, { from: 7, to: 8 },
+];
+
+const starterTokenIds = [4, 8, 12];
+
+const slotPositions = {
+    1: { top: '5%', left: '10%' }, 2: { top: '1%', left: '90%' }, 3: { top: '25%', left: '30%' },
+    4: { top: '50%', left: '30%' }, 5: { top: '50%', left: '5%' }, 6: { top: '50%', left: '95%' },
+    7: { top: '70%', left: '40%' }, 8: { top: '75%', left: '85%' }, 9: { top: '85%', left: '30%' },
+    10: { top: '85%', left: '70%' }, 11: { top: '1%', left: '50%' }, 12: { top: '40%', left: '50%' },
 };
 
 const TokenDisplay = ({ imageName }) => {
@@ -35,59 +68,7 @@ const TokenDisplay = ({ imageName }) => {
     );
 };
 
-const GAME_VERSION = 8;
-
-const TIMER_DURATION_MINUTES = 2;
-
-
-// ---------------------------------------------------
-
-// 🔑 Integrity Check Helper Funct
-const generateChecksum = (value, version) => {
-    const data = String(value) + String(version);
-    let hash = 0;
-    for (let i = 0; i < data.length; i++) {
-        const char = data.charCodeAt(i);
-        hash = ((hash << 5) - hash) + char;
-        hash = hash & hash;
-    }
-    return Math.abs(hash);
-};
-
 const PuzzleGame = ({ config, onComplete, session, sessionApi }) => {
-    const initialTokens = [
-        { id: 1, image: 'PinkCyan', symbols: ['symbol1', 'symbol2'] },
-        { id: 2, image: 'PinkCyan', symbols: ['symbol1', 'symbol2'] },
-        { id: 3, image: 'RedLavender', symbols: ['symbol3', 'symbol4'] },
-        { id: 4, image: 'BlueGreen', symbols: ['symbol5', 'symbol6'] },
-        { id: 5, image: 'RedPink', symbols: ['symbol4', 'symbol2'] },
-        { id: 6, image: 'RedPink', symbols: ['symbol2', 'symbol4'] },
-        { id: 7, image: 'LavCyan', symbols: ['symbol3', 'symbol1'] },
-        { id: 8, image: 'PinkGreen', symbols: ['symbol2', 'symbol6'] },
-        { id: 9, image: 'LavCyan', symbols: ['symbol1', 'symbol3'] },
-        { id: 10, image: 'BlueRed', symbols: ['symbol5', 'symbol4'] },
-        { id: 11, image: 'LavGreen', symbols: ['symbol3', 'symbol6'] },
-        { id: 12, image: 'LavCyan', symbols: ['symbol1', 'symbol3'] },
-    ];
-
-    const initialPaths = [
-        { from: 1, to: 3 }, { from: 1, to: 4 }, { from: 2, to: 3 }, { from: 2, to: 4 },
-        { from: 3, to: 4 }, { from: 4, to: 5 }, { from: 5, to: 9 }, { from: 4, to: 6 },
-        { from: 4, to: 9 }, { from: 8, to: 10 }, { from: 9, to: 10 }, { from: 6, to: 11 },
-        { from: 10, to: 11 }, { from: 10, to: 12 }, { from: 8, to: 12 }, { from: 5, to: 7 },
-        { from: 7, to: 6 }, { from: 7, to: 8 },
-    ];
-
-    const slotPositions = {
-        1: { top: '5%', left: '10%' }, 2: { top: '1%', left: '90%' }, 3: { top: '25%', left: '30%' },
-        4: { top: '50%', left: '30%' }, 5: { top: '50%', left: '5%' }, 6: { top: '50%', left: '95%' },
-        7: { top: '70%', left: '40%' }, 8: { top: '75%', left: '85%' }, 9: { top: '85%', left: '30%' },
-        10: { top: '85%', left: '70%' }, 11: { top: '1%', left: '50%' }, 12: { top: '40%', left: '50%' },
-    };
-
-    // Starter tokens fixed in place
-    const starterTokenIds = [4, 8, 12];
-
     const [slots, setSlots] = useState(
         Array.from({ length: 12 }, (_, i) => {
             const id = i + 1;
@@ -98,7 +79,6 @@ const PuzzleGame = ({ config, onComplete, session, sessionApi }) => {
         })
     );
 
-    // Remove starter tokens from token bar
     const [tokens, setTokens] = useState(
         initialTokens.filter(t => !starterTokenIds.includes(t.id))
     );
@@ -136,6 +116,7 @@ const PuzzleGame = ({ config, onComplete, session, sessionApi }) => {
         return () => window.removeEventListener('resize', updateContainerSize);
     }, []);
 
+    // ✅ Fixed useEffect: removed unstable dependency
     useEffect(() => {
         const newPathColors = {};
         let newGreenPathsCount = 0;
@@ -161,12 +142,13 @@ const PuzzleGame = ({ config, onComplete, session, sessionApi }) => {
                     newGreenPathsCount++;
                 }
             }
+
             newPathColors[`${path.from}-${path.to}`] = color;
         });
 
         setPathColors(newPathColors);
         setGreenPathsCount(newGreenPathsCount);
-    }, [slots, initialPaths]);
+    }, [slots]); // ✅ No infinite loop now
 
     const handleDragStart = (e, token, fromSlotId = null) => {
         if (isTimeUp || isWin) {
@@ -174,7 +156,6 @@ const PuzzleGame = ({ config, onComplete, session, sessionApi }) => {
             return;
         }
 
-        // Prevent dragging starter tokens
         if (starterTokenIds.includes(fromSlotId)) {
             e.preventDefault();
             return;
@@ -190,7 +171,6 @@ const PuzzleGame = ({ config, onComplete, session, sessionApi }) => {
         e.preventDefault();
         if (!draggedToken || isTimeUp || isWin) return;
 
-        // Prevent dropping on starter slots
         if (starterTokenIds.includes(slotId)) return;
 
         if (draggedFromSlotId === slotId) {
@@ -260,7 +240,7 @@ const PuzzleGame = ({ config, onComplete, session, sessionApi }) => {
     const getPathData = (path) => {
         const fromSlot = slotPositions[path.from];
         const toSlot = slotPositions[path.to];
-        const slotDiameter = 60; // Reduced from 80
+        const slotDiameter = 60;
         const slotRadius = slotDiameter / 2;
 
         const fromX = (parseFloat(fromSlot.left) / 100) * containerSize.width + slotRadius;
@@ -291,7 +271,7 @@ const PuzzleGame = ({ config, onComplete, session, sessionApi }) => {
                 backgroundRepeat: 'no-repeat',
             }}
         >
-            {(isWin || (session && session.remainingSeconds === 0)) && (
+            {(isWin || isTimeUp) && (
                 <div className="absolute inset-0 z-50 flex items-center justify-center bg-gray-900 bg-opacity-80 rounded-lg shadow-lg backdrop-blur-sm">
                     <div
                         className="text-center p-8 bg-gray-900 rounded-xl shadow-2xl transform scale-105 transition-transform duration-500 border-4"
@@ -382,11 +362,7 @@ const PuzzleGame = ({ config, onComplete, session, sessionApi }) => {
                     >
                         {slot.placedToken ? (
                             <div
-                                className={`w-full h-full flex items-center justify-center rounded-full shadow-lg ${
-                                    starterTokenIds.includes(slot.id)
-                                        ? 'bg-gray-600 cursor-default'
-                                        : 'bg-gray-700 cursor-move'
-                                }`}
+                                className={`w-full h-full flex items-center justify-center rounded-full shadow-lg ${starterTokenIds.includes(slot.id) ? 'bg-gray-600 cursor-default' : 'bg-gray-700 cursor-move'}`}
                                 draggable={!starterTokenIds.includes(slot.id) && !isTimeUp && !isWin}
                                 onDragStart={(e) => handleDragStart(e, slot.placedToken, slot.id)}
                             >

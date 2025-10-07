@@ -338,10 +338,10 @@ const M3 = ({ config, onComplete, session, sessionApi }) => {
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-2 sm:p-4">
       <div className="max-w-4xl mx-auto">
         <div className="text-center mb-4 sm:mb-6">
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-cyan-300 mb-2">
+          <h1 className="text-xl sm:text-3xl mt-12 md:text-4xl font-bold text-cyan-300 mb-2">
             Electrical Chip Connection
           </h1>
-          <p className="text-cyan-100 mb-4 text-sm sm:text-base px-2">
+          <p className="text-cyan-100 mb-2 text-sm sm:text-base px-2">
             Connect chips so each has the same number of connections as shown on the chip
           </p>
           
@@ -357,17 +357,9 @@ const M3 = ({ config, onComplete, session, sessionApi }) => {
               </div>
             )}
           </div>
-
-          <div className="bg-slate-800/30 p-3 sm:p-4 rounded-lg border border-cyan-500/20 mb-4 sm:mb-6 mx-2">
-            <p className="text-cyan-100 text-xs sm:text-sm">
-              Tap chips to select and connect them. Each chip must have exactly the number of connections shown.
-              Tap wires to remove them. Only horizontal and vertical connections allowed! Multiple wires can connect the same chips, but wires cannot cross each other.
-              You cannot connect two chips more than twice. Good luck!
-            </p>
-          </div>
         </div>
 
-        <div className="relative bg-slate-800/50 p-2 sm:p-4 md:p-8 rounded-xl border border-cyan-500/30 shadow-2xl mx-2">
+        <div className="relative bg-slate-800/50 p-2 sm:p-4 md:p-7 rounded-xl border border-cyan-500/30 shadow-2xl mx-2">
           {isGameOver && (
             <div className="absolute inset-0 flex items-center justify-center backdrop-blur-sm bg-black/40 rounded-xl z-50">
               <div className="text-center p-6 sm:p-10 bg-slate-900/80 rounded-2xl border border-red-500/50 shadow-2xl">

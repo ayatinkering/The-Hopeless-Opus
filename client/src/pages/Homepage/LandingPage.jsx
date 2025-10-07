@@ -4,7 +4,7 @@ import DecryptedText from "../../components/DecryptedText";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 // NEW: Import the video file
-import burnVideo from "../../assets/burn.mp4"; 
+import background from "../../assets/background.mp4"; 
 
 const LandingPage = () => {
   const [user, setUser] = useState(JSON.parse(localStorage.getItem("user")));
@@ -20,7 +20,7 @@ const LandingPage = () => {
       {/* NEW: Video Background Element */}
       <video className="background-video" autoPlay loop muted playsInline>
         {/* Use the imported variable 'burnVideo' as the source */}
-        <source src={burnVideo} type="video/mp4" /> 
+        <source src={background} type="video/mp4" /> 
         Your browser does not support the video tag.
       </video>
 
