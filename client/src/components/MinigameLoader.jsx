@@ -10,6 +10,15 @@ const M4 = React.lazy(() => import('../Minigames/M4'));
 const M5 = React.lazy(() => import('../Minigames/M5'));
 const M6 = React.lazy(() => import('../Minigames/M6'));
 const M7 = React.lazy(() => import('../Minigames/M7'));
+const M8 = React.lazy(() => import('../Minigames/M8'));
+const M9A = React.lazy(() => import('../Minigames/M9A'));
+const M9B = React.lazy(() => import('../Minigames/M9B'));
+const M10 = React.lazy(() => import('../Minigames/M10'));
+const M11 = React.lazy(() => import('../Minigames/M11'));
+const M12 = React.lazy(() => import('../Minigames/M12'));
+const M13 = React.lazy(() => import('../Minigames/M13'));
+const M14 = React.lazy(() => import('../Minigames/M14'));
+const M15 = React.lazy(() => import('../Minigames/M15'));
 
 const MAP = {
   M1,
@@ -19,10 +28,20 @@ const MAP = {
   M5,
   M6,
   M7,
+  M8,
+  M9A,
+  M9B,
+  M10,
+  M11,
+  M12,
+  M13,
+  M14,
+  M15,
 };
 
 export default function MinigameLoader({ id, config, onComplete }) {
-  useEffect(() => { console.log('[MinigameLoader] mount id=', id); }, [id]);
+  // useEffect(() => { console.log('[MinigameLoader] mount id=', id); }, [id]);
+  useEffect(() => {  }, [id]);
 
   const { session, remainingSeconds, triesLeft, api } = useMinigameSession(id);
 
@@ -45,12 +64,12 @@ export default function MinigameLoader({ id, config, onComplete }) {
             body: JSON.stringify({ minigameId: id })
           });
         } catch (rewardErr) {
-          console.warn('Reward claim failed:', rewardErr);
+          // console.warn('Reward claim failed:', rewardErr);
         }
       }
       onComplete(success);
     } catch (e) {
-      console.error('Error completing session', e);
+      // console.error('Error completing session', e);
       onComplete(success);
     }
   }, [api, onComplete, id]);

@@ -46,7 +46,7 @@ const VisualNovelInterface = () => {
           if (serverUserState) setUserState(serverUserState);
         }
       } catch (err) {
-        console.error("Error fetching current story:", err);
+        // console.error("Error fetching current story:", err);
       }
     };
 
@@ -69,7 +69,7 @@ const VisualNovelInterface = () => {
       const res = await axios.get(`${API_STORY}/${storyId}`, getToken());
       return res.data;
     } catch (err) {
-      console.error("Error fetching story by ID:", err);
+      // console.error("Error fetching story by ID:", err);
       return null;
     }
   };
@@ -83,7 +83,7 @@ const VisualNovelInterface = () => {
         { storyId: storyData.storyID, choiceIndex: index },
         getToken()
       );
-  console.log("Choice response:", res.data);
+  // console.log("Choice response:", res.data);
   const { nextStory, minigame, userState: serverUserState } = res.data;
   if (serverUserState) setUserState(serverUserState);
 
@@ -102,7 +102,7 @@ const VisualNovelInterface = () => {
         setSelectedChoice(null);
       }
     } catch (err) {
-      console.error("Error making choice:", err);
+      // console.error("Error making choice:", err);
     }
   };
 
@@ -122,7 +122,7 @@ const VisualNovelInterface = () => {
       const res = await axios.get(`${API_STORY}/current/me`, getToken());
       if (res.data?.userState) setUserState(res.data.userState);
     } catch (e) {
-      console.warn('User state refresh failed after minigame', e.response?.data || e.message || e);
+      // console.warn('User state refresh failed after minigame', e.response?.data || e.message || e);
     }
 
     // Branching logic: success -> nextID[0], failure -> nextID[1]
@@ -169,7 +169,7 @@ const VisualNovelInterface = () => {
           return;
         }
       } catch (e) {
-        console.error('Failed to fetch branched node', e);
+        // console.error('Failed to fetch branched node', e);
       }
     }
 
@@ -185,7 +185,7 @@ const VisualNovelInterface = () => {
         setSelectedChoice(null);
       }
     } catch (err) {
-      console.error('Final fallback failed after minigame', err);
+      // console.error('Final fallback failed after minigame', err);
     }
   };
 
@@ -214,7 +214,7 @@ const VisualNovelInterface = () => {
       if (nextStory) {
         // If the next story node is a minigame, trigger the minigame UI
         if (nextStory.storyID && nextStory.storyID.startsWith('M')) {
-          console.log('Next story is a minigame, launching:', nextStory.storyID);
+          // console.log('Next story is a minigame, launching:', nextStory.storyID);
           setStoryData(nextStory);
           setFullDialogue(nextStory.text?.join('\n') || '');
           setDisplayedText('');

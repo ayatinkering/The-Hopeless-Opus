@@ -15,8 +15,11 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import Profile from "./pages/Profile";
 import GameSlide from "./components/GameSlide";
+<<<<<<< HEAD
 import Visual from "./Minigames/Visual.jsx";
 import M1 from "./Minigames/M1.jsx"
+=======
+>>>>>>> 94aa2144d30339657073f740381b84b1863f11fb
 
 
 function App() {
@@ -73,7 +76,10 @@ function App() {
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/profile" element={<Profile setUser={setUser} />} />
+<<<<<<< HEAD
           <Route path="/M1" element={<M1 />} />
+=======
+>>>>>>> 94aa2144d30339657073f740381b84b1863f11fb
         </Routes>
       </>
     );

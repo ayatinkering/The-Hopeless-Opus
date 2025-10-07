@@ -73,7 +73,7 @@ const M5 = ({ config, onComplete, session, sessionApi }) => {
           setAudioPlaying(false);
         });
       } catch (err) {
-        console.error("Audio setup failed:", err);
+        // console.error("Audio setup failed:", err);
         return;
       }
     }
@@ -87,7 +87,7 @@ const M5 = ({ config, onComplete, session, sessionApi }) => {
         await audioRef.current.play();
         setAudioPlaying(true);
       } catch (err) {
-        console.error("Audio playback failed:", err);
+        // console.error("Audio playback failed:", err);
       }
     }
   };
