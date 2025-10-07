@@ -2,9 +2,10 @@ import React, { useRef, useEffect } from "react";
 import Navbar from "../components/Navbar";
 import LandingPage from "./Homepage/LandingPage";
 import Countdown from "../components/Countdown";
-import background from "../assets/background.jpg";
+import background from "../assets/background.mp4";
 import CardSlider from "../components/CardSlider";
 import FAQ from "../components/FAQ";
+import Footer from "../components/Footer";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import "../css/styles.css";
@@ -37,14 +38,18 @@ function Home() {
 
   return (
     <div className="relative min-h-screen">
-      {/* Background image */}
-      <div
-        className="fixed inset-0 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: `url(${background})` }}
-      ></div>
+      {/* Background video */}
+      <video
+        className="fixed inset-0 w-full h-full object-cover"
+        src={background}
+        autoPlay
+        loop
+        muted
+        playsInline
+      />
 
       {/* Dark overlay */}
-      <div className="fixed inset-0 bg-black opacity-30"></div>
+      <div className="fixed inset-0 bg-black opacity-20"></div>
 
       {/* Content */}
       <div className="relative z-10">
@@ -60,6 +65,7 @@ function Home() {
 
         <CardSlider />
         <FAQ />
+        <Footer/>
       </div>
     </div>
   );
