@@ -388,13 +388,14 @@ export default function Letter({ config, onComplete, session, sessionApi }) {
     generatePieces();
   }, [boardW, boardH]);
 
-  // Auto-fail when backend timer expires
+  // Auto-fail when backend timer expires — mark local state and let loader finalize
   useEffect(() => {
     if (!session || session.completed) return;
     if (session.remainingSeconds === 0) {
-      onComplete && onComplete(false);
+      setMessage('TIME EXPIRED');
+      setStage('expired');
     }
-  }, [session, onComplete]);
+  }, [session]);
 
   // ---------------- Dragging logic ----------------
   useEffect(() => {
@@ -780,7 +781,11 @@ THAT WILL GO ON TILL MIDNIGHT`;
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <div>{message}</div>
           <div style={{ marginLeft: 6 }}>
-            <MinigameTimer remainingSeconds={session?.remainingSeconds ?? null} triesLeft={session?.triesLeft ?? null} />
+            <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50">
+              <div className="bg-slate-800/60 rounded-full px-2 py-1 inline-block">
+                <MinigameTimer remainingSeconds={session?.remainingSeconds ?? null} triesLeft={session?.triesLeft ?? null} />
+              </div>
+            </div>
           </div>
         </div>
       </div>

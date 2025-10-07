@@ -89,13 +89,14 @@ export default function MusicArcade({ config, onComplete, session, sessionApi })
     });
   }, [currentTime, connections]);
 
-  // Auto-fail when backend timer expires
+  // Auto-fail when backend timer expires — mark local UI state, loader will finalize
   useEffect(() => {
     if (!session || session.completed) return;
     if (session.remainingSeconds === 0) {
-      onComplete && onComplete(false);
+      setGameStarted(false);
+      setCurrentTime(60);
     }
-  }, [session, onComplete]);
+  }, [session]);
 
   const getActiveInstructions = () => {
     return instructions.filter(
@@ -166,7 +167,11 @@ export default function MusicArcade({ config, onComplete, session, sessionApi })
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-100 via-yellow-50 to-orange-100 p-8 flex flex-col items-center justify-center">
-      <div className="absolute top-4 right-4"><MinigameTimer remainingSeconds={session?.remainingSeconds ?? null} triesLeft={session?.triesLeft ?? null} /></div>
+  <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50">
+    <div className="bg-slate-800/60 rounded-full px-2 py-1 inline-block">
+      <MinigameTimer remainingSeconds={session?.remainingSeconds ?? null} triesLeft={session?.triesLeft ?? null} />
+    </div>
+  </div>
       <h1 className="text-5xl font-bold text-amber-900 mb-8 tracking-wider" style={{ fontFamily: 'serif', textShadow: '2px 2px 4px rgba(0,0,0,0.3)' }}>MUSIC ARCADE</h1>
       
       {!gameStarted && countdown > 0 ? (

@@ -47,6 +47,10 @@ export default function LightGrid({
   solution = CORRECT_SOLUTION,
   cellSize = 36,
   leftWidth = 90,
+  config,
+  onComplete,
+  session,
+  sessionApi,
 }) {
   // accept loader props
   // signature: ({ config, onComplete, session, sessionApi }) is passed by MinigameLoader
@@ -56,13 +60,13 @@ export default function LightGrid({
   const extraProps = arguments[0] || {};
   const { onComplete, session } = extraProps;
 
-  // Auto-fail when backend timer expires
+  // Auto-fail when backend timer expires — set result and let loader finalize
   useEffect(() => {
     if (!session || session.completed) return;
     if (session.remainingSeconds === 0) {
-      onComplete && onComplete(false);
+      setResultMsg('TIME EXPIRED');
     }
-  }, [session, onComplete]);
+  }, [session]);
 
   const SIZE = 10;
   const [grid, setGrid] = useState(() =>
@@ -223,7 +227,11 @@ export default function LightGrid({
         )}
       </div>
       <div style={{ position: 'absolute', top: 16, right: 16 }}>
-        <MinigameTimer remainingSeconds={session?.remainingSeconds ?? null} triesLeft={session?.triesLeft ?? null} />
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50">
+          <div className="bg-slate-800/60 rounded-full px-2 py-1 inline-block">
+            <MinigameTimer remainingSeconds={session?.remainingSeconds ?? null} triesLeft={session?.triesLeft ?? null} />
+          </div>
+        </div>
       </div>
 
       {/* Buttons */}

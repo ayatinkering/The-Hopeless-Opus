@@ -58,7 +58,7 @@ const generateChecksum = (value, version) => {
     return Math.abs(hash);
 };
 
-const PuzzleGame = ({ onComplete, session, sessionApi }) => {
+const PuzzleGame = ({ config, onComplete, session, sessionApi }) => {
     const initialTokens = [
         { id: 1, image: 'BlueSilver', symbols: ['symbol1', 'symbol2'] },
         { id: 2, image: 'BlueSilver', symbols: ['symbol1', 'symbol2'] },
@@ -103,13 +103,13 @@ const PuzzleGame = ({ onComplete, session, sessionApi }) => {
     const isGameOver = useRef(false);
     const isTimeUp = !!(session && session.remainingSeconds === 0);
 
-    // Session-driven timer: fail when remainingSeconds hits 0
+    // Session-driven timer: mark local game over when remainingSeconds hits 0
     useEffect(() => {
         if (!session || session.completed) return;
         if (session.remainingSeconds === 0) {
-            onComplete && onComplete(false);
+            isGameOver.current = true;
         }
-    }, [session, onComplete]);
+    }, [session]);
     // ---------------------------------------------------
 
     const gameBoardRef = useRef(null);
@@ -312,7 +312,11 @@ const PuzzleGame = ({ onComplete, session, sessionApi }) => {
         ))
     )}
 
-    <div className="absolute bottom-2 right-2"><MinigameTimer remainingSeconds={session?.remainingSeconds ?? null} /></div>
+    <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50">
+      <div className="bg-slate-800/60 rounded-full px-2 py-1 inline-block">
+        <MinigameTimer remainingSeconds={session?.remainingSeconds ?? null} triesLeft={session?.triesLeft ?? null} />
+      </div>
+    </div>
 </div>
 
 
