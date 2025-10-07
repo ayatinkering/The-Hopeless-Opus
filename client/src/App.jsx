@@ -18,10 +18,14 @@ import GameSlide from "./components/GameSlide";
 import Visual from "./Minigames/Visual.jsx";
 import M4 from "./Minigames/M4.jsx";
 import { HexMinesweeperGame } from "./Minigames/Mines.jsx";
+import M3 from "./Minigames/M3.jsx";
+import M5 from "./Minigames/M5.jsx";
+import M6 from "./Minigames/M6.jsx";
+import ConcentricToggleGame from "./Minigames/M4.jsx";
 
 function App() {
   return(
-    <HexMinesweeperGame/>
+    <M6/>
   )
 }
 
