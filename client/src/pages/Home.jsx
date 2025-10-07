@@ -5,6 +5,7 @@ import Countdown from "../components/Countdown";
 import background from "../assets/background.jpg";
 import CardSlider from "../components/CardSlider";
 import FAQ from "../components/FAQ";
+import Footer from "../components/Footer";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import "../css/styles.css";
@@ -60,6 +61,7 @@ function Home() {
 
         <CardSlider />
         <FAQ />
+        <Footer/>
       </div>
     </div>
   );

@@ -13,28 +13,29 @@ const FAQ = () => {
   ];
 
   return (
-    <div className="flex justify-center py-20 px-4 min-h-screen bg-transparent">
+    <div className="flex justify-center py-30 px-4 max-[640px]:px-16 min-h-screen bg-transparent">
       <div className="w-full max-w-3xl">
         <h1 className="text-3xl sm:text-4xl font-normal text-center text-[#ffffff] mb-6 tracking-wide">
           FAQs
         </h1>
 
         {/* Outer Box */}
-        <div className="border-6 border-[#787661] p-6 backdrop-blur-xs bg-[#000000]/20 space-y-0">
+        <div className="border-4 border-[#787661] p-6 backdrop-blur-xs bg-[#000000]/20 space-y-0">
           {faqData.map((faq, idx) => (
             <details
               key={idx}
               className="group cursor-pointer rounded-lg transition-all duration-300"
             >
-              <summary className="flex justify-start items-center px-4 py-1 font-[300] text-[#ffffff] text-lg sm:text-lg select-none">
-  <span className="mr-1 transition-transform duration-300 group-open:rotate-90 inline-block text-2xl sm:text-3xl md:text-3xl ">
-    ▹
-  </span>
-  {faq.question}
-</summary>
+              <summary className="flex justify-start items-center px-4 py-1 font-[300] text-[#ffffff] text-sm sm:text-lg select-none">
+                <span className="mr-1 transition-transform duration-300 group-open:rotate-90 inline-block text-2xl sm:text-3xl md:text-3xl ">
+                  ▹
+                </span>
+                {faq.question}
+              </summary>
 
-              <div className="px-4 pb-3 text-[#ffffff]/90 text-base sm:text-base font-thin leading-relaxed animate-slideDown">
+              <div className="px-4 pt-1 pb-2 text-[#ffffff]/90 text-xs sm:text-base font-thin leading-relaxed animate-slideDown">
                 {faq.answer}
+                <div className="mt-2 border-b border-gray-400 opacity-0 group-open:opacity-100 transition-opacity duration-300"></div>
               </div>
             </details>
           ))}

@@ -1,105 +1,92 @@
 import React from "react";
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from "react-router-dom";
 
 const Footer = () => {
   const navigate = useNavigate();
 
-  const openHome = () => {
-    navigate('/');
-  };
-
-  const openPlay = () => {
-    navigate('/about');
-  };
-
-  const openContact = () => {
-    navigate('/contact');
-  };
+  const openHome = () => navigate("/");
+  const openAbout = () => navigate("/about");
+  const openLeaderboard = () => navigate("/leaderboard");
+  const openContact = () => navigate("/contact");
 
   return (
-    <footer
-      className="text-white w-full"
-      style={{
-        backgroundImage: `url(https://res.cloudinary.com/diswj8gya/image/upload/v1728568149/Earth2_hyfg6q.jpg)`, // Correctly use the image
-        backgroundSize: 'cover', // Ensures the image covers the entire footer
-        backgroundPosition: 'center', // Positions the image at the center
-        backgroundRepeat: 'no-repeat', // Prevents the image from repeating
-        // padding: '2rem 0', // Adds vertical padding
-        display: 'flex', // Use flexbox for better alignment
-        flexDirection: 'column', // Stacks content vertically
-        justifyContent: 'flex-end', // Vertically center the content
-        alignItems: 'center', // Horizontally center the content
-        height: '400px',
-      }}
-    >
-      <div
-        className="absolute inset-0 bg-black opacity-50"
-        style={{ zIndex: '-1' }} // Ensure the overlay is behind content
-      ></div>
-      <div
-        className="container text-center"
-        style={{
-          display: 'flex', // Flexbox for centering
-          flexDirection: 'column', // Stack content
-          alignItems: 'center', // Center horizontally
-        }}
-      >
-        <div className="mb-5">
-          <button className="text-white text-3xl font-bold">
-            ACUMEN
-          </button>
+    <footer className="backdrop-blur-xs bg-[#000000]/20 px-4 sm:px-6 lg:px-10 py-12 lg:py-16 w-full">
+      <div className="max-w-7xl mx-auto">
+        {/* Top grid section */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+          {/* Left column */}
+          <div className="col-span-1 sm:col-span-2 lg:col-span-1">
+            <h3 className="text-white font-thin mb-4 text-lg sm:text-xl">
+              HOPELESS OPUS
+            </h3>
+            <p className="text-gray-400 text-sm sm:text-base leading-relaxed">
+              Experience the ultimate challenge of strategy, puzzles, and
+              intellectual prowess in TechTatva 2025's most exciting
+              competition.
+            </p>
+          </div>
+
+          {/* Middle column */}
+          <div>
+            <h4 className="font-thin mb-4 text-base sm:text-lg text-white">
+              Quick Links
+            </h4>
+            <ul className="space-y-2 text-sm sm:text-base text-gray-400">
+              <li>
+                <button
+                  onClick={openHome}
+                  className="hover:text-white transition-colors cursor-pointer active:cursor-grabbing"
+                >
+                  Home
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={openAbout}
+                  className="hover:text-white transition-colors cursor-pointer active:cursor-grabbing"
+                >
+                  About Us
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={openLeaderboard}
+                  className="hover:text-white transition-colors cursor-pointer active:cursor-grabbing"
+                >
+                  Leaderboard
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={openContact}
+                  className="hover:text-white transition-colors cursor-pointer active:cursor-grabbing"
+                >
+                  Contact
+                </button>
+              </li>
+            </ul>
+          </div>
+
+          {/* Right column */}
+          <div>
+            <h4 className="font-thin mb-4 text-base sm:text-lg text-white">
+              Get in Touch
+            </h4>
+            <div className="text-sm sm:text-base text-gray-400 space-y-2">
+              <p>Udupi, Karnataka, India</p>
+              <p>tt.acumen@gmail.com</p>
+            </div>
+          </div>
         </div>
-        <div
-          className="flex justify-center mb-4"
-          style={{
-            display: 'flex', // Flex for link buttons
-            gap: '', // Gap between buttons
-          }}
-        >
-          <button
-            className="text-gray-200 text-xl hover:text-white p-2"
-            onClick={openHome}
-            style={{ transition: 'color 0.3s ease' }} // Smooth transition on hover
-          >
-            Home
-          </button>
-          <button
-            className="text-gray-200 text-xl hover:text-white p-2"
-            onClick={openPlay}
-            style={{ transition: 'color 0.3s ease' }}
-          >
-            About
-          </button>
-          <button
-            className="text-gray-200 text-xl hover:text-white p-2"
-            onClick={openContact}
-            style={{ transition: 'color 0.3s ease' }}
-          >
-            Contact
-          </button>
-          <button
-            className="text-gray-200 text-xl hover:text-white p-2"
-            onClick={openHome}
-            style={{ transition: 'color 0.3s ease' }}
-          >
-            Events
-          </button>
-        </div>
-        <div
-          className="text-gray-300 pb-4"
-          style={{
-            color: '#FFF',
-            textAlign: 'center',
-            fontFamily: 'Roboto Serif',
-            fontSize: '15px',
-            fontStyle: 'normal',
-            fontWeight: 400,
-            lineHeight: '26.99px',
-            marginTop: '1rem'
-          }}
-        >
-          © {new Date().getFullYear()} ACUMEN. All rights reserved.
-        </div>
+
+        {/* Bottom section */}
+<div className="border-t border-gray-200 mt-10 pt-6 text-center text-xs font-thin sm:text-xl text-white">
+  © 2025 ACUMEN
+</div>
+<div className="mt-1 text-center text-xs font-thin sm:text-sm text-white">
+  All rights reserved.
+</div>
+
       </div>
     </footer>
   );
