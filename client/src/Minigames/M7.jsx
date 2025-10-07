@@ -1,8 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import MinigameTimer from '../components/MinigameTimer';
 
-// --- Helper Component for the Token Image Display ---
-// Import all images from assets
 import PinkCyan from "../assets/PinkCyan.jpg";
 import RedLavender from "../assets/RedLavender.jpg";
 import BlueGreen from "../assets/BlueGreen.jpg";
@@ -37,23 +35,16 @@ const TokenDisplay = ({ imageName }) => {
     );
 };
 
-// ---------------------------------------------------
-
-// 🚨 CONFIGURATION 🚨
 const GAME_VERSION = 8;
-const TIMER_DURATION_MINUTES = 2; // (legacy local timer – now replaced by session timer)
+const TIMER_DURATION_MINUTES = 2;
 
-// ---------------------------------------------------
-
-// 🔑 Integrity Check Helper Functions 🔑
-// A simple, obfuscated hashing function for client-side integrity check.
 const generateChecksum = (value, version) => {
     const data = String(value) + String(version);
     let hash = 0;
     for (let i = 0; i < data.length; i++) {
         const char = data.charCodeAt(i);
         hash = ((hash << 5) - hash) + char;
-        hash = hash & hash; // Convert to 32bit integer
+        hash = hash & hash;
     }
     return Math.abs(hash);
 };
@@ -89,10 +80,24 @@ const PuzzleGame = ({ config, onComplete, session, sessionApi }) => {
         10: { top: '85%', left: '70%' }, 11: { top: '1%', left: '50%' }, 12: { top: '40%', left: '50%' },
     };
 
-    const [tokens, setTokens] = useState(initialTokens);
+    // Starter tokens fixed in place
+    const starterTokenIds = [4, 8, 12];
+
     const [slots, setSlots] = useState(
-        Array.from({ length: 12 }, (_, i) => ({ id: i + 1, placedToken: null }))
+        Array.from({ length: 12 }, (_, i) => {
+            const id = i + 1;
+            const starterToken = starterTokenIds.includes(id)
+                ? initialTokens.find(t => t.id === id)
+                : null;
+            return { id, placedToken: starterToken };
+        })
     );
+
+    // Remove starter tokens from token bar
+    const [tokens, setTokens] = useState(
+        initialTokens.filter(t => !starterTokenIds.includes(t.id))
+    );
+
     const [draggedToken, setDraggedToken] = useState(null);
     const [draggedFromSlotId, setDraggedFromSlotId] = useState(null);
     const [pathColors, setPathColors] = useState({});
@@ -163,6 +168,13 @@ const PuzzleGame = ({ config, onComplete, session, sessionApi }) => {
             e.preventDefault();
             return;
         }
+
+        // Prevent dragging starter tokens
+        if (starterTokenIds.includes(fromSlotId)) {
+            e.preventDefault();
+            return;
+        }
+
         setDraggedToken(token);
         setDraggedFromSlotId(fromSlotId);
         e.dataTransfer.effectAllowed = 'move';
@@ -172,6 +184,9 @@ const PuzzleGame = ({ config, onComplete, session, sessionApi }) => {
     const handleDrop = (e, slotId) => {
         e.preventDefault();
         if (!draggedToken || isTimeUp || isWin) return;
+
+        // Prevent dropping on starter slots
+        if (starterTokenIds.includes(slotId)) return;
 
         if (draggedFromSlotId === slotId) {
             setDraggedToken(null);
@@ -200,7 +215,7 @@ const PuzzleGame = ({ config, onComplete, session, sessionApi }) => {
             setTokens(updatedTokens);
         }
 
-        if (draggedFromSlotId) {
+        if (draggedFromSlotId && !starterTokenIds.includes(draggedFromSlotId)) {
             const sourceSlot = newSlots.find(s => s.id === draggedFromSlotId);
             if (sourceSlot) {
                 sourceSlot.placedToken = null;
@@ -217,6 +232,8 @@ const PuzzleGame = ({ config, onComplete, session, sessionApi }) => {
     const handleDropOnTokenBar = (e) => {
         e.preventDefault();
         if (!draggedToken || !draggedFromSlotId || isTimeUp || isWin) return;
+
+        if (starterTokenIds.includes(draggedFromSlotId)) return;
 
         const newSlots = slots.map(slot =>
             slot.id === draggedFromSlotId ? { ...slot, placedToken: null } : slot
@@ -292,7 +309,7 @@ const PuzzleGame = ({ config, onComplete, session, sessionApi }) => {
 
             {/* Token Bar */}
             <div
-                className="relative flex flex-wrap justify-center p-2 bg-gray-800 rounded-2xl shadow-xl border border-gray-700 w-full max-w-4xl z-10 mt-4"
+                className="relative flex flex-nowrap justify-center overflow-x-auto p-2 bg-gray-800 rounded-2xl shadow-xl border border-gray-700 w-full max-w-7xl z-10 mt-4"
                 onDragOver={handleDragOver}
                 onDrop={handleDropOnTokenBar}
             >
@@ -302,7 +319,7 @@ const PuzzleGame = ({ config, onComplete, session, sessionApi }) => {
                     tokens.map(token => (
                         <div
                             key={token.id}
-                            className="w-20 h-20 flex items-center justify-center rounded-full bg-gray-700 m-1 sm:m-2 cursor-grab transform transition-transform duration-200 hover:scale-110 active:scale-95 shadow-md border-2 border-gray-600"
+                            className="w-20 h-20 flex items-center justify-center rounded-full bg-gray-700 m-2 cursor-grab transform transition-transform duration-200 hover:scale-110 active:scale-95 shadow-md border-2 border-gray-600"
                             draggable={!isTimeUp && !isWin}
                             onDragStart={(e) => handleDragStart(e, token)}
                         >
@@ -316,15 +333,10 @@ const PuzzleGame = ({ config, onComplete, session, sessionApi }) => {
                 </div>
             </div>
 
-            <div className="mt-4 text-lg font-semibold text-gray-300 z-10">
-                Green Paths: <span className="text-green-400">{greenPathsCount}</span> / <span className="text-yellow-400">{totalPaths}</span>
-            </div>
-
             {/* Game Board */}
             <div
                 ref={gameBoardRef}
                 className="relative w-full max-w-5xl h-[70vh] mt-4 z-10"
-                style={{ height: '70vh' }}
             >
                 <svg className="absolute inset-0 w-full h-full z-0">
                     {initialPaths.map((path, index) => {
@@ -358,15 +370,23 @@ const PuzzleGame = ({ config, onComplete, session, sessionApi }) => {
                 {slots.map(slot => (
                     <div
                         key={slot.id}
-                        className={`absolute z-10 w-20 h-20 rounded-full flex items-center justify-center border-4 border-dashed border-gray-500 bg-gray-800 hover:bg-gray-700 transition-colors duration-200 transform ${!isTimeUp && !isWin ? 'hover:scale-105' : ''}`}
+                        className={`absolute z-10 w-20 h-20 rounded-full flex items-center justify-center border-4 border-dashed border-gray-500 bg-gray-800 ${
+                            starterTokenIds.includes(slot.id)
+                                ? 'opacity-100 border-green-400'
+                                : 'hover:bg-gray-700 transition-colors duration-200 transform hover:scale-105'
+                        }`}
                         style={slotPositions[slot.id]}
                         onDragOver={handleDragOver}
                         onDrop={(e) => handleDrop(e, slot.id)}
                     >
                         {slot.placedToken ? (
                             <div
-                                className="w-full h-full flex items-center justify-center bg-gray-700 rounded-full shadow-lg cursor-move"
-                                draggable={!isTimeUp && !isWin}
+                                className={`w-full h-full flex items-center justify-center rounded-full shadow-lg ${
+                                    starterTokenIds.includes(slot.id)
+                                        ? 'bg-gray-600 cursor-default'
+                                        : 'bg-gray-700 cursor-move'
+                                }`}
+                                draggable={!starterTokenIds.includes(slot.id) && !isTimeUp && !isWin}
                                 onDragStart={(e) => handleDragStart(e, slot.placedToken, slot.id)}
                             >
                                 <TokenDisplay imageName={slot.placedToken.image} />
