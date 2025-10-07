@@ -19,7 +19,7 @@ export const getStoryById = async (req, res) => {
     if (!story) return res.status(404).json({ message: "Story not found" });
     return res.json(story);
   } catch (err) {
-    console.error("Get story error:", err);
+    // console.error("Get story error:", err);
     return res.status(500).json({ message: "Server error" });
   }
 };
@@ -78,7 +78,7 @@ export const awardMinigameReward = async (req, res) => {
       userState: { points: user.points, inventory: user.inventory }
     });
   } catch (err) {
-    console.error('Award minigame reward error:', err);
+    // console.error('Award minigame reward error:', err);
     return res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
@@ -119,7 +119,7 @@ export const getCurrentStory = async (req, res) => {
       },
     });
   } catch (err) {
-    console.error("Get current story error:", err);
+    // console.error("Get current story error:", err);
     return res.status(500).json({ message: "Server error" });
   }
 };
@@ -190,7 +190,7 @@ export const makeChoice = async (req, res) => {
       nextStory,
     });
   } catch (err) {
-    console.error("Make choice error:", err);
+    // console.error("Make choice error:", err);
     return res.status(500).json({ message: "Server error", error: err.message });
   }
 };
@@ -242,7 +242,7 @@ export const updateUserStoryOnLevelEnd = async (req, res) => {
     });
 
   } catch (err) {
-    console.error("Update user story error:", err);
+    // console.error("Update user story error:", err);
     return res.status(500).json({ message: "Server error", error: err.message });
   }
 };

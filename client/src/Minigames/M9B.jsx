@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Check } from 'lucide-react';
+import MinigameTimer from '../components/MinigameTimer';
 
-export default function MusicArcade() {
+export default function MusicArcade({ config, onComplete, session, sessionApi }) {
   const [gameStarted, setGameStarted] = useState(false);
   const [countdown, setCountdown] = useState(3);
   const [currentTime, setCurrentTime] = useState(0);
@@ -88,6 +89,14 @@ export default function MusicArcade() {
     });
   }, [currentTime, connections]);
 
+  // Auto-fail when backend timer expires
+  useEffect(() => {
+    if (!session || session.completed) return;
+    if (session.remainingSeconds === 0) {
+      onComplete && onComplete(false);
+    }
+  }, [session, onComplete]);
+
   const getActiveInstructions = () => {
     return instructions.filter(
       inst => currentTime >= inst.start && currentTime <= inst.end
@@ -157,6 +166,7 @@ export default function MusicArcade() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-100 via-yellow-50 to-orange-100 p-8 flex flex-col items-center justify-center">
+      <div className="absolute top-4 right-4"><MinigameTimer remainingSeconds={session?.remainingSeconds ?? null} triesLeft={session?.triesLeft ?? null} /></div>
       <h1 className="text-5xl font-bold text-amber-900 mb-8 tracking-wider" style={{ fontFamily: 'serif', textShadow: '2px 2px 4px rgba(0,0,0,0.3)' }}>MUSIC ARCADE</h1>
       
       {!gameStarted && countdown > 0 ? (

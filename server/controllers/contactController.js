@@ -35,7 +35,7 @@ Message: ${message}`,
 
     res.status(200).json({ message: "Message sent successfully!" });
   } catch (err) {
-    console.error(err);
+    // console.error(err);
     res
       .status(500)
       .json({ message: "Failed to send message", error: err.message });

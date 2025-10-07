@@ -16,7 +16,7 @@ import img777 from '../assets/img777.png';
 import img911 from '../assets/img911.png';
 import map from '../assets/map.png';
 
-export default function MazeGame({ onComplete, session }) {
+export default function MazeGame({ config, onComplete, session, sessionApi }) {
   // ---------------- Maze Setup ----------------
   const nodes = {
     1: { images: choice1, connections: { up: 2 } },
@@ -185,8 +185,8 @@ export default function MazeGame({ onComplete, session }) {
             >
               <MapIcon className="w-8 h-8 text-white" />
             </button>
-            {/* Timer */}
-            <MinigameTimer remainingSeconds={session?.remainingSeconds ?? null} />
+              {/* Timer */}
+              <MinigameTimer remainingSeconds={session?.remainingSeconds ?? null} triesLeft={session?.triesLeft ?? null} />
           </div>
 
           {/* Map Overlay */}
