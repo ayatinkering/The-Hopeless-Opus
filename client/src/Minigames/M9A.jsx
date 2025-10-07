@@ -62,13 +62,14 @@ export default function Pravar({ config, onComplete, session, sessionApi }) {
     return highlightedCells.some(cell => cell.row === row && cell.col === col);
   };
 
-  // Auto-fail when backend timer expires
+  // Auto-fail when backend timer expires — mark local UI state and let loader finalize
   useEffect(() => {
     if (!session || session.completed) return;
     if (session.remainingSeconds === 0) {
-      onComplete && onComplete(false);
+      setShowLockPage(true);
+      setMessage('TIME UP');
     }
-  }, [session, onComplete]);
+  }, [session]);
 
   const toggleNumberOrientation = (boxIdx, num) => {
     const key = `${boxIdx}-${num}`;
@@ -345,7 +346,11 @@ export default function Pravar({ config, onComplete, session, sessionApi }) {
               </div>
               </div>
               <div className="absolute top-4 right-4">
-                <MinigameTimer remainingSeconds={session?.remainingSeconds ?? null} triesLeft={session?.triesLeft ?? null} />
+                <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50">
+                  <div className="bg-slate-800/60 rounded-full px-2 py-1 inline-block">
+                    <MinigameTimer remainingSeconds={session?.remainingSeconds ?? null} triesLeft={session?.triesLeft ?? null} />
+                  </div>
+                </div>
               </div>
           </div>
         )}

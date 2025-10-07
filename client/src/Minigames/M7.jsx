@@ -3,24 +3,25 @@ import MinigameTimer from '../components/MinigameTimer';
 
 // --- Helper Component for the Token Image Display ---
 // Import all images from assets
-import BlueSilver from "../assets/BlueSilver.png";
-import RedPurple from "../assets/RedPurple.png";
-import CageGreen from "../assets/CageGreen.png";
-import RedBlue from "../assets/RedBlue.png";
-import PurpleSilver from "../assets/PurpleSilver.png";
-import BlueGreen from "../assets/BlueGreen.png";
-import CageRed from "../assets/CageRed.png";
-import PurpleGreen from "../assets/PurpleGreen.png";
+import PinkCyan from "../assets/PinkCyan.jpg";
+import RedLavender from "../assets/RedLavender.jpg";
+import BlueGreen from "../assets/BlueGreen.jpg";
+import RedPink from "../assets/RedPink.jpg";
+import LavCyan from "../assets/LavCyan.jpg";
+import PinkGreen from "../assets/PinkGreen.jpg";
+import BlueRed from "../assets/BlueRed.jpg";
+import LavGreen from "../assets/LavGreen.jpg";
+import TokensBg from "../assets/TokensBg.jpg";
 
 const images = {
-    BlueSilver,
-    RedPurple,
-    CageGreen,
-    RedBlue,
-    PurpleSilver,
+    PinkCyan,
+    RedLavender,
     BlueGreen,
-    CageRed,
-    PurpleGreen,
+    RedPink,
+    LavCyan,
+    PinkGreen,
+    BlueRed,
+    LavGreen,
 };
 
 const TokenDisplay = ({ imageName }) => {
@@ -47,7 +48,6 @@ const TIMER_DURATION_MINUTES = 2; // (legacy local timer – now replaced by ses
 // 🔑 Integrity Check Helper Functions 🔑
 // A simple, obfuscated hashing function for client-side integrity check.
 const generateChecksum = (value, version) => {
-    // Convert to string and mix with a secret 'salt' (the version number)
     const data = String(value) + String(version);
     let hash = 0;
     for (let i = 0; i < data.length; i++) {
@@ -58,20 +58,20 @@ const generateChecksum = (value, version) => {
     return Math.abs(hash);
 };
 
-const PuzzleGame = ({ onComplete, session, sessionApi }) => {
+const PuzzleGame = ({ config, onComplete, session, sessionApi }) => {
     const initialTokens = [
-        { id: 1, image: 'BlueSilver', symbols: ['symbol1', 'symbol2'] },
-        { id: 2, image: 'BlueSilver', symbols: ['symbol1', 'symbol2'] },
-        { id: 3, image: 'RedPurple', symbols: ['symbol3', 'symbol4'] },
-        { id: 4, image: 'CageGreen', symbols: ['symbol5', 'symbol6'] },
-        { id: 5, image: 'RedBlue', symbols: ['symbol4', 'symbol2'] },
-        { id: 6, image: 'RedBlue', symbols: ['symbol2', 'symbol4'] },
-        { id: 7, image: 'PurpleSilver', symbols: ['symbol3', 'symbol1'] },
-        { id: 8, image: 'BlueGreen', symbols: ['symbol2', 'symbol6'] },
-        { id: 9, image: 'PurpleSilver', symbols: ['symbol1', 'symbol3'] },
-        { id: 10, image: 'CageRed', symbols: ['symbol5', 'symbol4'] },
-        { id: 11, image: 'PurpleGreen', symbols: ['symbol3', 'symbol6'] },
-        { id: 12, image: 'PurpleSilver', symbols: ['symbol1', 'symbol3'] },
+        { id: 1, image: 'PinkCyan', symbols: ['symbol1', 'symbol2'] },
+        { id: 2, image: 'PinkCyan', symbols: ['symbol1', 'symbol2'] },
+        { id: 3, image: 'RedLavender', symbols: ['symbol3', 'symbol4'] },
+        { id: 4, image: 'BlueGreen', symbols: ['symbol5', 'symbol6'] },
+        { id: 5, image: 'RedPink', symbols: ['symbol4', 'symbol2'] },
+        { id: 6, image: 'RedPink', symbols: ['symbol2', 'symbol4'] },
+        { id: 7, image: 'LavCyan', symbols: ['symbol3', 'symbol1'] },
+        { id: 8, image: 'PinkGreen', symbols: ['symbol2', 'symbol6'] },
+        { id: 9, image: 'LavCyan', symbols: ['symbol1', 'symbol3'] },
+        { id: 10, image: 'BlueRed', symbols: ['symbol5', 'symbol4'] },
+        { id: 11, image: 'LavGreen', symbols: ['symbol3', 'symbol6'] },
+        { id: 12, image: 'LavCyan', symbols: ['symbol1', 'symbol3'] },
     ];
 
     const initialPaths = [
@@ -98,19 +98,16 @@ const PuzzleGame = ({ onComplete, session, sessionApi }) => {
     const [pathColors, setPathColors] = useState({});
     const [greenPathsCount, setGreenPathsCount] = useState(0);
 
-    // Timer refs / flags (session-driven)
     const timerRef = useRef(null);
     const isGameOver = useRef(false);
     const isTimeUp = !!(session && session.remainingSeconds === 0);
 
-    // Session-driven timer: fail when remainingSeconds hits 0
     useEffect(() => {
         if (!session || session.completed) return;
         if (session.remainingSeconds === 0) {
-            onComplete && onComplete(false);
+            isGameOver.current = true;
         }
     }, [session, onComplete]);
-    // ---------------------------------------------------
 
     const gameBoardRef = useRef(null);
     const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
@@ -162,7 +159,6 @@ const PuzzleGame = ({ onComplete, session, sessionApi }) => {
     }, [slots, initialPaths]);
 
     const handleDragStart = (e, token, fromSlotId = null) => {
-        // Prevent drag and drop if game is over (win or time up/tampering)
         if (isTimeUp || isWin) {
             e.preventDefault();
             return;
@@ -175,8 +171,7 @@ const PuzzleGame = ({ onComplete, session, sessionApi }) => {
 
     const handleDrop = (e, slotId) => {
         e.preventDefault();
-        // Prevent drop if game is over
-        if (!draggedToken || isTimeUp || isWin) return; 
+        if (!draggedToken || isTimeUp || isWin) return;
 
         if (draggedFromSlotId === slotId) {
             setDraggedToken(null);
@@ -221,8 +216,7 @@ const PuzzleGame = ({ onComplete, session, sessionApi }) => {
 
     const handleDropOnTokenBar = (e) => {
         e.preventDefault();
-        // Prevent drop if game is over
-        if (!draggedToken || !draggedFromSlotId || isTimeUp || isWin) return; 
+        if (!draggedToken || !draggedFromSlotId || isTimeUp || isWin) return;
 
         const newSlots = slots.map(slot =>
             slot.id === draggedFromSlotId ? { ...slot, placedToken: null } : slot
@@ -258,7 +252,6 @@ const PuzzleGame = ({ onComplete, session, sessionApi }) => {
     const totalPaths = initialPaths.length;
     const isWin = greenPathsCount === totalPaths && totalPaths > 0;
 
-    // Stop the timer if the game is won
     useEffect(() => {
         if (isWin) {
             clearInterval(timerRef.current);
@@ -266,15 +259,22 @@ const PuzzleGame = ({ onComplete, session, sessionApi }) => {
         }
     }, [isWin]);
 
-
     return (
-        <div className="flex flex-col items-center justify-start min-h-screen bg-gray-900 text-gray-100 p-4 font-sans relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-br from-gray-800 to-gray-950 z-0"></div>
-
+        <div
+            className="flex flex-col items-center justify-start min-h-screen text-gray-100 p-4 font-sans relative overflow-hidden"
+            style={{
+                backgroundImage: `url(${TokensBg})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                backgroundRepeat: 'no-repeat',
+            }}
+        >
             {(isWin || (session && session.remainingSeconds === 0)) && (
                 <div className="absolute inset-0 z-50 flex items-center justify-center bg-gray-900 bg-opacity-80 rounded-lg shadow-lg backdrop-blur-sm">
-                    <div className="text-center p-8 bg-gray-900 rounded-xl shadow-2xl transform scale-105 transition-transform duration-500 border-4"
-                        style={{ borderColor: isWin ? '#10B981' : '#EF4444' }}>
+                    <div
+                        className="text-center p-8 bg-gray-900 rounded-xl shadow-2xl transform scale-105 transition-transform duration-500 border-4"
+                        style={{ borderColor: isWin ? '#10B981' : '#EF4444' }}
+                    >
                         {isWin ? (
                             <>
                                 <h2 className="text-5xl font-extrabold text-green-400 mb-4 animate-pulse">You Won! 🎉</h2>
@@ -290,31 +290,31 @@ const PuzzleGame = ({ onComplete, session, sessionApi }) => {
                 </div>
             )}
 
-            
             {/* Token Bar */}
-<div
-    className="relative flex flex-wrap justify-center p-2 bg-gray-800 rounded-2xl shadow-xl border border-gray-700 w-full max-w-4xl z-10 mt-4"
-    onDragOver={handleDragOver}
-    onDrop={handleDropOnTokenBar}
->
-    {tokens.length === 0 ? (
-        <p className="text-xl text-gray-400 font-medium p-4">No tokens left!</p>
-    ) : (
-        tokens.map(token => (
             <div
-                key={token.id}
-                className="w-20 h-20 flex items-center justify-center rounded-full bg-gray-700 m-1 sm:m-2 cursor-grab transform transition-transform duration-200 hover:scale-110 active:scale-95 shadow-md border-2 border-gray-600"
-                draggable={!isTimeUp && !isWin}
-                onDragStart={(e) => handleDragStart(e, token)}
+                className="relative flex flex-wrap justify-center p-2 bg-gray-800 rounded-2xl shadow-xl border border-gray-700 w-full max-w-4xl z-10 mt-4"
+                onDragOver={handleDragOver}
+                onDrop={handleDropOnTokenBar}
             >
-                <TokenDisplay imageName={token.image} />
+                {tokens.length === 0 ? (
+                    <p className="text-xl text-gray-400 font-medium p-4">No tokens left!</p>
+                ) : (
+                    tokens.map(token => (
+                        <div
+                            key={token.id}
+                            className="w-20 h-20 flex items-center justify-center rounded-full bg-gray-700 m-1 sm:m-2 cursor-grab transform transition-transform duration-200 hover:scale-110 active:scale-95 shadow-md border-2 border-gray-600"
+                            draggable={!isTimeUp && !isWin}
+                            onDragStart={(e) => handleDragStart(e, token)}
+                        >
+                            <TokenDisplay imageName={token.image} />
+                        </div>
+                    ))
+                )}
+
+                <div className="absolute bottom-2 right-2">
+                    <MinigameTimer remainingSeconds={session?.remainingSeconds ?? null} />
+                </div>
             </div>
-        ))
-    )}
-
-    <div className="absolute bottom-2 right-2"><MinigameTimer remainingSeconds={session?.remainingSeconds ?? null} /></div>
-</div>
-
 
             <div className="mt-4 text-lg font-semibold text-gray-300 z-10">
                 Green Paths: <span className="text-green-400">{greenPathsCount}</span> / <span className="text-yellow-400">{totalPaths}</span>

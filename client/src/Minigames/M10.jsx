@@ -277,13 +277,14 @@ export default function StepBlocksGame({ config, onComplete, session, sessionApi
     return () => clearInterval(timerInterval);
   }, [levelIndex]);
 
-  // Auto-fail when backend timer expires
+  // Auto-fail when backend timer expires — set UI state and let loader finalize
   useEffect(() => {
     if (!session || session.completed) return;
     if (session.remainingSeconds === 0) {
-      onComplete && onComplete(false);
+      setMsg('Session expired');
+      setLevelIndex(levels.length - 1);
     }
-  }, [session, onComplete]);
+  }, [session]);
 
   const renderCell = (side, blocks, row, col) => {
     const occupyingColor = findOccupyingColor(blocks, row, col);
@@ -376,7 +377,7 @@ export default function StepBlocksGame({ config, onComplete, session, sessionApi
         {renderStructure("right", rightBlocks)}
       </div>
 
-      <div className="absolute top-4 right-4"><MinigameTimer remainingSeconds={session?.remainingSeconds ?? null} triesLeft={session?.triesLeft ?? null} /></div>
+  <div className="absolute top-4 left-1/2 -translate-x-1/2"><MinigameTimer remainingSeconds={session?.remainingSeconds ?? null} triesLeft={session?.triesLeft ?? null} /></div>
 
       {dragging && preview && (
         <div

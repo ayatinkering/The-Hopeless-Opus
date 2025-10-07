@@ -89,13 +89,13 @@ export default function SlidingBlocks({ config, onComplete, session, sessionApi 
     checkWin();
   }, [blocks]);
 
-  // Auto-fail when backend timer expires
+  // Auto-fail when backend timer expires — rely on loader
   useEffect(() => {
     if (!session || session.completed) return;
     if (session.remainingSeconds === 0) {
-      onComplete && onComplete(false);
+      setWon(false);
     }
-  }, [session, onComplete]);
+  }, [session]);
 
   const computeRange = (block, axis) => {
     const occ = buildOccupancy(block.id);
