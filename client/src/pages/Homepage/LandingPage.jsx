@@ -28,9 +28,9 @@ const LandingPage = () => {
       <div
         className="
           relative
-          mt-50 lg:mt-20 	/* Phone: push down, Laptop/desktop unchanged */
+          mt-50 lg:mt-24  
           md:mt-16 md:ml-16
-          lg:ml-34
+          lg:ml-26
           w-full lg:w-[65%]
           text-white z-10
           mx-auto
@@ -58,7 +58,7 @@ const LandingPage = () => {
             <br />
             <DecryptedText text="that shape your psyche and confront the enigmatic mysteries hidden" animateOn="view" className="text-white" encryptedClassName="text-white" />
             <br />
-            <DecryptedText text="in the corners of your consciousness. Do you trust yourself into the unknown?" animateOn="view" className="text-white" encryptedClassName="text-white" />
+            <DecryptedText text="in the corners of your consciousness. Do you trust yourself in the unknown?" animateOn="view" className="text-white" encryptedClassName="text-white" />
           </span>
 
           {/* All screens below lg: phone layout */}

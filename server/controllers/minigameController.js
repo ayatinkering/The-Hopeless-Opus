@@ -35,11 +35,13 @@ export const startSession = async (req, res) => {
 
   let session = await MinigameSession.findOne({ user: userId, minigameId });
     if (!session) {
-  session = new MinigameSession({
+      // Games with finite tries (initialize to 3-5 depending on game type)
+      const triesGames = ['M4','M5','M6','M8','M9A','M9B','M10','M11','M12','M13','M14','M15'];
+      session = new MinigameSession({
         user: userId,
         minigameId,
         timerSeconds: base.timer || 300,
-        triesLeft: [ 'M4','M5','M6' ].includes(minigameId) ? 5 : 0,
+        triesLeft: triesGames.includes(minigameId) ? 3 : 0,
         startedAt: new Date(),
       });
       await session.save();
@@ -63,7 +65,7 @@ export const startSession = async (req, res) => {
       }
     });
   } catch (err) {
-    console.error('startSession error', err);
+    // console.error('startSession error', err);
     return res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
@@ -88,7 +90,7 @@ export const getSessionState = async (req, res) => {
       }
     });
   } catch (err) {
-    console.error('getSessionState error', err);
+    // console.error('getSessionState error', err);
     return res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
@@ -104,10 +106,15 @@ export const decrementTrySession = async (req, res) => {
     if (!session) return res.status(404).json({ message: 'Session not found' });
     if (session.triesLeft <= 0) return res.status(400).json({ message: 'No tries left' });
     session.triesLeft -= 1;
-    await session.save();
-    return res.json({ message: 'Try decremented', triesLeft: session.triesLeft });
+      // If tries reach zero, mark session as completed (failed)
+      if (session.triesLeft <= 0) {
+        session.completed = true;
+        session.completedAt = new Date();
+      }
+      await session.save();
+      return res.json({ message: 'Try decremented', triesLeft: session.triesLeft, completed: session.completed });
   } catch (err) {
-    console.error('decrementTrySession error', err);
+    // console.error('decrementTrySession error', err);
     return res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
@@ -143,7 +150,7 @@ export const completeSession = async (req, res) => {
 
     return res.json({ message: 'Session completed', score, sessionId: session._id, minigameId });
   } catch (err) {
-    console.error('completeSession error', err);
+    // console.error('completeSession error', err);
     return res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
@@ -177,7 +184,7 @@ export const claimMinigameReward = async (req, res) => {
       userPoints: user.points
     });
   } catch (err) {
-    console.error('claimMinigameReward error', err);
+    // console.error('claimMinigameReward error', err);
     return res.status(500).json({ message: 'Server error', error: err.message });
   }
 };

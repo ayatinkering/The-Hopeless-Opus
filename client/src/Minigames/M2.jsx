@@ -1,6 +1,7 @@
 import React, { useState } from "react";
+import MinigameTimer from "../components/MinigameTimer";
 
-export default function M2SelectPlace() {
+export default function M2SelectPlace({ config, onComplete, session, sessionApi }) {
   // State to track which cakes are available at the bottom
   const [availableCakes, setAvailableCakes] = useState([1, 2, 3, 4, 5]);
   
@@ -140,6 +141,9 @@ export default function M2SelectPlace() {
 
   return (
     <div style={containerStyle}>
+      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50">
+        <MinigameTimer remainingSeconds={session?.remainingSeconds ?? null}/>
+      </div>
       <div style={backgroundStyle}></div>
       
       {/* Plates overlay */}
@@ -200,8 +204,8 @@ export default function M2SelectPlace() {
         ))}
       </div>
       
-      {/* Success/Incorrect Message Modal */}
-      {gameStatus && (
+  {/* Success/Incorrect Message Modal */}
+  {gameStatus && (
         <>
           {/* Confetti Effect */}
           <div style={{
@@ -273,28 +277,6 @@ export default function M2SelectPlace() {
               }}>
                 You placed all the cakes correctly!
               </p>
-              <button
-                onClick={handleRetry}
-                style={{
-                  padding: '15px 40px',
-                  fontSize: '18px',
-                  backgroundColor: '#4CAF50',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '10px',
-                  cursor: 'pointer',
-                  fontWeight: 'bold',
-                  transition: 'background-color 0.2s',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = '#45a049';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = '#4CAF50';
-                }}
-              >
-                Play Again
-              </button>
             </div>
           </div>
           

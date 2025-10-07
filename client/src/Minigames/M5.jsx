@@ -141,7 +141,7 @@ const M5 = ({ config, onComplete, session, sessionApi }) => {
         audioEl.loop = true;
         audioRef.current = audioEl;
       } catch (err) {
-        console.error("Audio setup failed:", err);
+        // console.error("Audio setup failed:", err);
         return;
       }
     }
@@ -154,7 +154,7 @@ const M5 = ({ config, onComplete, session, sessionApi }) => {
         await audioRef.current.play();
         setAudioPlaying(true);
       } catch (err) {
-        console.error("Audio playback failed:", err);
+        // console.error("Audio playback failed:", err);
       }
     }
   };
@@ -166,15 +166,18 @@ const M5 = ({ config, onComplete, session, sessionApi }) => {
   }, []);
 
   // Session-driven expiry / tries
+  // Do not directly call onComplete(false) here — loader will handle finalization.
   useEffect(() => {
     if (!session || session.completed) return;
     if (session.remainingSeconds === 0) {
-      onComplete && onComplete(false);
+      setMessage('ACCESS DENIED');
+      setGameOver(true);
     }
     if (typeof session.triesLeft === 'number' && session.triesLeft <= 0) {
-      onComplete && onComplete(false);
+      setMessage('ACCESS DENIED - GAME OVER');
+      setGameOver(true);
     }
-  }, [session, onComplete]);
+  }, [session]);
 
   const failAndDecrement = () => {
     if (sessionApi?.decrementTry) sessionApi.decrementTry();
@@ -186,8 +189,10 @@ const M5 = ({ config, onComplete, session, sessionApi }) => {
       className="relative flex items-center justify-center min-h-screen bg-black bg-cover bg-center"
       style={{ backgroundImage: `url(${morseBg})` }}
     >
-      <div className="absolute top-4 left-1/2 -translate-x-1/2">
-        <MinigameTimer remainingSeconds={session?.remainingSeconds ?? timeLeft} triesLeft={session?.triesLeft ?? triesLeft} />
+      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50">
+        <div className="bg-slate-800/60 rounded-full px-2 py-1 inline-block">
+          <MinigameTimer remainingSeconds={session?.remainingSeconds ?? timeLeft} triesLeft={session?.triesLeft ?? triesLeft} />
+        </div>
       </div>
 
       <div className="absolute top-[50%] left-[47%] transform -translate-x-1/2 flex items-center gap-3">

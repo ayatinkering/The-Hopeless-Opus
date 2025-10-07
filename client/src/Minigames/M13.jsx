@@ -60,7 +60,7 @@ const boundingBox = (cells) => {
   return { minR, maxR, minC, maxC, height: maxR - minR + 1, width: maxC - minC + 1 };
 };
 
-export default function SlidingBlocks() {
+export default function SlidingBlocks({ config, onComplete, session, sessionApi }) {
   const [blocks, setBlocks] = useState(INITIAL_BLOCKS);
   const [won, setWon] = useState(false);
   const containerRef = useRef(null);
@@ -88,6 +88,14 @@ export default function SlidingBlocks() {
   useEffect(() => {
     checkWin();
   }, [blocks]);
+
+  // Auto-fail when backend timer expires — rely on loader
+  useEffect(() => {
+    if (!session || session.completed) return;
+    if (session.remainingSeconds === 0) {
+      setWon(false);
+    }
+  }, [session]);
 
   const computeRange = (block, axis) => {
     const occ = buildOccupancy(block.id);

@@ -46,7 +46,7 @@ const VisualNovelInterface = () => {
           if (serverUserState) setUserState(serverUserState);
         }
       } catch (err) {
-        console.error("Error fetching current story:", err);
+        // console.error("Error fetching current story:", err);
       }
     };
 
@@ -69,7 +69,7 @@ const VisualNovelInterface = () => {
       const res = await axios.get(`${API_STORY}/${storyId}`, getToken());
       return res.data;
     } catch (err) {
-      console.error("Error fetching story by ID:", err);
+      // console.error("Error fetching story by ID:", err);
       return null;
     }
   };
@@ -83,7 +83,7 @@ const VisualNovelInterface = () => {
         { storyId: storyData.storyID, choiceIndex: index },
         getToken()
       );
-  console.log("Choice response:", res.data);
+  // console.log("Choice response:", res.data);
   const { nextStory, minigame, userState: serverUserState } = res.data;
   if (serverUserState) setUserState(serverUserState);
 
@@ -102,7 +102,7 @@ const VisualNovelInterface = () => {
         setSelectedChoice(null);
       }
     } catch (err) {
-      console.error("Error making choice:", err);
+      // console.error("Error making choice:", err);
     }
   };
 
@@ -117,66 +117,17 @@ const VisualNovelInterface = () => {
     setActiveMinigame(null);
     setMinigameConfig(null);
 
-    // Refresh user state (reward claimed already if success)
+    // Call backend to update story on minigame completion
     try {
-      const res = await axios.get(`${API_STORY}/current/me`, getToken());
-      if (res.data?.userState) setUserState(res.data.userState);
+      await axios.post(`${API_STORY}/level-end`, { storyId: activeMinigame, success }, getToken());
     } catch (e) {
-      console.warn('User state refresh failed after minigame', e.response?.data || e.message || e);
+      // console.error('Failed to update story on level end', e);
     }
 
-    // Branching logic: success -> nextID[0], failure -> nextID[1]
-    // Priority order:
-    // 1. If explicit pendingStory (returned from choice that launched minigame), use that (overrides generic nextID branching).
-    // 2. Else use storyData.nextID based on success/fail.
-    // 3. Fallback to first available nextID if selected index missing.
-    // 4. Final fallback: reload current story from server.
-
-    // 1. Pending story override
-    if (pendingStory) {
-      const ps = pendingStory;
-      setStoryData(ps);
-      setFullDialogue(ps.text?.length ? ps.text.join('\n') : '');
-      setDisplayedText('');
-      setIsSkipping(false);
-      setPendingStory(null);
-      setSelectedChoice(null);
-      return;
-    }
-
-    const nextIDs = storyData?.nextID || [];
-    let targetId = null;
-    if (nextIDs.length) {
-      if (success) {
-        targetId = nextIDs[0];
-      } else if (nextIDs.length > 1) {
-        targetId = nextIDs[1];
-      } else {
-        // failure but only one branch; fall back to the sole nextID
-        targetId = nextIDs[0];
-      }
-    }
-
-    if (targetId) {
-      try {
-        const node = await fetchStoryById(targetId);
-        if (node) {
-          setStoryData(node);
-          setFullDialogue(node.text?.length ? node.text.join('\n') : '');
-          setDisplayedText('');
-          setIsSkipping(false);
-          setSelectedChoice(null);
-          return;
-        }
-      } catch (e) {
-        console.error('Failed to fetch branched node', e);
-      }
-    }
-
-    // 4. Final fallback: reload current story
+    // Refresh user state and story
     try {
       const res = await axios.get(`${API_STORY}/current/me`, getToken());
-      const { story } = res.data || {};
+      const { story, userState: serverUserState } = res.data;
       if (story) {
         setStoryData(story);
         setFullDialogue(story.text?.length ? story.text.join('\n') : '');
@@ -184,9 +135,12 @@ const VisualNovelInterface = () => {
         setIsSkipping(false);
         setSelectedChoice(null);
       }
-    } catch (err) {
-      console.error('Final fallback failed after minigame', err);
+      if (serverUserState) setUserState(serverUserState);
+    } catch (e) {
+      // console.error('Failed to fetch updated story after minigame', e);
     }
+
+    setPendingStory(null);
   };
 
   const handleSkip = () => {
@@ -199,7 +153,7 @@ const VisualNovelInterface = () => {
 
     try {
       let nextStory = null;
-
+      
       if (storyData.levelEnd) {
         const res = await axios.post(
           `${API_STORY}/level-end`,
@@ -214,7 +168,7 @@ const VisualNovelInterface = () => {
       if (nextStory) {
         // If the next story node is a minigame, trigger the minigame UI
         if (nextStory.storyID && nextStory.storyID.startsWith('M')) {
-          console.log('Next story is a minigame, launching:', nextStory.storyID);
+          // console.log('Next story is a minigame, launching:', nextStory.storyID);
           setStoryData(nextStory);
           setFullDialogue(nextStory.text?.join('\n') || '');
           setDisplayedText('');
@@ -280,23 +234,15 @@ const VisualNovelInterface = () => {
   );
 
   // If minigame is active, render it via MinigameLoader
-  if (activeMinigame) {
+    if (activeMinigame) {
     return (
       <div className="w-screen h-screen relative">
-        <UserHUD userState={userState} />
+        <UserHUD userState={userState} activeMinigame={activeMinigame} />
         <div style={{ opacity: sceneVisible ? 1 : 0, transition: 'opacity 260ms ease' }}>
           <MinigameLoader id={activeMinigame} config={minigameConfig} onComplete={handleMinigameComplete} />
 
           {/* Temporary test button for devs: simulate minigame completion (success) */}
-          <div className="absolute top-4 right-4 z-50">
-            <button
-              onClick={() => handleMinigameComplete(true)}
-              className="px-3 py-2 bg-green-600 text-white rounded-md shadow-lg hover:bg-green-500 transition"
-              title="Dev-only: simulate successful completion of the minigame"
-            >
-              Test: Complete (Success)
-            </button>
-          </div>
+          
           {awardMessage && (
             <div className="absolute top-16 right-4 z-50 px-3 py-2 bg-yellow-500 text-black rounded shadow">
               {awardMessage}
@@ -306,6 +252,20 @@ const VisualNovelInterface = () => {
       </div>
     );
   }
+
+  useEffect(() => {
+  const handleKeyDown = (e) => {
+    if (e.key === "ArrowRight") {
+      // Only advance if the dialogue is fully displayed and no choices exist
+      if (displayedText.length === fullDialogue.length && !storyData?.choice?.length) {
+        handleNext();
+      }
+    }
+  };
+
+  window.addEventListener("keydown", handleKeyDown);
+  return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [displayedText, fullDialogue, storyData]);
 
   return (
     <div
@@ -317,7 +277,7 @@ const VisualNovelInterface = () => {
         filter: 'brightness(0.85)'
       }}
     >
-      <UserHUD userState={userState} />
+  <UserHUD userState={userState} activeMinigame={activeMinigame} />
 
       <div style={{ opacity: sceneVisible ? 1 : 0, transition: 'opacity 260ms ease' }} className="absolute inset-0">
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent"></div>

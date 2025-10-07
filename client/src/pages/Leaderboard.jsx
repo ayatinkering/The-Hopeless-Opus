@@ -26,7 +26,7 @@ export default function Leaderboard({ currentUserId, token}) {
         setTeams(leaderboard);
         if (data.currentUserIndex !== undefined) setCurrentUserIndex(data.currentUserIndex);
       } catch (err) {
-        console.error("Error fetching leaderboard:", err);
+        // console.error("Error fetching leaderboard:", err);
         setTeams([]);
       } finally {
         setLoading(false);

@@ -16,7 +16,7 @@ const Navbar = ({ user }) => {
   ];
 
   return (
-    <nav className="w-full fixed top-0 z-50 backdrop-blur-sm bg-[#000000]/20 border-b border-[#787661]">
+    <nav className="w-full fixed top-0 z-50 backdrop-blur-xs bg-[#000000]/20 border-b border-gray-400">
       <div className="max-w-7xl mx-auto px-6 lg:px-8 flex justify-between items-center h-20">
         {/* Logo */}
         <div className="flex-shrink-0">
@@ -30,14 +30,14 @@ const Navbar = ({ user }) => {
         </div>
 
         {/* Desktop Links */}
-        <ul className="hidden md:flex space-x-18 text-lg">
+        <ul className="hidden md:flex space-x-8 text-lg">
           {navItems.map((item, index) => (
             <li key={index} className="relative">
               <NavLink
                 to={item.path}
                 end
                 className={({ isActive }) =>
-                  `relative px-4 py-2 font-normal transition-all duration-300
+                  `relative px-4 py-2 font-normal transition-all duration-300 whitespace-nowrap
                    before:absolute before:top-1/2 before:left-1/2 
                    before:h-[1.6em] before:w-[130%] before:-translate-x-1/2 before:-translate-y-1/2
                    before:rounded-full before:bg-[#8c8970]/70 before:blur-sm
@@ -93,8 +93,9 @@ const Navbar = ({ user }) => {
                   end
                   onClick={() => setIsOpen(false)}
                   className={({ isActive }) =>
-                    `relative transition-all after:content-[''] after:absolute after:left-0 after:-bottom-1 after:w-0 after:h-[2px] after:bg-white after:transition-all after:duration-300 hover:after:w-full
-                     ${isActive ? "text-[#09D8C7] after:w-full" : ""}`
+                    `relative transition-all whitespace-nowrap
+                     after:content-[''] after:absolute after:left-0 after:-bottom-1 after:w-0 after:h-[2px] after:bg-white after:transition-all after:duration-300 hover:after:w-full
+                     ${isActive ? " after:w-full" : ""}`
                   }
                 >
                   {item.name}

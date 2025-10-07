@@ -38,7 +38,7 @@ export default function Login({ setUser }) {  // ✅ receive setUser from App.js
       );
 
       setSuccessMsg(res.data.message);
-      console.log("User Data:", res.data);
+      // console.log("User Data:", res.data);
 
       // Store token and user in localStorage
       localStorage.setItem("token", res.data.token);

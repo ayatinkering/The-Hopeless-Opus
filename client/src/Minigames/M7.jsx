@@ -58,7 +58,7 @@ const generateChecksum = (value, version) => {
     return Math.abs(hash);
 };
 
-const PuzzleGame = ({ onComplete, session, sessionApi }) => {
+const PuzzleGame = ({ config, onComplete, session, sessionApi }) => {
     const initialTokens = [
         { id: 1, image: 'PinkCyan', symbols: ['symbol1', 'symbol2'] },
         { id: 2, image: 'PinkCyan', symbols: ['symbol1', 'symbol2'] },
@@ -105,7 +105,7 @@ const PuzzleGame = ({ onComplete, session, sessionApi }) => {
     useEffect(() => {
         if (!session || session.completed) return;
         if (session.remainingSeconds === 0) {
-            onComplete && onComplete(false);
+            isGameOver.current = true;
         }
     }, [session, onComplete]);
 

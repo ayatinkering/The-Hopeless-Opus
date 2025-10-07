@@ -16,7 +16,7 @@ import img777 from '../assets/img777.png';
 import img911 from '../assets/img911.png';
 import map from '../assets/map.png';
 
-export default function MazeGame({ onComplete, session }) {
+export default function MazeGame({ config, onComplete, session, sessionApi }) {
   // ---------------- Maze Setup ----------------
   const nodes = {
     1: { images: choice1, connections: { up: 2 } },
@@ -56,13 +56,14 @@ export default function MazeGame({ onComplete, session }) {
   const [gameStarted, setGameStarted] = useState(false);
 
   // ---------------- Timer Effect ----------------
-  // Session based expiry
+  // Session based expiry — do not finalize here, let loader handle completion
   useEffect(() => {
     if (!session || session.completed) return;
     if (session.remainingSeconds === 0 && gameStarted) {
-      onComplete && onComplete(false);
+      setGameStarted(false);
+      setShowMap(true);
     }
-  }, [session, gameStarted, onComplete]);
+  }, [session, gameStarted]);
 
   // ---------------- Navigation ----------------
   const handleNavigation = (direction) => {
@@ -185,8 +186,8 @@ export default function MazeGame({ onComplete, session }) {
             >
               <MapIcon className="w-8 h-8 text-white" />
             </button>
-            {/* Timer */}
-            <MinigameTimer remainingSeconds={session?.remainingSeconds ?? null} />
+              {/* Timer */}
+              <div className="absolute top-4 left-1/2 -translate-x-1/2"><MinigameTimer remainingSeconds={session?.remainingSeconds ?? null} triesLeft={session?.triesLeft ?? null} /></div>
           </div>
 
           {/* Map Overlay */}

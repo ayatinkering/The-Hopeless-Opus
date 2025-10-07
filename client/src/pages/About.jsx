@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import Logo from '../assets/logo.png';
+import logo from '../assets/logo.png';
 
 const About = () => {
   const [formData, setFormData] = useState({
@@ -68,7 +68,7 @@ const About = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log('Form submitted:', formData);
+    // console.log('Form submitted:', formData);
     alert('Message sent successfully!');
     setFormData({ name: '', email: '', message: '' });
   };
@@ -279,45 +279,6 @@ const About = () => {
           </div>
         </div>
       </div>
-
-      {/* Footer - Fully Responsive with consistent spacing */}
-      <footer className="bg-black px-4 sm:px-6 lg:px-8 py-12 lg:py-16 border-t border-gray-800 w-full">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            <div className="col-span-1 sm:col-span-2 lg:col-span-1">
-              <h3 className="text-red-500 font-bold mb-4 text-lg sm:text-xl">HOPELESS OPUS</h3>
-              <p className="text-gray-400 text-sm sm:text-base leading-relaxed">
-                Experience the ultimate challenge of strategy, puzzles, and intellectual prowess in TechTatva
-                2025's most exciting competition.
-              </p>
-            </div>
-            
-            <div>
-              <h4 className="font-semibold mb-4 text-base sm:text-lg">Quick Links</h4>
-              <ul className="space-y-2 text-sm sm:text-base text-gray-400">
-                <li><a href="#" className="hover:text-white transition-colors">Home</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">About Us</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Challenges</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Leaderboard</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Contact</a></li>
-              </ul>
-            </div>
-            
-            <div>
-              <h4 className="font-semibold mb-4 text-base sm:text-lg">Get in Touch</h4>
-              <div className="text-sm sm:text-base text-gray-400 space-y-2">
-                <p>Udupi, Karnataka, India</p>
-                <p>Email: info@acumen.com</p>
-                <p>Phone: +91 99999999999</p>
-              </div>
-            </div>
-          </div>
-          
-          <div className="border-t border-gray-800 mt-8 pt-6 text-center text-xs sm:text-sm text-gray-400">
-            Copyright 2025 Hopeless Opus. All rights reserved.
-          </div>
-        </div>
-      </footer>
     </div>
   );
 };

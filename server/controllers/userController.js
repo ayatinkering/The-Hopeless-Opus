@@ -2,6 +2,8 @@
 import jwt from "jsonwebtoken";
 import User from "../models/user.js";
 import { validateRequestBody } from "../utils/validators.js";
+import AllowedParticipant from "../models/allowedParticipants.js";
+
 
 // ---------------- Helper: Generate JWT ----------------
 const generateToken = (user) => {
@@ -17,23 +19,45 @@ export const registerUser = async (req, res) => {
   try {
     const { teamId, teamLeader, player2, password, role } = req.body;
 
-    // Always validate leader
-    // (you can uncomment your validateRequestBody for leader if you want)
     if (!teamId || !teamLeader || !password) {
       return res.status(400).json({ message: "Team ID, leader, and password are required" });
     }
 
-    // If player2 exists and has meaningful data, validate it
+    // ✅ 1️⃣ Validate that leader exists in allowed list
+    const allowedLeader = await AllowedParticipant.findOne({
+      teamId: teamId.trim(),
+      delegateId: teamLeader.delegateId.trim(),
+    });
+
+    if (!allowedLeader) {
+      return res.status(403).json({
+        message: "Team Leader not found in authorized list (Team ID or Delegate ID mismatch)",
+      });
+    }
+
+    // ✅ 2️⃣ (Optional) Validate player2 if provided
     let finalPlayer2 = undefined;
     if (player2 && Object.values(player2).some((v) => v && v !== "")) {
       const player2Check = validateRequestBody(player2, ["name", "email"]);
       if (!player2Check.isValid) {
-        return res.status(400).json({ message: `Player2: ${player2Check.message}` });
+        return res.status(400).json(`{ message: Player2: ${player2Check.message} }`);
       }
+
+      const allowedPlayer2 = await AllowedParticipant.findOne({
+        teamId: teamId.trim(),
+        delegateId: player2.delegateId.trim(),
+      });
+
+      if (!allowedPlayer2) {
+        return res.status(403).json({
+          message: "Player 2 not found in authorized list (Team ID or Delegate ID mismatch)",
+        });
+      }
+
       finalPlayer2 = player2;
     }
 
-    // Check if email already exists (either leader or player2)
+    // ✅ 3️⃣ Prevent duplicate registrations by email
     const existingUser = await User.findOne({
       $or: [
         { "teamLeader.email": teamLeader.email },
@@ -45,20 +69,18 @@ export const registerUser = async (req, res) => {
       return res.status(400).json({ message: "Email already registered" });
     }
 
-    // Build user object only with player2 if valid
+    // ✅ 4️⃣ Proceed to create new user
     const newUserData = {
       teamId,
       teamLeader,
       password,
-      role: role || 2001,
+      role: role || "user",
     };
-    if (finalPlayer2) {
-      newUserData.player2 = finalPlayer2;
-    }
+    if (finalPlayer2) newUserData.player2 = finalPlayer2;
 
     const newUser = new User(newUserData);
-
     const token = generateToken(newUser);
+
     await newUser.save();
 
     res.status(201).json({
@@ -67,10 +89,10 @@ export const registerUser = async (req, res) => {
       token,
     });
   } catch (err) {
+    console.error(err);
     res.status(500).json({ message: err.message });
   }
 };
-
 
 // ---------------- Login User ----------------http:localhost:5000/api/users/login
 export const loginUser = async (req, res) => {
@@ -79,7 +101,7 @@ export const loginUser = async (req, res) => {
     if (!check.isValid) return res.status(400).json({ message: check.message });
 
     const { email, password } = req.body;
-    console.log(email, password);
+    // console.log(email, password);
     const user = await User.findOne({
       $or: [{ "teamLeader.email": email }, { "player2.email": email }],
     });

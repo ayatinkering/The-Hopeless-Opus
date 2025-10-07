@@ -36,7 +36,7 @@ export const getLeaderboardWithCurrentUser = async (req, res) => {
   try {
     // console.log(req)
     const userId = req.user._id.toString();
-    console.log(userId)
+    // console.log(userId)
     // fetch all users
     const users = await User.find().select("-password");
 
@@ -58,7 +58,7 @@ export const getLeaderboardWithCurrentUser = async (req, res) => {
 
     // find current user's rank
     const currentUserIndex = leaderboard.findIndex(u => u._id.toString() === userId);
-    console.log(currentUserIndex)
+    // console.log(currentUserIndex)
     res.json({
       leaderboard,
       currentUserIndex, // frontend can highlight using this

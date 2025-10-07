@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import MinigameTimer from "../components/MinigameTimer";
 import { motion, AnimatePresence } from "framer-motion";
 
-export default function BinaryBulbGame({ onComplete, session }) {
+export default function BinaryBulbGame({ config, onComplete, session, sessionApi }) {
   const colors = ['R', 'G', 'B', 'Y'];
 
   const generateScenes = () => {
@@ -87,17 +87,19 @@ export default function BinaryBulbGame({ onComplete, session }) {
     </motion.div>
   );
 
-  // Auto-fail when backend timer expires
+  // Auto-fail when backend timer expires — set UI state and let loader finalize
   useEffect(() => {
     if (!session || session.completed) return;
     if (session.remainingSeconds === 0) {
-      onComplete && onComplete(false);
+      setResult('⏱ Time Expired');
+      setShowInput(false);
+      setGameStarted(false);
     }
-  }, [session, onComplete]);
+  }, [session]);
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-white p-6">
-      <div className="absolute top-4 right-4"><MinigameTimer remainingSeconds={session?.remainingSeconds ?? null} /></div>
+  <div className="absolute top-4 left-1/2 -translate-x-1/2"><MinigameTimer remainingSeconds={session?.remainingSeconds ?? null} triesLeft={session?.triesLeft ?? null} /></div>
       <h1 className="text-3xl font-bold mb-4 text-yellow-300">💡 Binary Bulb Challenge 💡</h1>
       <p className="text-gray-300 mb-6 text-center max-w-md">
         Welcome, Code Breaker! Observe the colored bulbs as they flicker in mysterious sequences. Once the show ends, enter the hidden number behind each color (top to bottom) to unlock the secret code.

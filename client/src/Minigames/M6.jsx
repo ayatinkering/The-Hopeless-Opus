@@ -30,17 +30,16 @@ export default function M6({ config, onComplete, session, sessionApi }) {
   };
 
   // Session integration for expiry and tries decrement on wrong attempts
+  // Do not call onComplete(false) here — loader finalizes.
   useEffect(() => {
     if (!session || session.completed) return;
     if (session.remainingSeconds === 0) {
       setGameEnded(true);
-      onComplete && onComplete(false);
     }
     if (typeof session.triesLeft === "number" && session.triesLeft <= 0) {
       setGameEnded(true);
-      onComplete && onComplete(false);
     }
-  }, [session, onComplete]);
+  }, [session]);
 
   useEffect(() => {
     if (wrongCount > 0 && !isCorrect && sessionApi?.decrementTry) {
