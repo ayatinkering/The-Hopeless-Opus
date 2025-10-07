@@ -19,7 +19,7 @@ const Footer = () => {
             <h3 className="text-white font-thin mb-4 text-lg sm:text-xl">
               HOPELESS OPUS
             </h3>
-            <p className="text-gray-400 text-sm sm:text-base leading-relaxed">
+            <p className="text-gray-300 text-sm sm:text-base leading-relaxed">
               Experience the ultimate challenge of strategy, puzzles, and
               intellectual prowess in TechTatva 2025's most exciting
               competition.
@@ -31,7 +31,7 @@ const Footer = () => {
             <h4 className="font-thin mb-4 text-base sm:text-lg text-white">
               Quick Links
             </h4>
-            <ul className="space-y-2 text-sm sm:text-base text-gray-400">
+            <ul className="space-y-2 text-sm sm:text-base text-gray-300">
               <li>
                 <button
                   onClick={openHome}
@@ -72,7 +72,7 @@ const Footer = () => {
             <h4 className="font-thin mb-4 text-base sm:text-lg text-white">
               Get in Touch
             </h4>
-            <div className="text-sm sm:text-base text-gray-400 space-y-2">
+            <div className="text-sm sm:text-base text-gray-300 space-y-2">
               <p>Udupi, Karnataka, India</p>
               <p>tt.acumen@gmail.com</p>
             </div>

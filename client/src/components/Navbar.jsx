@@ -16,7 +16,7 @@ const Navbar = ({ user }) => {
   ];
 
   return (
-    <nav className="w-full fixed top-0 z-50 backdrop-blur-xs bg-[#000000]/20 border-b border-[#787661]">
+    <nav className="w-full fixed top-0 z-50 backdrop-blur-xs bg-[#000000]/20 border-b border-gray-400">
       <div className="max-w-7xl mx-auto px-6 lg:px-8 flex justify-between items-center h-20">
         {/* Logo */}
         <div className="flex-shrink-0">
@@ -95,7 +95,7 @@ const Navbar = ({ user }) => {
                   className={({ isActive }) =>
                     `relative transition-all whitespace-nowrap
                      after:content-[''] after:absolute after:left-0 after:-bottom-1 after:w-0 after:h-[2px] after:bg-white after:transition-all after:duration-300 hover:after:w-full
-                     ${isActive ? "text-[#09D8C7] after:w-full" : ""}`
+                     ${isActive ? " after:w-full" : ""}`
                   }
                 >
                   {item.name}

@@ -63,22 +63,27 @@ const Countdown = ({ targetDateProp }) => {
   );
 
   return (
-    <div
-      className="
-        w-full flex justify-center items-center
-        px-4 
-        pt-8 pb-8      /* reduced top & bottom space on phones */
-        sm:pt-20 sm:pb-20  /* keep original spacing on sm+ screens */
-      "
-    >
-      <div className="grid grid-cols-2 gap-4 sm:flex sm:flex-wrap sm:justify-center sm:gap-6 md:gap-7 lg:gap-6 overflow-x-auto">
-        {unitBlock(days, "Days")}
-        {unitBlock(hours, "Hours")}
-        {unitBlock(minutes, "Minutes")}
-        {unitBlock(seconds, "Seconds")}
-      </div>
-    </div>
-  );
+  <div
+    className="
+      w-full flex justify-center items-center
+      px-4 
+      pt-8 pb-8
+      sm:pt-20 sm:pb-20
+    "
+  >
+    <div className="grid grid-cols-2 gap-4 sm:flex sm:flex-wrap sm:justify-center sm:gap-6 md:gap-7 lg:gap-6 overflow-x-auto items-center">
+  {unitBlock(days, "Days")}
+  <div className="hidden sm:flex justify-center items-center">{colon}</div>
+  {unitBlock(hours, "Hours")}
+  <div className="hidden sm:flex justify-center items-center">{colon}</div>
+  {unitBlock(minutes, "Minutes")}
+  <div className="hidden sm:flex justify-center items-center">{colon}</div>
+  {unitBlock(seconds, "Seconds")}
+</div>
+
+  </div>
+);
+
 };
 
 export default Countdown;

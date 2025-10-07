@@ -39,13 +39,13 @@ const CardSlider = React.forwardRef(({ onIntersection = () => {} }, forwardedRef
       ID: 100,
       Name: "Game Schedule",
       Desc: `October 8th: 6:30 PM - 11:30 PM<br />
-        October 9th: 12:00 AM - 12:00 PM<br />
+        October 9th: 12:00 PM - 12:00 AM<br />
         October 10th: 7:30 PM - 11:30 PM<br /><br/>Don't miss out on the action!`,
     },
     {
       ID: 200,
       Name: "Prizes",
-      Desc: `1st Place: Rs 4000<br />2nd Place: Rs 3000<br />3rd Place: Rs 2000<br/><br/><b>Grand Prize Pool: Rs 9000<b> `,
+      Desc: `1st Place: Rs 5000<br />2nd Place: Rs 3000<br />3rd Place: Rs 2000<br/><br/><b>Grand Prize Pool: Rs 10000<b> `,
     },
     {
       ID: 300,
@@ -79,7 +79,7 @@ Are you ready to see where your skills will lead you?`,
         <div className="overflow-x-hidden">
           <div
             className="
-              mt-50 ml-[50%] mb-20 w-fit flex justify-center gap-16
+              mt-26 ml-[50%] mb-20 w-fit flex justify-center gap-16
               max-[760px]:ml-0 max-[760px]:px-16     
               max-[760px]:flex-col max-[760px]:gap-10 max-[760px]:overflow-hidden
             "
@@ -89,7 +89,7 @@ Are you ready to see where your skills will lead you?`,
                 key={event.ID}
                 className="
                   eventCard flex flex-col justify-between 
-                  w-96 h-96 rounded-xl border border-[rgba(146,105,105,0.6)]
+                  w-96 h-96 rounded-xl border border-gray-400
                   backdrop-blur-xs bg-[#000000]/20 
                   p-12 pt-12
                   max-[760px]:w-full max-[760px]:h-[22rem]  

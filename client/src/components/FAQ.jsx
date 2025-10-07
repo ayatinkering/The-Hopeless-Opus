@@ -13,14 +13,14 @@ const FAQ = () => {
   ];
 
   return (
-    <div className="flex justify-center py-30 px-4 max-[640px]:px-16 min-h-screen bg-transparent">
+    <div className="flex justify-center py-20 px-4 max-[640px]:px-16 min-h-screen bg-transparent">
       <div className="w-full max-w-3xl">
         <h1 className="text-3xl sm:text-4xl font-normal text-center text-[#ffffff] mb-6 tracking-wide">
           FAQs
         </h1>
 
         {/* Outer Box */}
-        <div className="border-4 border-[#787661] p-6 backdrop-blur-xs bg-[#000000]/20 space-y-0">
+        <div className="border-2 border-gray-400 p-6 backdrop-blur-xs bg-[#000000]/20 space-y-0">
           {faqData.map((faq, idx) => (
             <details
               key={idx}
