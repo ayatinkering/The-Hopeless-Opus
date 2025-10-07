@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import MinigameTimer from '../components/MinigameTimer';
 
-const M3 = ({ config, onComplete, session }) => {
+const M3 = ({ config, onComplete, session, sessionApi }) => {
   const BOARD_SIZE = 10;
   const CHIP_POSITIONS = [
     { row: 0, col: 1, value: 1 }, { row: 0, col: 3, value: 4 }, { row: 0, col: 5, value: 3 }, { row: 0, col: 6, value: 5 }, { row: 0, col: 9, value: 4 },
@@ -55,14 +55,13 @@ const M3 = ({ config, onComplete, session }) => {
   const [isGameOver, setIsGameOver] = useState(false);
   const [gridSize, setGridSize] = useState({ width: 0, height: 0 });
 
-  // Session based expiry
+  // Session based expiry — rely on loader to finalize
   useEffect(() => {
     if (!session || session.completed) return;
     if (session.remainingSeconds === 0) {
       setIsGameOver(true);
-      onComplete && onComplete(false);
     }
-  }, [session, onComplete]);
+  }, [session]);
 
   const romanNumerals = ['', 'I', 'II', 'III', 'IV', 'V'];
 
@@ -346,8 +345,12 @@ const M3 = ({ config, onComplete, session }) => {
             Connect chips so each has the same number of connections as shown on the chip
           </p>
           
-          <div className="flex justify-center items-center gap-3 sm:gap-6 mb-4">
-            <MinigameTimer remainingSeconds={session?.remainingSeconds ?? null} />
+          <div className="flex justify-center items-center gap-3 sm:gap-6 mb-4 z-50">
+            <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50">
+              <div className="bg-slate-800/60 rounded-full px-2 py-1 inline-block">
+                <MinigameTimer remainingSeconds={session?.remainingSeconds ?? null} triesLeft={session?.triesLeft ?? null} />
+              </div>
+            </div>
             {isComplete && (
               <div className="bg-green-500/20 px-3 sm:px-4 py-2 rounded-lg border border-green-400">
                 <span className="text-green-300 font-bold text-sm sm:text-base">🎉 Completed!</span>

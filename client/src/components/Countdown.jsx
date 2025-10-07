@@ -29,49 +29,61 @@ const Countdown = ({ targetDateProp }) => {
   const { days, hours, minutes, seconds } = formatTime(time);
 
   const unitBlock = (value, label) => (
+  <div
+    className="
+      relative flex items-center justify-center
+      backdrop-blur-xs bg-[#000000]/20
+      w-28 h-28            /* bigger on mobile */
+      sm:w-28 sm:h-28       /* keep original for sm+ */
+      md:w-32 md:h-32
+      lg:w-36 lg:h-36
+      rounded-lg shadow-lg px-2
+    "
+  >
     <div
-      className="relative flex items-center justify-center
-                 backdrop-blur-xs bg-[#000000]/20
-                 w-16 sm:w-28 md:w-32 lg:w-36
-                 h-20 sm:h-28 md:h-32 lg:h-36
-                 rounded-lg shadow-lg px-2"
+      className="absolute top-3 sm:top-3 md:top-4 lg:top-5 w-full text-white font-mono
+                 text-3xl sm:text-4xl md:text-6xl lg:text-7xl flex justify-center"
     >
-      {/* Number moved slightly up using absolute positioning */}
-      <div
-        className="absolute top-2 sm:top-3 md:top-4 lg:top-5 w-full text-white font-mono
-                   text-2xl sm:text-4xl md:text-6xl lg:text-7xl flex justify-center"
-      >
-        {value.toString().padStart(2, "0")}
-      </div>
-
-      {/* Label remains in the same position */}
-      <div
-        className="absolute bottom-4 text-xs sm:text-sm md:text-base lg:text-lg text-gray-300 text-center w-full"
-      >
-        {label}
-      </div>
+      {value.toString().padStart(2, "0")}
     </div>
-  );
+
+    <div
+      className="absolute bottom-3 text-xs sm:text-sm md:text-base lg:text-lg text-gray-300 text-center w-full"
+    >
+      {label}
+    </div>
+  </div>
+);
+
 
   const colon = (
-    <div className="text-white font-mono text-2xl sm:text-4xl md:text-6xl lg:text-7xl mx-1 sm:mx-2.5 flex items-center justify-center select-none">
+    <div className="hidden sm:flex text-white font-mono text-2xl sm:text-4xl md:text-6xl lg:text-7xl mx-1 sm:mx-2.5 items-center justify-center select-none">
       :
     </div>
   );
 
   return (
-    <div className="w-full flex justify-center items-center min-h-[60vh] px-4">
-      <div className="flex flex-nowrap sm:flex-wrap justify-center gap-3 sm:gap-6 md:gap-7 lg:gap-6 overflow-x-auto">
-        {unitBlock(days, "Days")}
-        {colon}
-        {unitBlock(hours, "Hours")}
-        {colon}
-        {unitBlock(minutes, "Minutes")}
-        {colon}
-        {unitBlock(seconds, "Seconds")}
-      </div>
-    </div>
-  );
+  <div
+    className="
+      w-full flex justify-center items-center
+      px-4 
+      pt-8 pb-8
+      sm:pt-20 sm:pb-20
+    "
+  >
+    <div className="grid grid-cols-2 gap-4 sm:flex sm:flex-wrap sm:justify-center sm:gap-6 md:gap-7 lg:gap-6 overflow-x-auto items-center">
+  {unitBlock(days, "Days")}
+  <div className="hidden sm:flex justify-center items-center">{colon}</div>
+  {unitBlock(hours, "Hours")}
+  <div className="hidden sm:flex justify-center items-center">{colon}</div>
+  {unitBlock(minutes, "Minutes")}
+  <div className="hidden sm:flex justify-center items-center">{colon}</div>
+  {unitBlock(seconds, "Seconds")}
+</div>
+
+  </div>
+);
+
 };
 
 export default Countdown;

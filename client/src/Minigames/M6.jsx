@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef } from "react";
-import MinigameTimer from "../components/MinigameTimer";
-import backgroundImage from "../assets/cipherimage.jpg";
+
+import React, { useState, useEffect } from "react";
+import backgroundImage from "../assets/cipherimage.png";
 
 export default function M6({ config, onComplete, session, sessionApi }) {
   const cipherText = "Zvuv Whgga Xbhzap Vvthup";
@@ -12,17 +12,14 @@ export default function M6({ config, onComplete, session, sessionApi }) {
   const [wrongCount, setWrongCount] = useState(0);
   const [gameEnded, setGameEnded] = useState(false);
 
-  const timerRef = useRef(null);
-
-  // --- Handle Submission ---
+  
   const handleSubmit = () => {
-    if (gameEnded) return; // Stop submitting after game ends
+    if (gameEnded) return;
 
     setSubmitted(true);
     if (input.toLowerCase().replace(/\s+/g, "") === correctAnswer) {
       setIsCorrect(true);
-      setGameEnded(true); // End the game immediately
-      clearInterval(timerRef.current); // Stop the timer
+      setGameEnded(true);
       if (onComplete) {
         setTimeout(() => onComplete(true), 1000);
       }
@@ -33,17 +30,16 @@ export default function M6({ config, onComplete, session, sessionApi }) {
   };
 
   // Session integration for expiry and tries decrement on wrong attempts
+  // Do not call onComplete(false) here — loader finalizes.
   useEffect(() => {
     if (!session || session.completed) return;
     if (session.remainingSeconds === 0) {
       setGameEnded(true);
-      onComplete && onComplete(false);
     }
-    if (typeof session.triesLeft === 'number' && session.triesLeft <= 0) {
+    if (typeof session.triesLeft === "number" && session.triesLeft <= 0) {
       setGameEnded(true);
-      onComplete && onComplete(false);
     }
-  }, [session, onComplete]);
+  }, [session]);
 
   useEffect(() => {
     if (wrongCount > 0 && !isCorrect && sessionApi?.decrementTry) {
@@ -62,14 +58,6 @@ export default function M6({ config, onComplete, session, sessionApi }) {
       }}
     >
       <div className="absolute inset-0"></div>
-
-      {/* --- Timer Display Top-Left --- */}
-      <div className="absolute top-4 left-4">
-        <MinigameTimer 
-          remainingSeconds={session?.remainingSeconds ?? 0} 
-          triesLeft={session?.triesLeft ?? null} 
-        />
-      </div>
 
       {/* --- Wrong Answer Counter --- */}
       <div
@@ -101,7 +89,7 @@ export default function M6({ config, onComplete, session, sessionApi }) {
       <button
         onClick={handleSubmit}
         disabled={gameEnded}
-        className="absolute top-[60%] left-[63.5%] px-6 py-3 rounded-lg bg-[#551414ff] hover:bg-[#432c09ff] text-[#f5f0e1] font-semibold transition shadow-[0_10px_25px_rgba(85,20,20,0.7)"
+        className="absolute top-[60%] left-[63.5%] px-6 py-3 rounded-lg bg-[#551414ff] hover:bg-[#432c09ff] text-[#f5f0e1] font-semibold transition shadow-[0_10px_25px_rgba(85,20,20,0.7)]"
       >
         Write
       </button>
@@ -116,17 +104,6 @@ export default function M6({ config, onComplete, session, sessionApi }) {
           }}
         >
           Congratulations, the veil is lifted.
-        </p>
-      )}
-      {gameEnded && session?.remainingSeconds === 0 && !isCorrect && (
-        <p
-          className="absolute top-[70%] left-[52.5%] text-2xl font-bold animate-pulse"
-          style={{
-            color: "#7B3F00",
-            textShadow: "0 0 10px rgba(65, 35, 35, 0.8)",
-          }}
-        >
-          Time's up! The riddle remains sealed.
         </p>
       )}
       {!gameEnded && submitted && !isCorrect && (

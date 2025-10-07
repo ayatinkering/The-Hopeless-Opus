@@ -21,7 +21,6 @@ const MinigameSchema = new Schema({
   tries: {
     type: Number,
     default: function() {
-      // Only M4, M5, M6 have tries
       if (["M4", "M5", "M6","M8", "M9A", "M9B", "M10", "M11", "M12", "M13", "M14", "M15"].includes(this.minigameId)) return 3;
       return null;
     },

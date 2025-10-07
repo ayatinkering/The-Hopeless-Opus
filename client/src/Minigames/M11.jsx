@@ -56,13 +56,14 @@ export default function MazeGame({ config, onComplete, session, sessionApi }) {
   const [gameStarted, setGameStarted] = useState(false);
 
   // ---------------- Timer Effect ----------------
-  // Session based expiry
+  // Session based expiry — do not finalize here, let loader handle completion
   useEffect(() => {
     if (!session || session.completed) return;
     if (session.remainingSeconds === 0 && gameStarted) {
-      onComplete && onComplete(false);
+      setGameStarted(false);
+      setShowMap(true);
     }
-  }, [session, gameStarted, onComplete]);
+  }, [session, gameStarted]);
 
   // ---------------- Navigation ----------------
   const handleNavigation = (direction) => {
@@ -186,7 +187,7 @@ export default function MazeGame({ config, onComplete, session, sessionApi }) {
               <MapIcon className="w-8 h-8 text-white" />
             </button>
               {/* Timer */}
-              <MinigameTimer remainingSeconds={session?.remainingSeconds ?? null} triesLeft={session?.triesLeft ?? null} />
+              <div className="absolute top-4 left-1/2 -translate-x-1/2"><MinigameTimer remainingSeconds={session?.remainingSeconds ?? null} triesLeft={session?.triesLeft ?? null} /></div>
           </div>
 
           {/* Map Overlay */}

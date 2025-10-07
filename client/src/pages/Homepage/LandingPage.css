@@ -1,3 +1,21 @@
+/* --- Video Background Styling --- */
+
+.background-video {
+  /* CHANGE: 'fixed' locks the element relative to the viewport so it doesn't scroll */
+  position: fixed; 
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  
+  /* Z-index to ensure it is behind the content (which has a z-10 class in JSX) */
+  z-index: 0;
+  
+  /* Ensures the video covers the entire viewport */
+  object-fit: cover; 
+}
+
+
 /* LandingPage.css - Uiverse button - modified for smaller size, body-text font, padding, and color */
 .uiverse-button {
   --main-size: 1rem; /* font size same as body text */
@@ -109,4 +127,3 @@
   50% { outline: 0.2em solid var(--color-outline); outline-offset: 0.2em; }
   100% { outline: 0.4em solid transparent; outline-offset: 0.4em; }
 }
-

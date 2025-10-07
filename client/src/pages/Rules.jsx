@@ -1,5 +1,7 @@
 import React from 'react';
 import background from "../assets/background.jpg";
+import React from 'react';
+import background from "../assets/background.jpg";
 
 function Rules() {
   return (

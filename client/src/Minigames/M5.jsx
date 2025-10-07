@@ -98,6 +98,20 @@ const M5 = ({ config, onComplete, session, sessionApi }) => {
     };
   }, []);
 
+  // Session-driven expiry / tries
+  // Do not directly call onComplete(false) here — loader will handle finalization.
+  useEffect(() => {
+    if (!session || session.completed) return;
+    if (session.remainingSeconds === 0) {
+      setMessage('ACCESS DENIED');
+      setGameOver(true);
+    }
+    if (typeof session.triesLeft === 'number' && session.triesLeft <= 0) {
+      setMessage('ACCESS DENIED - GAME OVER');
+      setGameOver(true);
+    }
+  }, [session]);
+
   const failAndDecrement = () => {
     if (sessionApi?.decrementTry) sessionApi.decrementTry();
     setMessage("ACCESS DENIED");
@@ -109,11 +123,10 @@ const M5 = ({ config, onComplete, session, sessionApi }) => {
       className="relative flex items-center justify-center min-h-screen bg-black bg-cover bg-center"
       style={{ backgroundImage: `url(${morseBg})` }}
     >
-      <div className="absolute top-4 left-1/2 -translate-x-1/2">
-        <MinigameTimer 
-          remainingSeconds={session?.remainingSeconds ?? 0} 
-          triesLeft={session?.triesLeft ?? 0} 
-        />
+      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50">
+        <div className="bg-slate-800/60 rounded-full px-2 py-1 inline-block">
+          <MinigameTimer remainingSeconds={session?.remainingSeconds ?? timeLeft} triesLeft={session?.triesLeft ?? triesLeft} />
+        </div>
       </div>
 
       <div className="absolute top-[50%] left-[47%] transform -translate-x-1/2 flex items-center gap-3">
