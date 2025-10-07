@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { motion, AnimatePresence } from 'framer-motion';
 
 // Import your minigame components
 import MinigameLoader from './MinigameLoader';
@@ -10,7 +11,14 @@ const TYPING_SPEED = 30;
 import API_BASE from '../lib/api_endpoint';
 const API_STORY = `${API_BASE}/story`;
 
-// Minigame rendering is delegated to MinigameLoader
+// --- Character Assets ---
+const characterAssets = {
+  'Player 1': { src: 'https://res.cloudinary.com/dzntiuwyr/image/upload/v1759849140/p1_we3btx.png', position: 'left' },
+  'Player 2': { src: 'https://res.cloudinary.com/dzntiuwyr/image/upload/v1759849140/p2_f6igmq.png', position: 'right' },
+  // Workshop heads are not included per your last request, but can be added here if needed
+  // 'Workshop head 1': { src: 'https://res.cloudinary.com/dzntiuwyr/image/upload/v1759849140/pride_bgjd7m.png', position: 'left' },
+  // 'Workshop head 2': { src: 'https://res.cloudinary.com/dzntiuwyr/image/upload/v1759849140/sloth_m84fg2.png', position: 'right' },
+};
 
 const VisualNovelInterface = () => {
   const [storyData, setStoryData] = useState(null);
@@ -20,6 +28,10 @@ const VisualNovelInterface = () => {
   const [selectedChoice, setSelectedChoice] = useState(null);
   const [isSkipping, setIsSkipping] = useState(false);
   
+  // --- NEW STATE FOR CHARACTER HANDLING ---
+  const [dialogueLines, setDialogueLines] = useState([]);
+  const [currentSpeaker, setCurrentSpeaker] = useState(null);
+
   // Minigame state
   const [activeMinigame, setActiveMinigame] = useState(null);
   const [minigameConfig, setMinigameConfig] = useState(null);
@@ -32,27 +44,39 @@ const VisualNovelInterface = () => {
     return { headers: { Authorization: `Bearer ${token}` } };
   };
 
+  const processStoryNode = (storyNode) => {
+    if (!storyNode) return;
+    setStoryData(storyNode);
+    setFullDialogue(storyNode.text.join("\n"));
+    setDisplayedText("");
+    setIsSkipping(false);
+    setSelectedChoice(null);
+
+    // Also process lines for character speaker tracking
+    const lines = storyNode.text.map((line, index) => ({
+      speaker: storyNode.characters?.[index] || null,
+      text: line,
+    }));
+    setDialogueLines(lines);
+  };
+
   useEffect(() => {
     const fetchCurrentStory = async () => {
       try {
         const res = await axios.get(`${API_STORY}/current/me`, getToken());
         const { story, userState: serverUserState } = res.data;
-
         if (story) {
-          setStoryData(story);
-          setFullDialogue(story.text.join("\n"));
-          setDisplayedText("");
-          setIsSkipping(false);
+          processStoryNode(story);
           if (serverUserState) setUserState(serverUserState);
         }
       } catch (err) {
         // console.error("Error fetching current story:", err);
       }
     };
-
     fetchCurrentStory();
   }, []);
 
+  // Original typing effect remains unchanged
   useEffect(() => {
     if (isSkipping || !fullDialogue) return;
 
@@ -63,6 +87,27 @@ const VisualNovelInterface = () => {
       return () => clearTimeout(timeout);
     }
   }, [displayedText, isSkipping, fullDialogue]);
+
+  // --- NEW useEffect to determine the current speaker based on typing progress ---
+  useEffect(() => {
+    if (!dialogueLines.length) return;
+
+    let cumulativeLength = 0;
+    let speakerForCurrentText = dialogueLines[0]?.speaker || null;
+
+    for (let i = 0; i < dialogueLines.length; i++) {
+      const line = dialogueLines[i];
+      const lineLengthWithNewline = line.text.length + (i < dialogueLines.length - 1 ? 1 : 0);
+
+      if (displayedText.length <= cumulativeLength + lineLengthWithNewline) {
+        speakerForCurrentText = line.speaker;
+        break;
+      }
+      cumulativeLength += lineLengthWithNewline;
+    }
+    
+    setCurrentSpeaker(speakerForCurrentText);
+  }, [displayedText, dialogueLines]);
 
   const fetchStoryById = async (storyId) => {
     try {
@@ -76,37 +121,27 @@ const VisualNovelInterface = () => {
 
   const handleChoiceClick = async (id, index) => {
     setSelectedChoice(id);
-
     try {
       const res = await axios.post(
         `${API_STORY}/current/choice`,
         { storyId: storyData.storyID, choiceIndex: index },
         getToken()
       );
-  // console.log("Choice response:", res.data);
-  const { nextStory, minigame, userState: serverUserState } = res.data;
-  if (serverUserState) setUserState(serverUserState);
+      const { nextStory, minigame, userState: serverUserState } = res.data;
+      if (serverUserState) setUserState(serverUserState);
 
-      // Check if minigame was triggered
       if (minigame) {
         setActiveMinigame(minigame.id);
         setMinigameConfig(minigame.config[minigame.id]);
-        
-        // Store the next story to show after minigame
         setPendingStory(nextStory);
       } else if (nextStory) {
-        setStoryData(nextStory);
-        setFullDialogue(nextStory.text.join("\n"));
-        setDisplayedText("");
-        setIsSkipping(false);
-        setSelectedChoice(null);
+        processStoryNode(nextStory);
       }
     } catch (err) {
       // console.error("Error making choice:", err);
     }
   };
 
-  // Fade transition for scene changes
   useEffect(() => {
     setSceneVisible(false);
     const t = setTimeout(() => setSceneVisible(true), 60);
@@ -116,56 +151,27 @@ const VisualNovelInterface = () => {
   const handleMinigameComplete = async (success) => {
     setActiveMinigame(null);
     setMinigameConfig(null);
-
-    // Refresh user state (reward claimed already if success)
     try {
       const res = await axios.get(`${API_STORY}/current/me`, getToken());
       if (res.data?.userState) setUserState(res.data.userState);
     } catch (e) {
-      // console.warn('User state refresh failed after minigame', e.response?.data || e.message || e);
+      // console.warn('User state refresh failed');
     }
-
-    // Branching logic: success -> nextID[0], failure -> nextID[1]
-    // Priority order:
-    // 1. If explicit pendingStory (returned from choice that launched minigame), use that (overrides generic nextID branching).
-    // 2. Else use storyData.nextID based on success/fail.
-    // 3. Fallback to first available nextID if selected index missing.
-    // 4. Final fallback: reload current story from server.
-
-    // 1. Pending story override
+    
     if (pendingStory) {
-      const ps = pendingStory;
-      setStoryData(ps);
-      setFullDialogue(ps.text?.length ? ps.text.join('\n') : '');
-      setDisplayedText('');
-      setIsSkipping(false);
+      processStoryNode(pendingStory);
       setPendingStory(null);
-      setSelectedChoice(null);
       return;
     }
 
     const nextIDs = storyData?.nextID || [];
-    let targetId = null;
-    if (nextIDs.length) {
-      if (success) {
-        targetId = nextIDs[0];
-      } else if (nextIDs.length > 1) {
-        targetId = nextIDs[1];
-      } else {
-        // failure but only one branch; fall back to the sole nextID
-        targetId = nextIDs[0];
-      }
-    }
+    let targetId = success ? nextIDs[0] : (nextIDs.length > 1 ? nextIDs[1] : nextIDs[0]);
 
     if (targetId) {
       try {
         const node = await fetchStoryById(targetId);
         if (node) {
-          setStoryData(node);
-          setFullDialogue(node.text?.length ? node.text.join('\n') : '');
-          setDisplayedText('');
-          setIsSkipping(false);
-          setSelectedChoice(null);
+          processStoryNode(node);
           return;
         }
       } catch (e) {
@@ -173,22 +179,18 @@ const VisualNovelInterface = () => {
       }
     }
 
-    // 4. Final fallback: reload current story
     try {
       const res = await axios.get(`${API_STORY}/current/me`, getToken());
       const { story } = res.data || {};
       if (story) {
-        setStoryData(story);
-        setFullDialogue(story.text?.length ? story.text.join('\n') : '');
-        setDisplayedText('');
-        setIsSkipping(false);
-        setSelectedChoice(null);
+        processStoryNode(story);
       }
     } catch (err) {
       // console.error('Final fallback failed after minigame', err);
     }
   };
 
+  // Original handleSkip and handleNext logic is preserved
   const handleSkip = () => {
     setDisplayedText(fullDialogue);
     setIsSkipping(true);
@@ -196,10 +198,8 @@ const VisualNovelInterface = () => {
 
   const handleNext = async () => {
     if (!storyData) return;
-
     try {
       let nextStory = null;
-
       if (storyData.levelEnd) {
         const res = await axios.post(
           `${API_STORY}/level-end`,
@@ -210,26 +210,13 @@ const VisualNovelInterface = () => {
       } else if (storyData.nextID?.length > 0) {
         nextStory = await fetchStoryById(storyData.nextID[0]);
       }
-
       if (nextStory) {
-        // If the next story node is a minigame, trigger the minigame UI
-        if (nextStory.storyID && nextStory.storyID.startsWith('M')) {
-          // console.log('Next story is a minigame, launching:', nextStory.storyID);
+        if (nextStory.storyID?.startsWith('M')) {
           setStoryData(nextStory);
-          setFullDialogue(nextStory.text?.join('\n') || '');
-          setDisplayedText('');
-          setIsSkipping(false);
-          setSelectedChoice(null);
           setActiveMinigame(nextStory.storyID);
-          // If the story provides a minigame config, use it; otherwise leave null
-          if (nextStory.minigameConfig) setMinigameConfig(nextStory.minigameConfig);
-          else setMinigameConfig(null);
+          setMinigameConfig(nextStory.minigameConfig || null);
         } else {
-          setStoryData(nextStory);
-          setFullDialogue(nextStory.text.join("\n"));
-          setDisplayedText("");
-          setIsSkipping(false);
-          setSelectedChoice(null);
+          processStoryNode(nextStory);
         }
       }
     } catch (err) {
@@ -269,7 +256,6 @@ const VisualNovelInterface = () => {
           </button>
         </div>
       )}
-
       <div className="text-xl text-gray-200 font-light whitespace-pre-line">
         {displayedText}
         {displayedText.length < fullDialogue.length && (
@@ -279,29 +265,166 @@ const VisualNovelInterface = () => {
     </div>
   );
 
-  // If minigame is active, render it via MinigameLoader
+  // --- Enhanced Function to render character sprites with RPG-style effects ---
+  const renderCharacters = () => {
+    const charactersInScene = [...new Set(dialogueLines.map(line => line.speaker).filter(Boolean))];
+
+    return (
+      <AnimatePresence>
+        {charactersInScene.map(charName => {
+          const asset = characterAssets[charName];
+          if (!asset) return null;
+
+          const isActive = currentSpeaker === charName;
+          const baseTransform = asset.position === 'right' ? 'scaleX(-1)' : '';
+          const xPosition = asset.position === 'left' ? '-5%' : undefined;
+          const rightPosition = asset.position === 'right' ? '-5%' : undefined;
+
+          return (
+            <motion.div
+              key={charName}
+              initial={{ 
+                opacity: 0, 
+                y: 50,
+                x: asset.position === 'left' ? -100 : 100 
+              }}
+              animate={{ 
+                opacity: isActive ? 1 : 0.8,
+                y: 0,
+                x: asset.position === 'left' ? 0 : asset.position === 'right' ? 0 : 0,
+                scale: isActive ? 1 : 0.95,
+              }}
+              exit={{ 
+                opacity: 0,
+                y: 50,
+                x: asset.position === 'left' ? -100 : 100 
+              }}
+              transition={{
+                duration: 0.5,
+                ease: "easeInOut"
+              }}
+              style={{
+                position: 'absolute',
+                bottom: 0,
+                left: xPosition,
+                right: rightPosition,
+                height: '85vh',
+                maxHeight: '800px',
+                filter: isActive ? 'brightness(1)' : 'brightness(0.6)',
+                transform: baseTransform,
+                zIndex: isActive ? 2 : 1,
+              }}
+              className="character-container"
+            >
+              {/* Character highlight effect for active speaker */}
+              {isActive && (
+                <motion.div
+                  className="absolute inset-0"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: [0.2, 0.4, 0.2] }}
+                  transition={{
+                    duration: 2,
+                    repeat: Infinity,
+                    ease: "easeInOut"
+                  }}
+                  style={{
+                    background: 'radial-gradient(circle at 50% 50%, rgba(255,255,255,0.3) 0%, transparent 70%)',
+                    pointerEvents: 'none'
+                  }}
+                />
+              )}
+
+              {/* Active speaker indicator */}
+              {isActive && (
+                <motion.div
+                  className="absolute left-1/2 bottom-[-20px] transform -translate-x-1/2"
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  style={{
+                    width: '40px',
+                    height: '40px',
+                    background: 'radial-gradient(circle at 50% 50%, rgba(255,255,255,0.8) 0%, transparent 70%)',
+                    borderRadius: '50%',
+                    pointerEvents: 'none'
+                  }}
+                />
+              )}
+
+              {/* Character image with floating animation */}
+              <motion.img
+                src={asset.src}
+                alt={charName}
+                className="w-full h-full object-contain relative z-10"
+                animate={isActive ? {
+                  y: [0, -10, 0],
+                } : {}}
+                transition={isActive ? {
+                  duration: 2,
+                  repeat: Infinity,
+                  ease: "easeInOut"
+                } : {}}
+                style={{
+                  filter: `drop-shadow(0 0 10px rgba(255,255,255,${isActive ? 0.3 : 0}))`
+                }}
+              />
+
+              {/* RPG-style active speaker effects */}
+              {isActive && (
+                <>
+                  {/* Sparkle effects */}
+                  <motion.div
+                    className="absolute inset-0"
+                    animate={{
+                      opacity: [0, 1, 0],
+                      scale: [0.8, 1.2, 0.8],
+                    }}
+                    transition={{
+                      duration: 2,
+                      repeat: Infinity,
+                      ease: "easeInOut",
+                    }}
+                    style={{
+                      background: `
+                        radial-gradient(circle at 30% 40%, rgba(255,255,255,0.2) 0%, transparent 20%),
+                        radial-gradient(circle at 70% 60%, rgba(255,255,255,0.2) 0%, transparent 20%),
+                        radial-gradient(circle at 40% 80%, rgba(255,255,255,0.2) 0%, transparent 20%)
+                      `,
+                      pointerEvents: 'none'
+                    }}
+                  />
+
+                  {/* Energy aura effect */}
+                  <motion.div
+                    className="absolute inset-0"
+                    animate={{
+                      opacity: [0.3, 0.6, 0.3],
+                    }}
+                    transition={{
+                      duration: 1.5,
+                      repeat: Infinity,
+                      ease: "easeInOut",
+                    }}
+                    style={{
+                      background: 'linear-gradient(to top, rgba(255,255,255,0.1), transparent)',
+                      borderRadius: '50%',
+                      pointerEvents: 'none'
+                    }}
+                  />
+                </>
+              )}
+            </motion.div>
+          );
+        })}
+      </AnimatePresence>
+    );
+  };
+
   if (activeMinigame) {
     return (
       <div className="w-screen h-screen relative">
         <UserHUD userState={userState} />
         <div style={{ opacity: sceneVisible ? 1 : 0, transition: 'opacity 260ms ease' }}>
           <MinigameLoader id={activeMinigame} config={minigameConfig} onComplete={handleMinigameComplete} />
-
-          {/* Temporary test button for devs: simulate minigame completion (success) */}
-          <div className="absolute top-4 right-4 z-50">
-            <button
-              onClick={() => handleMinigameComplete(true)}
-              className="px-3 py-2 bg-green-600 text-white rounded-md shadow-lg hover:bg-green-500 transition"
-              title="Dev-only: simulate successful completion of the minigame"
-            >
-              Test: Complete (Success)
-            </button>
-          </div>
-          {awardMessage && (
-            <div className="absolute top-16 right-4 z-50 px-3 py-2 bg-yellow-500 text-black rounded shadow">
-              {awardMessage}
-            </div>
-          )}
         </div>
       </div>
     );
@@ -320,6 +443,10 @@ const VisualNovelInterface = () => {
       <UserHUD userState={userState} />
 
       <div style={{ opacity: sceneVisible ? 1 : 0, transition: 'opacity 260ms ease' }} className="absolute inset-0">
+        
+        {/* Call to render characters */}
+        {renderCharacters()}
+
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent"></div>
 
         <div className="absolute bottom-[5vh] left-[5%] w-[90%] z-10"> 
@@ -331,11 +458,13 @@ const VisualNovelInterface = () => {
             className="absolute z-30 text-white text-3xl italic font-bold" 
             style={{ textShadow: '0 0 8px rgba(0, 0, 0, 0.9)', bottom: 'calc(180px - 10px)', left: '25px' }}
           >
-            {storyData?.characterName || " "}
+            {/* Display the dynamically updated current speaker */}
+            {currentSpeaker || " "}
           </div>
 
           <div className="relative bg-black/50 backdrop-blur-sm w-full p-6 rounded-xl border-[3px] border-gray-500 min-h-[150px]">
             {renderDialogue()}
+            {/* Original Skip button logic is preserved */}
             {displayedText.length < fullDialogue.length && (
               <button
                 onClick={handleSkip}
