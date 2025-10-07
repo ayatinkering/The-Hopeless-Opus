@@ -20,6 +20,9 @@ const characterAssets = {
   // 'Workshop head 2': { src: 'https://res.cloudinary.com/dzntiuwyr/image/upload/v1759849140/sloth_m84fg2.png', position: 'right' },
 };
 
+// --- Story ID List for Inverted/Italic Style ---
+const INVERTED_STORY_IDS = ['0101', '0102', '0103', '1001', '1002', '1003', '1601', '1602', '1603', '2201c', '2202c', '2401a', '2501b'];
+
 const VisualNovelInterface = () => {
   const [storyData, setStoryData] = useState(null);
   const [userState, setUserState] = useState({ points: 0, inventory: {} });
@@ -244,26 +247,40 @@ const VisualNovelInterface = () => {
     </div>
   );
 
-  const renderDialogue = () => (
-    <div className="relative">
-      {displayedText.length === fullDialogue.length && storyData?.nextID?.length > 0 && !storyData?.choice?.length && (
-        <div className="flex justify-end mb-2">
-          <button
-            onClick={handleNext}
-            className="text-lg italic px-4 py-2 text-white rounded-xl hover:bg-gray-600/25 transition"
-          >
-            Next &gt;&gt;
-          </button>
-        </div>
-      )}
-      <div className="text-xl text-gray-200 font-light whitespace-pre-line">
-        {displayedText}
-        {displayedText.length < fullDialogue.length && (
-          <span className="animate-pulse text-white">_</span>
+  const renderDialogue = () => {
+    // Use the comprehensive list defined globally
+    const isSpecialStory = storyData?.storyID && INVERTED_STORY_IDS.includes(storyData.storyID);
+
+    // Dynamic Tailwind classes for the text div
+    const textClasses = isSpecialStory 
+        ? 'text-black italic' // Black text, italic for inverted box
+        : 'text-gray-200';    // Default: Gray-200 text for dark box
+
+    return (
+      <div className="relative">
+        {displayedText.length === fullDialogue.length && storyData?.nextID?.length > 0 && !storyData?.choice?.length && (
+          <div className="flex justify-end mb-2">
+            <button
+              onClick={handleNext}
+              className="text-lg italic px-4 py-2 text-white rounded-xl hover:bg-gray-600/25 transition"
+            >
+              Next &gt;&gt;
+            </button>
+          </div>
         )}
+        <div 
+          // Apply dynamic text color and italic style
+          className={`text-xl font-light whitespace-pre-line ${textClasses}`}
+        >
+          {displayedText}
+          {displayedText.length < fullDialogue.length && (
+            // Ensure the typing cursor color matches the current text color
+            <span className={`animate-pulse ${isSpecialStory ? 'text-black' : 'text-white'}`}>_</span>
+          )}
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   // --- Enhanced Function to render character sprites with RPG-style effects ---
   const renderCharacters = () => {
@@ -429,6 +446,16 @@ const VisualNovelInterface = () => {
       </div>
     );
   }
+  
+  // Logic based on the new, extensive list of IDs
+  const isInvertedBox = storyData?.storyID && INVERTED_STORY_IDS.includes(storyData.storyID);
+
+  // Dynamic Tailwind classes for the dialogue container
+  const dialogueContainerClasses = isInvertedBox
+    // Inverted colors: white background, black border
+    ? 'bg-white/90 backdrop-blur-md border-[3px] border-black'
+    // Default colors: black background, gray border
+    : 'bg-black/50 backdrop-blur-sm border-[3px] border-gray-500';
 
   return (
     <div
@@ -454,21 +481,28 @@ const VisualNovelInterface = () => {
             {renderChoiceButtons()}
           </div>
 
+          {/* Speaker name color logic adjusted for the inverted box */}
           <div 
-            className="absolute z-30 text-white text-3xl italic font-bold" 
-            style={{ textShadow: '0 0 8px rgba(0, 0, 0, 0.9)', bottom: 'calc(180px - 10px)', left: '25px' }}
+            className={`absolute z-30 text-3xl italic font-bold ${isInvertedBox ? 'text-black' : 'text-white'}`} 
+            style={{ 
+              // Adjust text shadow for contrast against the background gradient (white shadow for black text)
+              textShadow: isInvertedBox ? '0 0 8px rgba(255, 255, 255, 0.9)' : '0 0 8px rgba(0, 0, 0, 0.9)', 
+              bottom: 'calc(180px - 10px)', 
+              left: '25px' 
+            }}
           >
             {/* Display the dynamically updated current speaker */}
             {currentSpeaker || " "}
           </div>
 
-          <div className="relative bg-black/50 backdrop-blur-sm w-full p-6 rounded-xl border-[3px] border-gray-500 min-h-[150px]">
+          <div className={`relative w-full p-6 rounded-xl min-h-[150px] ${dialogueContainerClasses}`}>
             {renderDialogue()}
-            {/* Original Skip button logic is preserved */}
+            {/* Skip button text color logic adjusted for contrast against the box */}
             {displayedText.length < fullDialogue.length && (
               <button
                 onClick={handleSkip}
-                className="absolute bottom-4 right-6 text-lg italic px-4 py-2 text-white rounded-xl hover:bg-gray-600/25 transition"
+                className={`absolute bottom-4 right-6 text-lg italic px-4 py-2 rounded-xl transition 
+                  ${isInvertedBox ? 'text-black hover:bg-gray-200/50' : 'text-white hover:bg-gray-600/25'}`}
               >
                 Skip &gt;&gt;
               </button>
