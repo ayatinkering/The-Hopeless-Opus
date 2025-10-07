@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
+import valImg from "../assets/TilesWall.jpg";
 import MinigameTimer from "../components/MinigameTimer";
 import bg from '../assets/bgforM4.png';
+
 // ConcentricToggleGame.jsx
 // Game using only JavaScript, React and Tailwind CSS
 
@@ -23,88 +25,122 @@ function sectorPath(cx, cy, r1, r2, startAngle, endAngle) {
 }
 
 export default function ConcentricToggleGame({ config, onComplete, session, sessionApi }) {
-    // Outer: sectors 1, 4, and 6 colored
-    const [outer, setOuter] = useState(() => {
-        const arr = Array(SEGMENTS).fill(false);
-        arr[1] = true;
-        arr[4] = true;
-        arr[6] = true;
-        return arr;
-    });
-
-    // Inner: sectors 1 and 6 colored
-    const [inner, setInner] = useState(() => {
-        const arr = Array(SEGMENTS).fill(false);
-        arr[1] = true;
-        arr[6] = true;
-        return arr;
-    });
-
-    // Token starts at outer ring, index 4
-    const [token, setToken] = useState({ ring: "outer", idx: 4 });
-
-    const [levelend, setLevelend] = useState(false);
-
-  function toggleSegment(ring, idx) {
-    if (ring === "outer") {
-      setOuter((prev) => prev.map((val, i) => (i === idx ? !val : val)));
-    } else {
-      setInner((prev) => prev.map((val, i) => (i === idx ? !val : val)));
-    }
-  }
-
-    function autoMove() {
-  let current = { ...token };
-  for (let step = 0; step < 3; step++) {
-    current.idx = (current.idx + 1) % SEGMENTS;
-  }
-  setToken(current);
-  toggleSegment(current.ring, current.idx);
-
-  setTimeout(() => {
-    if (checkWin(outer, inner)) setWinner(true);
-  }, 0);
-}
-
-    function doSwitch() {
-        const idx = token.idx;
-        if (token.ring === "outer") {
-            setInner((prev) => {
-                const newInner = prev.map((val, i) => (i === idx ? !val : val));
-                if (checkWin(outer, newInner)) setWinner(true);
-                return newInner;
-            });
-            setToken({ ring: "inner", idx });
-        } else {
-            setOuter((prev) => {
-                const newOuter = prev.map((val, i) => (i === idx ? !val : val));
-                if (checkWin(newOuter, inner)) setWinner(true);
-                return newOuter;
-            });
-            setToken({ ring: "outer", idx });
-        }
-    }
-
-  function autoMove() {
-    let current = { ...token };
-    for (let step = 0; step < 3; step++) {
-      // simple rule: move clockwise in same ring (outer only)
-      current.idx = (current.idx + 1) % SEGMENTS;
-    }
-    setToken(current);
-    toggleSegment(current.ring, current.idx);
-  }
-
+  // radii & svg geometry
   const size = 400;
   const cx = size / 2;
   const cy = size / 2;
   const outerR = 180;
   const innerR = 80;
-  const [winner, setWinner] = useState(false);
 
-    function checkWin(outer, inner) {
-        return outer.every(Boolean) && inner.every(Boolean);
+  // Outer: sectors 1, 4, and 6 colored
+  const [outer, setOuter] = useState(() => {
+    const arr = Array(SEGMENTS).fill(false);
+    arr[1] = true;
+    arr[4] = true;
+    arr[6] = true;
+    return arr;
+  });
+
+  // Inner: sectors 1 and 6 colored
+  const [inner, setInner] = useState(() => {
+    const arr = Array(SEGMENTS).fill(false);
+    arr[1] = true;
+    arr[6] = true;
+    return arr;
+  });
+
+  // Token starts at outer ring, index 4
+  const [token, setToken] = useState({ ring: "outer", idx: 4 });
+
+  const [winner, setWinner] = useState(false);
+  const [levelend, setLevelend] = useState(false);
+  const failedRef = useRef(false);
+
+  function checkWin(outerArr, innerArr) {
+    return outerArr.every(Boolean) && innerArr.every(Boolean);
+  }
+
+  function toggleSegment(ring, idx) {
+    if (ring === "outer") {
+      setOuter((prev) => {
+        const next = prev.map((val, i) => (i === idx ? !val : val));
+        // check win with updated outer
+        if (checkWin(next, inner)) setWinner(true);
+        return next;
+      });
+    } else {
+      setInner((prev) => {
+        const next = prev.map((val, i) => (i === idx ? !val : val));
+        if (checkWin(outer, next)) setWinner(true);
+        return next;
+      });
     }
+  }
+
+  function autoMove() {
+    // Move token 3 steps clockwise in same ring and toggle that segment
+    setToken((prevToken) => {
+      const current = { ...prevToken };
+      current.idx = (current.idx + 3) % SEGMENTS;
+      // toggle segment in the same ring
+      if (current.ring === "outer") {
+        setOuter((prev) => {
+          const next = prev.map((v, i) => (i === current.idx ? !v : v));
+          if (checkWin(next, inner)) setWinner(true);
+          return next;
+        });
+      } else {
+        setInner((prev) => {
+          const next = prev.map((v, i) => (i === current.idx ? !v : v));
+          if (checkWin(outer, next)) setWinner(true);
+          return next;
+        });
+      }
+      return current;
+    });
+  }
+
+  function doSwitch() {
+    const idx = token.idx;
+    if (token.ring === "outer") {
+      // toggle inner at same idx and move token to inner
+      setInner((prev) => {
+        const newInner = prev.map((val, i) => (i === idx ? !val : val));
+        if (checkWin(outer, newInner)) setWinner(true);
+        return newInner;
+      });
+      setToken({ ring: "inner", idx });
+    } else {
+      // toggle outer at same idx and move token to outer
+      setOuter((prev) => {
+        const newOuter = prev.map((val, i) => (i === idx ? !val : val));
+        if (checkWin(newOuter, inner)) setWinner(true);
+        return newOuter;
+      });
+      setToken({ ring: "outer", idx });
+    }
+  }
+
+  function handleTokenClick() {
+    // clicking the token toggles the current sector in the other ring (same as doSwitch)
+    doSwitch();
+  }
+
+  function tokenCoords(ring, idx) {
+    const startAngle = (idx * TAU) / SEGMENTS - Math.PI / 2;
+    const endAngle = ((idx + 1) * TAU) / SEGMENTS - Math.PI / 2;
+    const angle = (startAngle + endAngle) / 2;
+
+    let r;
+    if (ring === "outer") {
+      r = (innerR + outerR) / 2; // middle of outer ring
+    } else {
+      r = innerR / 2; // middle of inner ring
+    }
+
+    return polarToCartesian(cx, cy, r, angle);
+  }
+
   const sectors = Array.from({ length: SEGMENTS }, (_, i) => {
     const startAngle = (i * TAU) / SEGMENTS - Math.PI / 2;
     const endAngle = ((i + 1) * TAU) / SEGMENTS - Math.PI / 2;
@@ -116,61 +152,46 @@ export default function ConcentricToggleGame({ config, onComplete, session, sess
     };
   });
 
-    function tokenCoords(ring, idx) {
-        const sector = sectors[idx];
-        const angle = (sector.startAngle + sector.endAngle) / 2;
-
-        let r;
-        if (ring === "outer") {
-            r = (innerR + outerR) / 2; // middle of outer ring
-        } else {
-            r = innerR / 2; // middle of inner ring
-        }
-
-        return polarToCartesian(cx, cy, r, angle);
+  async function resetGame() {
+    // Decrement a try on reset if we still have tries and session API available
+    if (session?.triesLeft > 0 && sessionApi?.decrementTry) {
+      try {
+        await sessionApi.decrementTry();
+      } catch (e) {
+        // Non-fatal; log only
+        // console.warn('Failed to decrement try on reset', e);
+      }
     }
+    // Reset outer ring: sectors 1, 4, and 6 colored
+    setOuter(() => {
+      const arr = Array(SEGMENTS).fill(false);
+      arr[1] = true;
+      arr[4] = true;
+      arr[6] = true;
+      return arr;
+    });
 
-    async function resetGame() {
-        // Decrement a try on reset if we still have tries and session API available
-        if (session?.triesLeft > 0 && sessionApi?.decrementTry) {
-          try {
-            await sessionApi.decrementTry();
-          } catch (e) {
-            // Non-fatal; log only
-            // console.warn('Failed to decrement try on reset', e);
-          }
-        }
-        // Reset outer ring: sectors 1, 4, and 6 colored
-        setOuter(() => {
-            const arr = Array(SEGMENTS).fill(false);
-            arr[1] = true;
-            arr[4] = true;
-            arr[6] = true;
-            return arr;
-        });
+    // Reset inner ring: sectors 1 and 6 colored
+    setInner(() => {
+      const arr = Array(SEGMENTS).fill(false);
+      arr[1] = true;
+      arr[6] = true;
+      return arr;
+    });
 
-        // Reset inner ring: sectors 1 and 6 colored
-        setInner(() => {
-            const arr = Array(SEGMENTS).fill(false);
-            arr[1] = true;
-            arr[6] = true;
-            return arr;
-        });
+    // Reset token to outer ring, index 4
+    setToken({ ring: "outer", idx: 4 });
 
-        // Reset token to outer ring, index 4
-        setToken({ ring: "outer", idx: 4 });
+    // Reset winner flag
+    setWinner(false);
+    failedRef.current = false;
+    setLevelend(false);
+  }
 
-        // Reset winner flag
-        setWinner(false);
-    }
-
-  const failedRef = useRef(false);
   // Fail on expiry or triesLeft depletion (session is authoritative)
-  // Don't call onComplete(false) directly here; let the loader finalize.
   useEffect(() => {
-    if (!session || session.completed || failedRef.current) return;
+    if (!session || session.completed) return;
     if (session.remainingSeconds === 0) {
-      // mark locally as failed and let loader's effect (or guard) handle finalization
       failedRef.current = true;
       setLevelend(true);
     }
@@ -190,110 +211,115 @@ export default function ConcentricToggleGame({ config, onComplete, session, sess
   }, [winner, onComplete]);
 
   return (
-  <div className="relative mt-20 w-full max-w-4xl mx-auto">
-    {/* Timer Overlay */}
-    <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50">
-      <div className="bg-slate-800/60 rounded-full px-2 py-1 inline-block">
-        <MinigameTimer remainingSeconds={session?.remainingSeconds ?? null} triesLeft={session?.triesLeft ?? null} />
-      </div>
-    </div>
-    {/* Background Image Layer */}
-    <div 
-      className="absolute inset-0 bg-center bg-no-repeat bg-cover rounded-2xl"
-      style={{ backgroundImage: `url(${bg})` }}
-    />
-    
-    {/* Content Layer */}
-    <div className="relative flex flex-col items-center justify-between gap-4 rounded-2xl shadow-lg p-4 min-h-[600px]">
-      {/* SVG Game */}
-      <div className="flex-1 w-full flex justify-center items-center">
-        <svg
-          className="w-[85%] max-w-md h-auto"
-          viewBox={`0 0 ${size} ${size}`}
-        >
-          {sectors.map((s, i) => (
-            <path
-              key={`outer-${i}`}
-              d={s.pathOuter}
-              fill={outer[i] ? "#34D399" : "white"}
-              stroke="black"
-            />
-          ))}
-          {sectors.map((s, i) => (
-            <path
-              key={`inner-${i}`}
-              d={s.pathInner}
-              fill={inner[i] ? "#34D399" : "white"}
-              stroke="black"
-            />
-          ))}
-          {/* Lines */}
-          <line x1={cx - outerR} y1={cy} x2={cx + outerR} y2={cy} stroke="black" />
-          <line x1={cx} y1={cy - outerR} x2={cx} y2={cy + outerR} stroke="black" />
-          <line
-            x1={cx - outerR * Math.SQRT1_2}
-            y1={cy - outerR * Math.SQRT1_2}
-            x2={cx + outerR * Math.SQRT1_2}
-            y2={cy + outerR * Math.SQRT1_2}
-            stroke="black"
-          />
-          <line
-            x1={cx - outerR * Math.SQRT1_2}
-            y1={cy + outerR * Math.SQRT1_2}
-            x2={cx + outerR * Math.SQRT1_2}
-            y2={cy - outerR * Math.SQRT1_2}
-            stroke="black"
-          />
-          {/* Token */}
-          {(() => {
-            const [tx, ty] = tokenCoords(token.ring, token.idx);
-            return (
-              <text x={tx} y={ty + 5} textAnchor="middle" fontSize="20">
-                *
-              </text>
-            );
-          })()}
-        </svg>
+    <div className="relative mt-20 w-full max-w-4xl mx-auto">
+      {/* Timer Overlay */}
+      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50">
+        <div className="bg-slate-800/60 rounded-full px-2 py-1 inline-block">
+          <MinigameTimer remainingSeconds={session?.remainingSeconds ?? null} triesLeft={session?.triesLeft ?? null} />
+        </div>
       </div>
 
-      {/* Buttons */}
-      <div className="flex flex-wrap gap-2 justify-center mb-2">
-        <button
-          className="px-3 py-2 bg-blue-500 text-white rounded"
-          onClick={autoMove}
-          disabled={levelend}
-        >
-          Move (3 steps clockwise)
-        </button>
-        <button
-          className="px-3 py-2 bg-green-500 text-white rounded"
-          onClick={doSwitch}
-          disabled={levelend}
-        >
-          Switch
-        </button>
-        <button
-          className="px-3 py-2 bg-red-500 text-white rounded"
-          onClick={resetGame}
-          disabled={levelend || (session?.triesLeft !== null && session?.triesLeft <= 0)}
-        >
-          {levelend ? "Game Over" : (session?.triesLeft !== null && session?.triesLeft <= 0 ? "No Tries" : "Reset")}
-        </button>
-      </div>
+      {/* Background Image Layer */}
+      <div
+        className="absolute inset-0 bg-center bg-no-repeat bg-cover rounded-2xl"
+        style={{ backgroundImage: `url(${bg})` }}
+      />
 
-      {/* Win Message */}
-      {winner && (
-        <div className="mt-2 text-2xl font-bold text-white-600">
-           You Won! 
+      {/* Content Layer */}
+      <div className="relative flex flex-col items-center justify-between gap-4 rounded-2xl shadow-lg p-4 min-h-[600px]">
+        {/* SVG Game */}
+        <div className="flex-1 w-full flex justify-center items-center">
+          <svg
+            className="w-[85%] max-w-md h-auto"
+            viewBox={`0 0 ${size} ${size}`}
+          >
+            {/* outer sectors */}
+            {sectors.map((s, i) => (
+              <path
+                key={`outer-${i}`}
+                d={s.pathOuter}
+                fill={outer[i] ? "#34D399" : "white"}
+                stroke="black"
+              />
+            ))}
+            {/* inner sectors */}
+            {sectors.map((s, i) => (
+              <path
+                key={`inner-${i}`}
+                d={s.pathInner}
+                fill={inner[i] ? "#34D399" : "white"}
+                stroke="black"
+              />
+            ))}
+
+            {/* Lines */}
+            <line x1={cx - outerR} y1={cy} x2={cx + outerR} y2={cy} stroke="black" />
+            <line x1={cx} y1={cy - outerR} x2={cx} y2={cy + outerR} stroke="black" />
+            <line
+              x1={cx - outerR * Math.SQRT1_2}
+              y1={cy - outerR * Math.SQRT1_2}
+              x2={cx + outerR * Math.SQRT1_2}
+              y2={cy + outerR * Math.SQRT1_2}
+              stroke="black"
+            />
+            <line
+              x1={cx - outerR * Math.SQRT1_2}
+              y1={cy + outerR * Math.SQRT1_2}
+              x2={cx + outerR * Math.SQRT1_2}
+              y2={cy - outerR * Math.SQRT1_2}
+              stroke="black"
+            />
+
+            {/* Token - draw as a circle in SVG and attach click to toggle */}
+            {(() => {
+              const [tx, ty] = tokenCoords(token.ring, token.idx);
+              return (
+                <g key={`token-${token.ring}-${token.idx}`} onClick={handleTokenClick} style={{ cursor: 'pointer' }}>
+                  <circle cx={tx} cy={ty} r={14} fill="#111827" stroke="#000" strokeWidth={2} />
+                  <circle cx={tx} cy={ty} r={6} fill={token.ring === 'outer' ? '#60a5fa' : '#34d399'} />
+                </g>
+              );
+            })()}
+          </svg>
         </div>
-      )}
-      {/* Fail Message */}
-      {levelend && !winner && (
-        <div className="mt-2 text-2xl font-bold text-red-600">
-           Game Over
+
+        {/* Buttons */}
+        <div className="flex flex-wrap gap-2 justify-center mb-2">
+          <button
+            className="px-3 py-2 bg-blue-500 text-white rounded disabled:opacity-50"
+            onClick={autoMove}
+            disabled={levelend}
+          >
+            Move (3 steps clockwise)
+          </button>
+          <button
+            className="px-3 py-2 bg-green-500 text-white rounded disabled:opacity-50"
+            onClick={doSwitch}
+            disabled={levelend}
+          >
+            Switch
+          </button>
+          <button
+            className="px-3 py-2 bg-red-500 text-white rounded disabled:opacity-50"
+            onClick={resetGame}
+            disabled={levelend || (session?.triesLeft !== null && session?.triesLeft <= 0)}
+          >
+            {levelend ? "Game Over" : (session?.triesLeft !== null && session?.triesLeft <= 0 ? "No Tries" : "Reset")}
+          </button>
         </div>
-      )}
+
+        {/* Win / Fail Message */}
+        {winner && (
+          <div className="mt-2 text-2xl font-bold text-white">
+            You Won!
+          </div>
+        )}
+        {levelend && !winner && (
+          <div className="mt-2 text-2xl font-bold text-red-600">
+            Game Over
+          </div>
+        )}
+      </div>
     </div>
-  </div>
-);
+  );
 }

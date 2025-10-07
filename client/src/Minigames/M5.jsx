@@ -1,117 +1,40 @@
-// ============================================
-// M5.jsx - Morse Code Game (3 attempts, total 90s, persistent tries, tamper-proof)
-// ============================================
 import React, { useState, useEffect, useRef } from "react";
 import MinigameTimer from "../components/MinigameTimer";
 import morseAudio from "../assets/morse.wav";
 import morseBg from "../assets/morse.png";
 
-const TOTAL_TIME = 90; // total game time in seconds
-const MAX_TRIES = 3;
-
 const M5 = ({ config, onComplete, session, sessionApi }) => {
   const audioRef = useRef(null);
   const objectUrlRef = useRef(null);
 
-  // Initialize triesLeft from localStorage
-  const getInitialTries = () => { 
-    const storedTries = localStorage.getItem("morseTriesLeft");
-    if (storedTries !== null) {
-      return parseInt(storedTries, 10);
-    }
-    localStorage.setItem("morseTriesLeft", MAX_TRIES);
-    return MAX_TRIES;
-  };
-
-  // Initialize total timeLeft from localStorage
-  const getInitialTime = () => {
-    let endTime = localStorage.getItem("morseEndTime");
-    if (!endTime) {
-      endTime = Date.now() + TOTAL_TIME * 1000;
-      localStorage.setItem("morseEndTime", endTime);
-    }
-    return Math.max(0, Math.floor((parseInt(endTime, 10) - Date.now()) / 1000));
-  };
-
-  // Check if tampering has occurred
-  const [tampered, setTampered] = useState(() => {
-    return localStorage.getItem("morseTampered") === "true";
-  });
-
-  const [timeLeft, setTimeLeft] = useState(getInitialTime());
   const [input, setInput] = useState("");
   const [message, setMessage] = useState("");
-  const [gameOver, setGameOver] = useState(tampered);
+  const [gameOver, setGameOver] = useState(false);
   const [audioPlaying, setAudioPlaying] = useState(false);
-  const [triesLeft, setTriesLeft] = useState(getInitialTries);
 
-  // Immediately enforce tampering if detected
+  // Check for game over conditions from session
   useEffect(() => {
-    if (tampered) {
-      setMessage("GAME OVER - TAMPERING DETECTED");
+    if (!session) return;
+    
+    if (session.completed) {
       setGameOver(true);
       if (audioRef.current) audioRef.current.pause();
     }
-  }, [tampered]);
-
-  // Timer effect
-  useEffect(() => {
-    if (gameOver) return;
-    const interval = setInterval(() => {
-      const endTime = parseInt(localStorage.getItem("morseEndTime"), 10);
-      const diff = Math.max(0, Math.floor((endTime - Date.now()) / 1000));
-      setTimeLeft(diff);
-
-      if (diff <= 0) {
-        clearInterval(interval);
-        setMessage("ACCESS DENIED");
-        setGameOver(true);
-        if (audioRef.current) audioRef.current.pause();
-      }
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [gameOver]);
-
-  // Detect localStorage tampering
-  useEffect(() => {
-    const checkTampering = () => {
-      const storedTries = parseInt(localStorage.getItem("morseTriesLeft") || "0", 10);
-      const endTime = parseInt(localStorage.getItem("morseEndTime") || "0", 10);
-      if (storedTries > MAX_TRIES || endTime > Date.now() + TOTAL_TIME * 1000) {
-        return true;
-      }
-      return false;
-    };
-
-    const tamperInterval = setInterval(() => {
-      if (checkTampering() && !gameOver) {
-        localStorage.setItem("morseTampered", "true"); // mark permanently
-        setTampered(true);
-        setMessage("ACCESS DENIED - TAMPERING DETECTED");
-        setGameOver(true);
-        if (audioRef.current) audioRef.current.pause();
-        clearInterval(tamperInterval);
-      }
-    }, 1000);
-
-    return () => clearInterval(tamperInterval);
-  }, [gameOver]);
-
-  const handleFail = () => {
-    const remaining = triesLeft - 1;
-    localStorage.setItem("morseTriesLeft", remaining);
-    if (remaining > 0) {
-      setTriesLeft(remaining);
+    
+    if (session.remainingSeconds === 0) {
       setMessage("ACCESS DENIED");
-      setInput("");
-    } else {
-      setTriesLeft(0);
-      setMessage("ACCESS DENIED - GAME OVER"); //  updated message
       setGameOver(true);
       if (audioRef.current) audioRef.current.pause();
+      onComplete && onComplete(false);
     }
-  };
+    
+    if (typeof session.triesLeft === 'number' && session.triesLeft <= 0) {
+      setMessage("ACCESS DENIED - GAME OVER");
+      setGameOver(true);
+      if (audioRef.current) audioRef.current.pause();
+      onComplete && onComplete(false);
+    }
+  }, [session, onComplete]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -123,7 +46,11 @@ const M5 = ({ config, onComplete, session, sessionApi }) => {
       if (audioRef.current) audioRef.current.pause();
       if (onComplete) setTimeout(() => onComplete(true), 2000);
     } else {
-      handleFail();
+      if (sessionApi?.decrementTry) {
+        sessionApi.decrementTry();
+      }
+      setMessage("ACCESS DENIED");
+      setInput("");
     }
   };
 
@@ -138,8 +65,13 @@ const M5 = ({ config, onComplete, session, sessionApi }) => {
 
         const audioEl = new Audio();
         audioEl.src = url;
-        audioEl.loop = true;
+        audioEl.loop = false;
         audioRef.current = audioEl;
+
+        // When the audio finishes naturally, reset state
+        audioEl.addEventListener("ended", () => {
+          setAudioPlaying(false);
+        });
       } catch (err) {
         // console.error("Audio setup failed:", err);
         return;
@@ -148,6 +80,7 @@ const M5 = ({ config, onComplete, session, sessionApi }) => {
 
     if (audioPlaying) {
       audioRef.current.pause();
+      audioRef.current.currentTime = 0; // reset position to start
       setAudioPlaying(false);
     } else {
       try {
@@ -181,7 +114,8 @@ const M5 = ({ config, onComplete, session, sessionApi }) => {
 
   const failAndDecrement = () => {
     if (sessionApi?.decrementTry) sessionApi.decrementTry();
-    handleFail();
+    setMessage("ACCESS DENIED");
+    setInput("");
   };
 
   return (
@@ -210,6 +144,11 @@ const M5 = ({ config, onComplete, session, sessionApi }) => {
           placeholder="Enter the override code..."
           value={input}
           onChange={(e) => setInput(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && !gameOver) {
+              handleSubmit(e);
+            }
+          }}
           disabled={gameOver}
           className="px-4 py-2 rounded-md bg-neutral-900 border border-gray-600 text-white 
                      placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-400"

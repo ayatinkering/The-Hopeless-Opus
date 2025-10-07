@@ -1,6 +1,3 @@
-// ============================================
-// M3.jsx - Electrical Chip Connection
-// ============================================
 import React, { useState, useCallback, useEffect } from 'react';
 import MinigameTimer from '../components/MinigameTimer';
 
@@ -176,15 +173,19 @@ const M3 = ({ config, onComplete, session, sessionApi }) => {
 
   const handleWireClick = (connectionIndex) => {
     const connection = connections[connectionIndex];
-    if (connection.isDefault) return; // Prevent removing default wires
-
-    if (timeLeft <= 0) return;
+    if (connection.isDefault) return; // keep if you don't want default wires removable
 
     setConnections(prev => prev.filter((_, index) => index !== connectionIndex));
     setChips(prev => ({
       ...prev,
-      [connection.from]: { ...prev[connection.from], currentConnections: prev[connection.from].currentConnections - 1 },
-      [connection.to]: { ...prev[connection.to], currentConnections: prev[connection.to].currentConnections - 1 }
+      [connection.from]: {
+        ...prev[connection.from],
+        currentConnections: prev[connection.from].currentConnections - 1
+      },
+      [connection.to]: {
+        ...prev[connection.to],
+        currentConnections: prev[connection.to].currentConnections - 1
+      }
     }));
   };
 

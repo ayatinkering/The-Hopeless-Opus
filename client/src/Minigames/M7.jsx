@@ -36,8 +36,13 @@ const TokenDisplay = ({ imageName }) => {
 };
 
 const GAME_VERSION = 8;
+
 const TIMER_DURATION_MINUTES = 2;
 
+
+// ---------------------------------------------------
+
+// 🔑 Integrity Check Helper Funct
 const generateChecksum = (value, version) => {
     const data = String(value) + String(version);
     let hash = 0;
@@ -255,7 +260,7 @@ const PuzzleGame = ({ config, onComplete, session, sessionApi }) => {
     const getPathData = (path) => {
         const fromSlot = slotPositions[path.from];
         const toSlot = slotPositions[path.to];
-        const slotDiameter = 80;
+        const slotDiameter = 60; // Reduced from 80
         const slotRadius = slotDiameter / 2;
 
         const fromX = (parseFloat(fromSlot.left) / 100) * containerSize.width + slotRadius;
@@ -294,13 +299,13 @@ const PuzzleGame = ({ config, onComplete, session, sessionApi }) => {
                     >
                         {isWin ? (
                             <>
-                                <h2 className="text-5xl font-extrabold text-green-400 mb-4 animate-pulse">You Won! 🎉</h2>
-                                <p className="text-xl font-medium">All paths are green. Congratulations!</p>
+                                <h2 className="text-3xl sm:text-5xl font-extrabold text-green-400 mb-2 sm:mb-4 animate-pulse">You Won! 🎉</h2>
+                                <p className="text-base sm:text-xl font-medium">All paths are green. Congratulations!</p>
                             </>
                         ) : (
                             <>
-                                <h2 className="text-5xl font-extrabold text-red-400 mb-4 animate-bounce">Time Up! ⏳</h2>
-                                <p className="text-xl font-medium">Better luck next time. Refresh the page to start over.</p>
+                                <h2 className="text-3xl sm:text-5xl font-extrabold text-red-400 mb-2 sm:mb-4 animate-bounce">Time Up! ⏳</h2>
+                                <p className="text-base sm:text-xl font-medium">Better luck next time.</p>
                             </>
                         )}
                     </div>
@@ -336,15 +341,15 @@ const PuzzleGame = ({ config, onComplete, session, sessionApi }) => {
             {/* Game Board */}
             <div
                 ref={gameBoardRef}
-                className="relative w-full max-w-5xl h-[70vh] mt-4 z-10"
+                className="relative w-full max-w-4xl h-[50vh] sm:h-[55vh] mt-2 z-10"
             >
                 <svg className="absolute inset-0 w-full h-full z-0">
                     {initialPaths.map((path, index) => {
                         const pathKey = `${path.from}-${path.to}`;
                         const color = pathColors[pathKey] || 'gray';
                         const strokeColor = color === 'green' ? '#10B981' : color === 'red' ? '#EF4444' : '#6B7280';
-                        const coloredStrokeWidth = color === 'green' || color === 'red' ? '12' : '6';
-                        const borderStrokeWidth = '16';
+                        const coloredStrokeWidth = color === 'green' || color === 'red' ? '8' : '4';
+                        const borderStrokeWidth = '12';
 
                         return (
                             <React.Fragment key={index}>
@@ -370,11 +375,7 @@ const PuzzleGame = ({ config, onComplete, session, sessionApi }) => {
                 {slots.map(slot => (
                     <div
                         key={slot.id}
-                        className={`absolute z-10 w-20 h-20 rounded-full flex items-center justify-center border-4 border-dashed border-gray-500 bg-gray-800 ${
-                            starterTokenIds.includes(slot.id)
-                                ? 'opacity-100 border-green-400'
-                                : 'hover:bg-gray-700 transition-colors duration-200 transform hover:scale-105'
-                        }`}
+                        className={`absolute z-10 w-12 h-12 sm:w-16 sm:h-16 rounded-full flex items-center justify-center border-2 sm:border-4 border-dashed border-gray-500 bg-gray-800 hover:bg-gray-700 transition-colors duration-200 transform ${!isTimeUp && !isWin ? 'hover:scale-105' : ''}`}
                         style={slotPositions[slot.id]}
                         onDragOver={handleDragOver}
                         onDrop={(e) => handleDrop(e, slot.id)}

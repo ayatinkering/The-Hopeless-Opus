@@ -1,8 +1,4 @@
-// ============================================
-// M1.jsx - KnobPuzzle 4x5 with black row
-// ============================================
-import React, { useState, useEffect } from "react";
-import valImg from "../assets/TilesWall.jpg";
+import React, { useState, useEffect, useRef } from "react";
 import MinigameTimer from "../components/MinigameTimer";
 
 export default function M1({
@@ -209,9 +205,37 @@ export default function M1({
         )}
       </div>
 
-      <div style={{ marginTop: 16, color: "#bbb", fontSize: 13 }}>
-        Click any knob to rotate the 2×2 block clockwise.
+      {/* Buttons */}
+      <div className="flex flex-wrap gap-1.5 sm:gap-2 justify-center mb-1 sm:mb-2">
+        <button
+          className="px-2 py-1.5 sm:px-3 sm:py-2 text-xs sm:text-sm md:text-base bg-blue-500 text-white rounded hover:bg-blue-600 transition"
+          onClick={autoMove}
+        >
+          Move (3 steps)
+        </button>
+        <button
+          className="px-2 py-1.5 sm:px-3 sm:py-2 text-xs sm:text-sm md:text-base bg-green-500 text-white rounded hover:bg-green-600 transition"
+          onClick={doSwitch}
+        >
+          Switch
+        </button>
+        <button
+          className="px-2 py-1.5 sm:px-3 sm:py-2 text-xs sm:text-sm md:text-base bg-red-500 text-white rounded hover:bg-red-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
+          onClick={resetGame}
+          disabled={session?.triesLeft !== null && session?.triesLeft <= 0}
+        >
+          {session?.triesLeft !== null && session?.triesLeft <= 0
+            ? "No Tries"
+            : "Reset"}
+        </button>
       </div>
+
+      {/* Win Message */}
+      {winner && (
+        <div className="mt-1 sm:mt-2 text-lg sm:text-xl md:text-2xl font-bold text-white">
+           You Won! 
+        </div>
+      )}
     </div>
   );
 }
