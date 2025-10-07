@@ -224,7 +224,7 @@ export const updateUserStoryOnLevelEnd = async (req, res) => {
         nextStoryId = levelStory.nextID[successIndex];
       } else {
         // If not array or insufficient length, use nextID directly
-        nextStoryId = levelStory.nextID;
+        nextStoryId = levelStory.nextID;  
       }
     } else {
       // Regular levelEnd: set to this story, then find next

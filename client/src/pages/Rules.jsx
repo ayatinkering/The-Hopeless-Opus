@@ -1,7 +1,5 @@
-import React from 'react';
 import background from "../assets/background.jpg";
 import React from 'react';
-import background from "../assets/background.jpg";
 
 function Rules() {
   return (
@@ -18,6 +16,7 @@ function Rules() {
           Community Rules
         </h1>
         <ol className="list-decimal pl-5 space-y-3 text-base sm:text-lg text-black leading-relaxed">
+          <li>Please play the games on the laptop for the best user experience</li>
           <li>Respect all players – no harassment, hate speech, or discrimination.</li>
           <li>No cheating or exploiting – avoid hacks, bots, or unfair advantages.</li>
           <li>Play fair – follow the intended game mechanics.</li>

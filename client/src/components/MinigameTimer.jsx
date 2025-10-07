@@ -24,7 +24,7 @@ export default function MinigameTimer({ remainingSeconds, triesLeft, compact = f
   return (
     <div className={`inline-flex items-center gap-2 rounded-full font-mono bg-slate-800/70 border ${danger ? 'border-red-500 text-red-300' : 'border-slate-600 text-slate-200'} shadow-sm backdrop-blur ${baseStyles} ${className}`.trim()}>
       <span title="Time Remaining">⏱ {fmt(remainingSeconds)}</span>
-      {typeof triesLeft === 'number' && triesLeft >= 0 && (
+      {typeof triesLeft === 'number' && triesLeft > 0 && triesLeft!=null && (
         <span className="font-semibold" title="Tries Left">• Tries: {triesLeft}</span>
       )}
     </div>

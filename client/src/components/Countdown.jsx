@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 const Countdown = ({ targetDateProp }) => {
   const [time, setTime] = useState(0);
 
-  const targetDate = targetDateProp || new Date("2025-10-08T00:00:00");
+  const targetDate = targetDateProp || new Date("2025-10-08T18:30:00");
 
   useEffect(() => {
     const updateTimer = () => {

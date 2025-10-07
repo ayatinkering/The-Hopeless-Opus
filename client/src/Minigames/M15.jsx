@@ -57,8 +57,7 @@ export default function LightGrid({
   // but keep existing param structure by allowing extra props via rest args if necessary
   // NOTE: MinigameLoader passes session and onComplete; we'll read them from props via arguments
   // (React provides props as first arg; since we destructured above, we can instead access `arguments[0]`)
-  const extraProps = arguments[0] || {};
-  const { onComplete, session } = extraProps;
+
 
   // Auto-fail when backend timer expires — set result and let loader finalize
   useEffect(() => {

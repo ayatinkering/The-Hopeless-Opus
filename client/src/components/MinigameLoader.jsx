@@ -133,7 +133,7 @@ export default function MinigameLoader({ id, config, onComplete }) {
         <div className="relative w-full h-full">
           <div className="minigame-content relative w-full h-full">
           {/* Dev/Test Success Toggle */}
-          <div className="absolute top-2 left-2 z-50 flex gap-2">
+          {/* <div className="absolute top-2 left-2 z-50 flex gap-2">
             <button
               className="px-3 py-1 rounded bg-green-600 text-white text-sm"
               onClick={() => handleComplete(true)}
@@ -142,7 +142,7 @@ export default function MinigameLoader({ id, config, onComplete }) {
               className="px-3 py-1 rounded bg-red-600 text-white text-sm"
               onClick={() => handleComplete(false)}
             >Force Fail</button>
-          </div>
+          </div> */}
             <Component
               config={config}
               onComplete={handleComplete}
