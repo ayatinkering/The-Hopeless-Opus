@@ -97,14 +97,14 @@ export default function Register() {
     const data = await res.json();
     if (res.ok) {
       alert("Registration successful!");
-      console.log("Server response:", data);
+      // console.log("Server response:", data);
       Navigate("/login");
 
     } else {
       alert(data.message || "Registration failed");
     }
   } catch (err) {
-    console.error(err);
+    // console.error(err);
     alert("Network error");
   }
 };

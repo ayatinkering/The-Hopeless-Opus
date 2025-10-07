@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
+import MinigameTimer from '../components/MinigameTimer';
 
 const DEFAULT_TOP = [
   [4],
@@ -47,6 +48,22 @@ export default function LightGrid({
   cellSize = 36,
   leftWidth = 90,
 }) {
+  // accept loader props
+  // signature: ({ config, onComplete, session, sessionApi }) is passed by MinigameLoader
+  // but keep existing param structure by allowing extra props via rest args if necessary
+  // NOTE: MinigameLoader passes session and onComplete; we'll read them from props via arguments
+  // (React provides props as first arg; since we destructured above, we can instead access `arguments[0]`)
+  const extraProps = arguments[0] || {};
+  const { onComplete, session } = extraProps;
+
+  // Auto-fail when backend timer expires
+  useEffect(() => {
+    if (!session || session.completed) return;
+    if (session.remainingSeconds === 0) {
+      onComplete && onComplete(false);
+    }
+  }, [session, onComplete]);
+
   const SIZE = 10;
   const [grid, setGrid] = useState(() =>
     Array.from({ length: SIZE }, () =>
@@ -204,6 +221,9 @@ export default function LightGrid({
             </button>
           ))
         )}
+      </div>
+      <div style={{ position: 'absolute', top: 16, right: 16 }}>
+        <MinigameTimer remainingSeconds={session?.remainingSeconds ?? null} triesLeft={session?.triesLeft ?? null} />
       </div>
 
       {/* Buttons */}

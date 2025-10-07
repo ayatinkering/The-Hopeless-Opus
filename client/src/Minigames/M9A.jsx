@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import React from 'react';
+import MinigameTimer from '../components/MinigameTimer';
 
-export default function Pravar() {
+export default function Pravar({ config, onComplete, session, sessionApi }) {
   const COLS = 20;
   const ROWS = 17;
 
@@ -60,6 +61,14 @@ export default function Pravar() {
   const isHighlightedCell = (row, col) => {
     return highlightedCells.some(cell => cell.row === row && cell.col === col);
   };
+
+  // Auto-fail when backend timer expires
+  useEffect(() => {
+    if (!session || session.completed) return;
+    if (session.remainingSeconds === 0) {
+      onComplete && onComplete(false);
+    }
+  }, [session, onComplete]);
 
   const toggleNumberOrientation = (boxIdx, num) => {
     const key = `${boxIdx}-${num}`;
@@ -334,7 +343,10 @@ export default function Pravar() {
                   </div>
                 ))}
               </div>
-            </div>
+              </div>
+              <div className="absolute top-4 right-4">
+                <MinigameTimer remainingSeconds={session?.remainingSeconds ?? null} triesLeft={session?.triesLeft ?? null} />
+              </div>
           </div>
         )}
         

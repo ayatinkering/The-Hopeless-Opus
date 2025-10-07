@@ -63,7 +63,7 @@ export const startSession = async (req, res) => {
       }
     });
   } catch (err) {
-    console.error('startSession error', err);
+    // console.error('startSession error', err);
     return res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
@@ -88,7 +88,7 @@ export const getSessionState = async (req, res) => {
       }
     });
   } catch (err) {
-    console.error('getSessionState error', err);
+    // console.error('getSessionState error', err);
     return res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
@@ -107,7 +107,7 @@ export const decrementTrySession = async (req, res) => {
     await session.save();
     return res.json({ message: 'Try decremented', triesLeft: session.triesLeft });
   } catch (err) {
-    console.error('decrementTrySession error', err);
+    // console.error('decrementTrySession error', err);
     return res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
@@ -143,7 +143,7 @@ export const completeSession = async (req, res) => {
 
     return res.json({ message: 'Session completed', score, sessionId: session._id, minigameId });
   } catch (err) {
-    console.error('completeSession error', err);
+    // console.error('completeSession error', err);
     return res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
@@ -177,7 +177,7 @@ export const claimMinigameReward = async (req, res) => {
       userPoints: user.points
     });
   } catch (err) {
-    console.error('claimMinigameReward error', err);
+    // console.error('claimMinigameReward error', err);
     return res.status(500).json({ message: 'Server error', error: err.message });
   }
 };

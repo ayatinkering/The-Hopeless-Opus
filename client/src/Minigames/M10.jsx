@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
+import MinigameTimer from '../components/MinigameTimer';
 
-export default function StepBlocksGame() {
+export default function StepBlocksGame({ config, onComplete, session, sessionApi }) {
   const structure = [2, 3, 4, 5];
 
   const levels = [
@@ -276,6 +277,14 @@ export default function StepBlocksGame() {
     return () => clearInterval(timerInterval);
   }, [levelIndex]);
 
+  // Auto-fail when backend timer expires
+  useEffect(() => {
+    if (!session || session.completed) return;
+    if (session.remainingSeconds === 0) {
+      onComplete && onComplete(false);
+    }
+  }, [session, onComplete]);
+
   const renderCell = (side, blocks, row, col) => {
     const occupyingColor = findOccupyingColor(blocks, row, col);
     const bgClass = occupyingColor
@@ -366,6 +375,8 @@ export default function StepBlocksGame() {
         {renderStructure("left", leftBlocks)}
         {renderStructure("right", rightBlocks)}
       </div>
+
+      <div className="absolute top-4 right-4"><MinigameTimer remainingSeconds={session?.remainingSeconds ?? null} triesLeft={session?.triesLeft ?? null} /></div>
 
       {dragging && preview && (
         <div

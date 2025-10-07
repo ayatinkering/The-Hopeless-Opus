@@ -135,7 +135,7 @@ export default function ConcentricToggleGame({ onComplete, session, sessionApi }
             await sessionApi.decrementTry();
           } catch (e) {
             // Non-fatal; log only
-            console.warn('Failed to decrement try on reset', e);
+            // console.warn('Failed to decrement try on reset', e);
           }
         }
         // Reset outer ring: sectors 1, 4, and 6 colored

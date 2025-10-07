@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
+import MinigameTimer from "../components/MinigameTimer";
 import letterSrc from "../assets/letter.jpg";
 import letterbg from "../assets/plainletter.jpg";
 
@@ -297,7 +298,7 @@ const ClockDialLock = ({ onSequenceComplete, setCodeMsg }) => {
 // =================================================================
 // Main Letter Component (with original Puzzle/Decode stages)
 // =================================================================
-export default function Letter() {
+export default function Letter({ config, onComplete, session, sessionApi }) {
   const containerRef = useRef(null);
   const [isBroken, setIsBroken] = useState(true);
   const [message, setMessage] = useState("");
@@ -386,6 +387,14 @@ export default function Letter() {
   useEffect(() => {
     generatePieces();
   }, [boardW, boardH]);
+
+  // Auto-fail when backend timer expires
+  useEffect(() => {
+    if (!session || session.completed) return;
+    if (session.remainingSeconds === 0) {
+      onComplete && onComplete(false);
+    }
+  }, [session, onComplete]);
 
   // ---------------- Dragging logic ----------------
   useEffect(() => {
@@ -768,7 +777,12 @@ THAT WILL GO ON TILL MIDNIGHT`;
           zIndex: 500,
         }}
       >
-        {message}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div>{message}</div>
+          <div style={{ marginLeft: 6 }}>
+            <MinigameTimer remainingSeconds={session?.remainingSeconds ?? null} triesLeft={session?.triesLeft ?? null} />
+          </div>
+        </div>
       </div>
 
       <div

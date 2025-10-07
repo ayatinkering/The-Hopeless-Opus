@@ -93,7 +93,7 @@ export default function RegisterForm() {
       })
 
       setSuccess(res.data.message || "Registration successful!")
-      console.log("Registered User:", res.data)
+      // console.log("Registered User:", res.data)
     } catch (err) {
       setError(err.response?.data?.message || "Something went wrong")
     } finally {
