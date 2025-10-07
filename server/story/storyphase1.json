@@ -780,7 +780,7 @@
       "choice": [],
       "characters": [
         null,
-        null
+        "Workshop head 1"
       ]
     },
     {
@@ -797,8 +797,8 @@
       "levelEnd": false,
       "choice": [],
       "characters": [
-        null,
-        null
+        "Workshop head 2",
+        "Workshop head 1"
       ]
     },
     {
@@ -831,7 +831,7 @@
       "levelEnd": false,
       "choice": [],
       "characters": [
-        null,
+        "Workshop head 1",
         "Player 1"
       ]
     },
@@ -909,7 +909,7 @@
       "characters": [
         null,
         null,
-        null,
+        "Workshop head 2",
         null
       ]
     },
@@ -1014,7 +1014,7 @@
       "choice": [],
       "characters": [
         null,
-        null
+        "Workshop head 1"
       ]
     },
     {
@@ -3128,4 +3128,4 @@
         null
       ]
     }
-  ]
+]

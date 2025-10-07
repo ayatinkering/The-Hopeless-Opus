@@ -16,8 +16,8 @@ const characterAssets = {
   'Player 1': { src: 'https://res.cloudinary.com/dzntiuwyr/image/upload/v1759849140/p1_we3btx.png', position: 'left' },
   'Player 2': { src: 'https://res.cloudinary.com/dzntiuwyr/image/upload/v1759849140/p2_f6igmq.png', position: 'right' },
   // Workshop heads are not included per your last request, but can be added here if needed
-  // 'Workshop head 1': { src: 'https://res.cloudinary.com/dzntiuwyr/image/upload/v1759849140/pride_bgjd7m.png', position: 'left' },
-  // 'Workshop head 2': { src: 'https://res.cloudinary.com/dzntiuwyr/image/upload/v1759849140/sloth_m84fg2.png', position: 'right' },
+  'Workshop head 1': { src: 'https://res.cloudinary.com/dzntiuwyr/image/upload/v1759849140/pride_bgjd7m.png', position: 'left' },
+  'Workshop head 2': { src: 'https://res.cloudinary.com/dzntiuwyr/image/upload/v1759849140/sloth_m84fg2.png', position: 'right' },
 };
 
 // --- Story ID List for Inverted/Italic Style ---
