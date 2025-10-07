@@ -68,7 +68,7 @@ const About = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log('Form submitted:', formData);
+    // console.log('Form submitted:', formData);
     alert('Message sent successfully!');
     setFormData({ name: '', email: '', message: '' });
   };

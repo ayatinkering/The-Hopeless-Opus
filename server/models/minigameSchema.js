@@ -7,7 +7,7 @@ const MinigameSchema = new Schema({
     type: String,
     required: true,
     unique: true,
-    enum: ["M1", "M2", "M3", "M4", "M5", "M6", "M7"],
+    enum: ["M1", "M2", "M3", "M4", "M5", "M6", "M7", "M8", "M9A", "M9B", "M10", "M11", "M12", "M13", "M14", "M15"],
   },
   timer: {
     type: Number, // store timer in seconds
@@ -22,13 +22,13 @@ const MinigameSchema = new Schema({
     type: Number,
     default: function() {
       // Only M4, M5, M6 have tries
-      if (["M4", "M5", "M6"].includes(this.minigameId)) return 3;
+      if (["M4", "M5", "M6","M8", "M9A", "M9B", "M10", "M11", "M12", "M13", "M14", "M15"].includes(this.minigameId)) return 3;
       return null;
     },
     min: 0,
     max: 3,
     required: function() {
-      return ["M4", "M5", "M6"].includes(this.minigameId);
+      return ["M4", "M5", "M6","M8", "M9A", "M9B", "M10", "M11", "M12", "M13", "M14", "M15"].includes(this.minigameId);
     },
   },
 });

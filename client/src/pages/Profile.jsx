@@ -20,7 +20,7 @@ export default function Profile({ setUser }) {
         );
         setProfileData(res.data);
       } catch (err) {
-        console.error(err);
+        // console.error(err);
       }
     };
 
