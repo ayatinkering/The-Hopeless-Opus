@@ -1,51 +1,103 @@
-
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import backgroundImage from "../assets/cipherimage.png";
+import MinigameTimer from "../components/MinigameTimer";
+import useMinigameSession from "../lib/useMinigameSession";
 
-export default function M6({ config, onComplete, session, sessionApi }) {
-  const cipherText = "Zvuv Whgga Xbhzap Vvthup";
+export default function M6({ onComplete }) {
+  const minigameId = "M6";
+  const { session, loading, error, remainingSeconds, triesLeft, api: sessionApi } = useMinigameSession(minigameId);
+
+  const cipherText = " "; // <-- Insert your cipher text here
   const correctAnswer = "theseromansarecrazy";
 
   const [input, setInput] = useState("");
   const [isCorrect, setIsCorrect] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
-  const [wrongCount, setWrongCount] = useState(0);
   const [gameEnded, setGameEnded] = useState(false);
+  const [showWrongAnswer, setShowWrongAnswer] = useState(false);
 
-  
-  const handleSubmit = () => {
-    if (gameEnded) return;
+  const alreadyEnded = useRef(false);
 
-    setSubmitted(true);
-    if (input.toLowerCase().replace(/\s+/g, "") === correctAnswer) {
+  // Handle submission
+  const handleSubmit = async () => {
+    if (gameEnded || alreadyEnded.current) return;
+    
+    const normalized = input.toLowerCase().replace(/\s+/g, "");
+    
+    if (normalized === correctAnswer) {
+      // Correct answer
       setIsCorrect(true);
       setGameEnded(true);
-      if (onComplete) {
-        setTimeout(() => onComplete(true), 1000);
+      alreadyEnded.current = true;
+      try {
+        await sessionApi.completeSession();
+        if (onComplete) onComplete(true);
+      } catch (err) {
+        console.error("Failed to mark session complete:", err);
       }
     } else {
-      setIsCorrect(false);
-      setWrongCount((prev) => prev + 1);
+      // Wrong answer - decrement try
+      setShowWrongAnswer(true);
+      setTimeout(() => setShowWrongAnswer(false), 2000);
+      
+      try {
+        await sessionApi.decrementTry();
+        // fetchState is called automatically by decrementTry
+      } catch (err) {
+        console.error("Failed to decrement try:", err);
+      }
+      
+      setInput("");
     }
   };
 
-  // Session integration for expiry and tries decrement on wrong attempts
-  // Do not call onComplete(false) here — loader finalizes.
-  useEffect(() => {
-    if (!session || session.completed) return;
-    if (session.remainingSeconds === 0) {
-      setGameEnded(true);
+  // Skip button handler
+  const handleSkip = async () => {
+    if (gameEnded || alreadyEnded.current) return;
+    setGameEnded(true);
+    alreadyEnded.current = true;
+    try {
+      await sessionApi.completeSession();
+    } catch (err) {
+      console.error("Failed to skip game:", err);
     }
-    if (typeof session.triesLeft === "number" && session.triesLeft <= 0) {
-      setGameEnded(true);
-    }
-  }, [session]);
+    if (onComplete) onComplete(false);
+  };
 
+  // Timer expiry is handled by MinigameLoader - no need to handle it here
+
+  // Effect: check if tries exhausted
   useEffect(() => {
-    if (wrongCount > 0 && !isCorrect && sessionApi?.decrementTry) {
-      sessionApi.decrementTry();
+    if (triesLeft === 0 && !alreadyEnded.current && !gameEnded) {
+      setGameEnded(true);
+      alreadyEnded.current = true;
+      
+      (async () => {
+        try {
+          await sessionApi.completeSession();
+          console.log("Tries exhausted - session completed on backend");
+          if (onComplete) onComplete(false);
+        } catch (err) {
+          console.error("Failed to complete session on tries exhausted:", err);
+        }
+      })();
     }
-  }, [wrongCount, isCorrect, sessionApi]);
+  }, [triesLeft, gameEnded, sessionApi, onComplete]);
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen text-white bg-[#0D1A2F]">
+        <p>Loading game session...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen text-red-400 bg-[#0D1A2F]">
+        <p>Error: {error}</p>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -57,44 +109,63 @@ export default function M6({ config, onComplete, session, sessionApi }) {
         fontFamily: "'IM Fell English', serif",
       }}
     >
-      <div className="absolute inset-0"></div>
+      {/* Timer Component with Tries */}
+      <div className="absolute top-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3">
+        <MinigameTimer 
+          remainingSeconds={remainingSeconds} 
+          triesLeft={triesLeft}
+        />
 
-      {/* --- Wrong Answer Counter --- */}
-      <div
-        className="absolute top-16 left-4 text-lg font-semibold p-2 rounded-lg"
-        style={{
-          backgroundColor: "rgba(255,255,255,0.7)",
-          color: "#9b111e",
-          border: "2px solid #5c0000",
-        }}
-      >
-        Wrong Attempts: {wrongCount}
+        <button
+          onClick={handleSkip}
+          disabled={gameEnded}
+          className="px-4 py-2 bg-[#5c0000] text-white rounded-lg hover:bg-[#7a0000] transition font-semibold shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          Skip
+        </button>
       </div>
 
+      {/* Cipher Text Display */}
+      <div
+        className="absolute top-[35%] left-[50%] -translate-x-1/2 text-3xl text-center font-bold"
+        style={{ color: "#4b1e1e", textShadow: "0 0 10px rgba(255,255,255,0.7)" }}
+      >
+        {cipherText}
+      </div>
+
+      {/* Input and Button */}
       <input
         type="text"
         placeholder="Enter your answer"
         value={input}
         onChange={(e) => setInput(e.target.value)}
         onKeyDown={(e) => {
-          if (e.key === "Enter" && !gameEnded) {
-            handleSubmit();
-          }
+          if (e.key === "Enter" && !gameEnded && !alreadyEnded.current) handleSubmit();
         }}
         disabled={gameEnded}
-        className="absolute top-[50%] left-[57%] p-3 rounded-lg w-[20%] border border-[#a07855] focus:outline-none focus:ring-2 focus:ring-[#a07855] focus:border-[#a07855] shadow-md"
+        className="absolute top-[50%] left-[57%] p-3 rounded-lg w-[20%] border border-[#a07855] focus:outline-none focus:ring-2 focus:ring-[#a07855] focus:border-[#a07855] shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
         style={{ color: "#8B0000" }}
       />
 
       <button
         onClick={handleSubmit}
         disabled={gameEnded}
-        className="absolute top-[60%] left-[63.5%] px-6 py-3 rounded-lg bg-[#551414ff] hover:bg-[#432c09ff] text-[#f5f0e1] font-semibold transition shadow-[0_10px_25px_rgba(85,20,20,0.7)]"
+        className="absolute top-[60%] left-[63.5%] px-6 py-3 rounded-lg bg-[#551414ff] hover:bg-[#432c09ff] text-[#f5f0e1] font-semibold transition shadow-[0_10px_25px_rgba(85,20,20,0.7)] disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        Write
+        Submit
       </button>
 
-      {/* --- Messages --- */}
+      {/* Wrong Answer Feedback */}
+      {showWrongAnswer && !gameEnded && (
+        <p
+          className="absolute top-[70%] left-[55%] text-lg animate-pulse"
+          style={{ color: "#8B0000" }}
+        >
+          Incorrect! Try again.
+        </p>
+      )}
+
+      {/* Messages */}
       {gameEnded && isCorrect && (
         <p
           className="absolute top-[70%] left-[54.5%] text-2xl font-bold animate-pulse"
@@ -103,17 +174,17 @@ export default function M6({ config, onComplete, session, sessionApi }) {
             textShadow: "0 0 10px rgba(65, 35, 35, 0.8)",
           }}
         >
-          Congratulations, the veil is lifted.
+          The veil is lifted! 
         </p>
       )}
-      {!gameEnded && submitted && !isCorrect && (
+      {gameEnded && !isCorrect && (
         <p
           className="absolute top-[70%] left-[52.5%] text-lg"
           style={{
             color: "#3f1010ff",
           }}
         >
-          The riddle remains sealed. Return with sharper eyes.
+          The riddle remains sealed.
         </p>
       )}
     </div>

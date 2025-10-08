@@ -1,12 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
-import valImg from "../assets/TilesWall.jpg";
 import MinigameTimer from "../components/MinigameTimer";
 import bg from '../assets/bgforM4.png';
 
-// ConcentricToggleGame.jsx
-// Game using only JavaScript, React and Tailwind CSS
-
-const SEGMENTS = 8; // 4 lines -> 8 sectors
+const SEGMENTS = 8;
 const TAU = Math.PI * 2;
 
 function polarToCartesian(cx, cy, r, angleRad) {
@@ -25,7 +21,6 @@ function sectorPath(cx, cy, r1, r2, startAngle, endAngle) {
 }
 
 export default function ConcentricToggleGame({ config, onComplete, session, sessionApi }) {
-  // radii & svg geometry
   const size = 400;
   const cx = size / 2;
   const cy = size / 2;
@@ -53,8 +48,8 @@ export default function ConcentricToggleGame({ config, onComplete, session, sess
   const [token, setToken] = useState({ ring: "outer", idx: 4 });
 
   const [winner, setWinner] = useState(false);
-  const [levelend, setLevelend] = useState(false);
-  const failedRef = useRef(false);
+  const [gameEnded, setGameEnded] = useState(false);
+  const alreadyEnded = useRef(false);
 
   function checkWin(outerArr, innerArr) {
     return outerArr.every(Boolean) && innerArr.every(Boolean);
@@ -64,7 +59,6 @@ export default function ConcentricToggleGame({ config, onComplete, session, sess
     if (ring === "outer") {
       setOuter((prev) => {
         const next = prev.map((val, i) => (i === idx ? !val : val));
-        // check win with updated outer
         if (checkWin(next, inner)) setWinner(true);
         return next;
       });
@@ -78,11 +72,12 @@ export default function ConcentricToggleGame({ config, onComplete, session, sess
   }
 
   function autoMove() {
-    // Move token 3 steps clockwise in same ring and toggle that segment
+    if (gameEnded || alreadyEnded.current) return;
+    
     setToken((prevToken) => {
       const current = { ...prevToken };
       current.idx = (current.idx + 3) % SEGMENTS;
-      // toggle segment in the same ring
+      
       if (current.ring === "outer") {
         setOuter((prev) => {
           const next = prev.map((v, i) => (i === current.idx ? !v : v));
@@ -101,9 +96,10 @@ export default function ConcentricToggleGame({ config, onComplete, session, sess
   }
 
   function doSwitch() {
+    if (gameEnded || alreadyEnded.current) return;
+    
     const idx = token.idx;
     if (token.ring === "outer") {
-      // toggle inner at same idx and move token to inner
       setInner((prev) => {
         const newInner = prev.map((val, i) => (i === idx ? !val : val));
         if (checkWin(outer, newInner)) setWinner(true);
@@ -111,7 +107,6 @@ export default function ConcentricToggleGame({ config, onComplete, session, sess
       });
       setToken({ ring: "inner", idx });
     } else {
-      // toggle outer at same idx and move token to outer
       setOuter((prev) => {
         const newOuter = prev.map((val, i) => (i === idx ? !val : val));
         if (checkWin(newOuter, inner)) setWinner(true);
@@ -122,7 +117,6 @@ export default function ConcentricToggleGame({ config, onComplete, session, sess
   }
 
   function handleTokenClick() {
-    // clicking the token toggles the current sector in the other ring (same as doSwitch)
     doSwitch();
   }
 
@@ -133,9 +127,9 @@ export default function ConcentricToggleGame({ config, onComplete, session, sess
 
     let r;
     if (ring === "outer") {
-      r = (innerR + outerR) / 2; // middle of outer ring
+      r = (innerR + outerR) / 2;
     } else {
-      r = innerR / 2; // middle of inner ring
+      r = innerR / 2;
     }
 
     return polarToCartesian(cx, cy, r, angle);
@@ -153,15 +147,15 @@ export default function ConcentricToggleGame({ config, onComplete, session, sess
   });
 
   async function resetGame() {
-    // Decrement a try on reset if we still have tries and session API available
-    if (session?.triesLeft > 0 && sessionApi?.decrementTry) {
-      try {
-        await sessionApi.decrementTry();
-      } catch (e) {
-        // Non-fatal; log only
-        // console.warn('Failed to decrement try on reset', e);
-      }
+    if (gameEnded || alreadyEnded.current) return;
+    
+    // Decrement try on reset
+    try {
+      await sessionApi.decrementTry();
+    } catch (e) {
+      console.error('Failed to decrement try on reset', e);
     }
+
     // Reset outer ring: sectors 1, 4, and 6 colored
     setOuter(() => {
       const arr = Array(SEGMENTS).fill(false);
@@ -184,38 +178,42 @@ export default function ConcentricToggleGame({ config, onComplete, session, sess
 
     // Reset winner flag
     setWinner(false);
-    failedRef.current = false;
-    setLevelend(false);
   }
 
-  // Fail on expiry or triesLeft depletion (session is authoritative)
+  // When player wins, complete the session
   useEffect(() => {
-    if (!session || session.completed) return;
-    if (session.remainingSeconds === 0) {
-      failedRef.current = true;
-      setLevelend(true);
+    if (winner && !gameEnded && !alreadyEnded.current) {
+      alreadyEnded.current = true;
+      setGameEnded(true);
+      
+      (async () => {
+        try {
+          await sessionApi.completeSession();
+          if (onComplete) onComplete(true);
+        } catch (err) {
+          console.error('Failed to complete session on win:', err);
+        }
+      })();
     }
-    if (typeof session.triesLeft === 'number' && session.triesLeft <= 0) {
-      failedRef.current = true;
-      setLevelend(true);
-    }
-  }, [session]);
+  }, [winner, gameEnded, sessionApi, onComplete]);
 
-  // When player wins, notify backend complete
+  // Effect: check if tries exhausted (handled by MinigameLoader's handleComplete logic)
   useEffect(() => {
-    if (winner && !failedRef.current) {
-      failedRef.current = true;
-      setLevelend(true);
-      onComplete && onComplete(true);
+    if (session?.triesLeft === 0 && !alreadyEnded.current && !gameEnded) {
+      setGameEnded(true);
+      alreadyEnded.current = true;
     }
-  }, [winner, onComplete]);
+  }, [session?.triesLeft, gameEnded]);
+
+  const triesLeft = session?.triesLeft ?? null;
+  const remainingSeconds = session?.remainingSeconds ?? null;
 
   return (
     <div className="relative mt-20 w-full max-w-4xl mx-auto">
       {/* Timer Overlay */}
       <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50">
         <div className="bg-slate-800/60 rounded-full px-2 py-1 inline-block">
-          <MinigameTimer remainingSeconds={session?.remainingSeconds ?? null} triesLeft={session?.triesLeft ?? null} />
+          <MinigameTimer remainingSeconds={remainingSeconds} triesLeft={triesLeft} />
         </div>
       </div>
 
@@ -270,11 +268,15 @@ export default function ConcentricToggleGame({ config, onComplete, session, sess
               stroke="black"
             />
 
-            {/* Token - draw as a circle in SVG and attach click to toggle */}
+            {/* Token */}
             {(() => {
               const [tx, ty] = tokenCoords(token.ring, token.idx);
               return (
-                <g key={`token-${token.ring}-${token.idx}`} onClick={handleTokenClick} style={{ cursor: 'pointer' }}>
+                <g 
+                  key={`token-${token.ring}-${token.idx}`} 
+                  onClick={handleTokenClick} 
+                  style={{ cursor: gameEnded ? 'default' : 'pointer' }}
+                >
                   <circle cx={tx} cy={ty} r={14} fill="#111827" stroke="#000" strokeWidth={2} />
                   <circle cx={tx} cy={ty} r={6} fill={token.ring === 'outer' ? '#60a5fa' : '#34d399'} />
                 </g>
@@ -286,25 +288,25 @@ export default function ConcentricToggleGame({ config, onComplete, session, sess
         {/* Buttons */}
         <div className="flex flex-wrap gap-2 justify-center mb-2">
           <button
-            className="px-3 py-2 bg-blue-500 text-white rounded disabled:opacity-50"
+            className="px-3 py-2 bg-blue-500 text-white rounded disabled:opacity-50 disabled:cursor-not-allowed"
             onClick={autoMove}
-            disabled={levelend}
+            disabled={gameEnded}
           >
             Move (3 steps clockwise)
           </button>
           <button
-            className="px-3 py-2 bg-green-500 text-white rounded disabled:opacity-50"
+            className="px-3 py-2 bg-green-500 text-white rounded disabled:opacity-50 disabled:cursor-not-allowed"
             onClick={doSwitch}
-            disabled={levelend}
+            disabled={gameEnded}
           >
             Switch
           </button>
           <button
-            className="px-3 py-2 bg-red-500 text-white rounded disabled:opacity-50"
+            className="px-3 py-2 bg-red-500 text-white rounded disabled:opacity-50 disabled:cursor-not-allowed"
             onClick={resetGame}
-            disabled={levelend || (session?.triesLeft !== null && session?.triesLeft <= 0)}
+            disabled={gameEnded || triesLeft === 0}
           >
-            {levelend ? "Game Over" : (session?.triesLeft !== null && session?.triesLeft <= 0 ? "No Tries" : "Reset")}
+            {gameEnded ? "Game Over" : (triesLeft === 0 ? "No Tries" : "Reset")}
           </button>
         </div>
 
@@ -314,7 +316,7 @@ export default function ConcentricToggleGame({ config, onComplete, session, sess
             You Won!
           </div>
         )}
-        {levelend && !winner && (
+        {gameEnded && !winner && (
           <div className="mt-2 text-2xl font-bold text-red-600">
             Game Over
           </div>
