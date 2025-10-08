@@ -1,15 +1,15 @@
 import mongoose from "mongoose";
 
 const allowedParticipantSchema = new mongoose.Schema({
-  teamId: { type: String, required: true, trim: true }, 
-  name: { type: String, required: true, trim: true }, 
-  delegateId: { type: String, required: true, trim: true }, 
-  registrationNo: { type: String, required: true, trim: true }, 
-  collegeName: { type: String, required: true, trim: true }, 
-  phoneNumber: { type: String, required: true, trim: true }, 
-  email: { type: String, required: true, trim: true }, 
-  categoryName: { type: String, trim: true }, 
-  eventName: { type: String, trim: true },
+  TeamID: { type: String, required: true, trim: true }, 
+  Name: { type: String, required: true, trim: true }, 
+  DelegateID: { type: String, required: true, trim: true }, 
+  RegistrationNo: { type: String, required: true, trim: true }, 
+  CollegeName: { type: String, required: true, trim: true }, 
+  PhoneNumber: { type: String, required: true, trim: true }, 
+  EmailID: { type: String, required: true, trim: true }, 
+  CategoryName: { type: String, trim: true }, 
+  EventName: { type: String, trim: true },
 });
 
 export default mongoose.model("AllowedParticipant", allowedParticipantSchema);

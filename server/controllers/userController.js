@@ -17,44 +17,67 @@ const generateToken = (user) => {
 // ---------------- Register User ----------------
 export const registerUser = async (req, res) => {
   try {
-    const { teamId, teamLeader, player2, password, role } = req.body;
+    let { teamId, teamLeader, player2, password, role } = req.body || {};
+
+    // Support clients that send TitleCase keys (coming from AllowedParticipant fields)
+    teamId = teamId || req.body?.TeamID || req.body?.teamId;
+    // teamLeader may come as an object with different key casing
+    teamLeader = teamLeader || req.body?.teamLeader || req.body?.TeamLeader;
 
     if (!teamId || !teamLeader || !password) {
-      return res.status(400).json({ message: "Team ID, leader, and password are required" });
+      return res.status(400).json({
+        message: "Team ID, leader, and password are required",
+      });
     }
+
+    // Normalize leader fields and guard before using .trim()
+    const leaderDelegateId =
+      teamLeader?.DelegateID || teamLeader?.delegateId || teamLeader?.DelegateId || teamLeader?.Delegateid || teamLeader?.delegateID;
+    const leaderEmail = teamLeader?.EmailID || teamLeader?.email || teamLeader?.Email || teamLeader?.emailId;
 
     // ✅ 1️⃣ Validate that leader exists in allowed list
     const allowedLeader = await AllowedParticipant.findOne({
-      teamId: teamId.trim(),
-      delegateId: teamLeader.delegateId.trim(),
+      TeamID: (teamId && typeof teamId === "string") ? teamId.trim() : teamId,
+      DelegateID: leaderDelegateId ? String(leaderDelegateId).trim() : leaderDelegateId,
+      EmailID: leaderEmail ? String(leaderEmail).trim() : leaderEmail,
     });
 
     if (!allowedLeader) {
       return res.status(403).json({
-        message: "Team Leader not found in authorized list (Team ID or Delegate ID mismatch)",
+        message: "Team Leader not found in authorized list (Team ID, Delegate ID, or Email mismatch)",
       });
     }
 
     // ✅ 2️⃣ (Optional) Validate player2 if provided
     let finalPlayer2 = undefined;
     if (player2 && Object.values(player2).some((v) => v && v !== "")) {
-      const player2Check = validateRequestBody(player2, ["name", "email"]);
+      // normalize player2 keys similar to leader
+      const player2Normalized = {
+        name: player2.name || player2.Name,
+        email: player2.email || player2.Email || player2.EmailID,
+        DelegateID: player2.DelegateID || player2.delegateId || player2.DelegateId,
+      };
+
+      const player2Check = validateRequestBody(player2Normalized, ["name", "email", "DelegateID"]);
       if (!player2Check.isValid) {
-        return res.status(400).json(`{ message: Player2: ${player2Check.message} }`);
+        return res.status(400).json({
+          message: `Player2: ${player2Check.message}`,
+        });
       }
 
       const allowedPlayer2 = await AllowedParticipant.findOne({
-        teamId: teamId.trim(),
-        delegateId: player2.delegateId.trim(),
+        TeamID: (teamId && typeof teamId === "string") ? teamId.trim() : teamId,
+        DelegateID: player2Normalized.DelegateID ? String(player2Normalized.DelegateID).trim() : player2Normalized.DelegateID,
+        EmailID: player2Normalized.email ? String(player2Normalized.email).trim() : player2Normalized.email,
       });
 
       if (!allowedPlayer2) {
         return res.status(403).json({
-          message: "Player 2 not found in authorized list (Team ID or Delegate ID mismatch)",
+          message: "Player 2 not found in authorized list (Team ID, Delegate ID, or Email mismatch)",
         });
       }
 
-      finalPlayer2 = player2;
+      finalPlayer2 = player2Normalized;
     }
 
     // ✅ 3️⃣ Prevent duplicate registrations by email
@@ -76,7 +99,10 @@ export const registerUser = async (req, res) => {
       password,
       role: role || "user",
     };
-    if (finalPlayer2) newUserData.player2 = finalPlayer2;
+
+    if (finalPlayer2) {
+      newUserData.player2 = finalPlayer2;
+    }
 
     const newUser = new User(newUserData);
     const token = generateToken(newUser);
@@ -93,6 +119,7 @@ export const registerUser = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+
 
 // ---------------- Login User ----------------http:localhost:5000/api/users/login
 export const loginUser = async (req, res) => {

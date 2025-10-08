@@ -1,4 +1,12 @@
 import React, { useState } from 'react';
+// Swiper component and module imports for the carousel
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Autoplay, Pagination, Navigation } from 'swiper/modules';
+
+// Swiper styles
+import 'swiper/css';
+import 'swiper/css/pagination';
+import 'swiper/css/navigation';
 import logo from '../assets/logo.png';
 import pravar from "../assets/pravar.jpg";
 import pranav from "../assets/pranav.jpg";
@@ -22,6 +30,21 @@ import nav from "../assets/nav.jpeg";
 import yash from "../assets/yash.jpeg";
 import sid from "../assets/sid.png";
 import vanshika from "../assets/vanshika.jpeg";
+
+// ---- NEW: Imports for your 12 carousel images ----
+// Note: Make sure the file extension (.jpg) matches your image files.
+import c1 from '../assets/c1.jpg';
+import c2 from '../assets/c2.jpg';
+import c3 from '../assets/c3.jpg';
+import c4 from '../assets/c4.jpg';
+import c5 from '../assets/c5.jpg';
+import c6 from '../assets/c6.jpg';
+import c7 from '../assets/c7.jpg';
+import c8 from '../assets/c8.jpg';
+import c10 from '../assets/c10.jpg';
+import c11 from '../assets/c11.jpg';
+import c12 from '../assets/c12.jpg';
+import c13 from '../assets/c13.jpeg';
 
 const About = () => {
   const [formData, setFormData] = useState({
@@ -49,7 +72,7 @@ const About = () => {
     ],
     "Story Team": [
       { name: "Shlok Kasargod", funnyFact: "Sono Pazzi Questi Romani", img: shlok },
-      { name: "Medhavi Mehta", funnyFact: "MINIONS!! TODAY WE STEAL THE MOON !!!", img: medhavi },
+      { name: "Medhavi Mehta", funnyFact: "MINIONS!! TONIGHT WE STEAL THE MOON !!!", img: medhavi },
       { name: "Naman Kaushik", funnyFact: "Can I still quit?", img: naman },
       { name: "Bhuvi Sanga", funnyFact: "I can finally sleep...", img: bhuvi },
     ],
@@ -62,6 +85,22 @@ const About = () => {
       { name: "P.V. Reneethra", funnyFact: "80% chill, 20% lowkey chaos", img: reneethra },
     ],
   };
+
+  // ---- UPDATED: The carouselImages array now uses your 12 images ----
+  const carouselImages = [
+    { src: c1, alt: "Carousel Image 1" },
+    { src: c2, alt: "Carousel Image 2" },
+    { src: c3, alt: "Carousel Image 3" },
+    { src: c4, alt: "Carousel Image 4" },
+    { src: c5, alt: "Carousel Image 5" },
+    { src: c6, alt: "Carousel Image 6" },
+    { src: c7, alt: "Carousel Image 7" },
+    { src: c8, alt: "Carousel Image 8" },
+    { src: c10, alt: "Carousel Image 10" },
+    { src: c11, alt: "Carousel Image 11" },
+    { src: c12, alt: "Carousel Image 12" },
+    { src: c13, alt: "Carousel Image 13" },
+  ];
 
   const handleInputChange = (e) => {
     setFormData({
@@ -77,54 +116,94 @@ const About = () => {
   };
 
   return (
-    <div className="bg-black pt-10 text-white min-h-screen w-full font-sans overflow-x-hidden">
-      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <>
+      {/* Custom styles for Swiper navigation/pagination to match the site's theme */}
+      <style>
+        {`
+          .swiper-button-next,
+          .swiper-button-prev {
+            color: #ef4444; /* red-500 */
+          }
+          .swiper-pagination-bullet-active {
+            background-color: #ef4444; /* red-500 */
+          }
+        `}
+      </style>
 
-        {/* WHAT IS ACUMEN */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 py-16 items-center">
-          <div>
-            <h2 className="text-3xl font-bold mb-6 leading-tight">
-              WHAT IS <span className="text-red-500">ACUMEN</span>?
-            </h2>
-            <div className="space-y-6 text-gray-300 text-base leading-relaxed">
-              <p>
-                TechTatva 2025 presents Acumen - Where Strategy, Puzzles, and Possibilities Unite!
-                Step into the most exhilarating challenge of TechTatva: Acumen, a battleground of 
-                intellect and imagination featuring two thrilling journeys - Tesseract and Hopeless Opus.
-              </p>
-              <p>
-                From mind-bending puzzles to choices that shape your destiny,
-                Acumen is not just a test - it's an adventure you won't forget.
-                Try your hand at the prize pool of a whopping Rs. 28,000!
-              </p>
+      <div className="bg-black pt-10 text-white min-h-screen w-full font-sans overflow-x-hidden">
+        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+          {/* What is ACUMEN Section */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 py-16 lg:py-20 items-center">
+            <div className="w-full">
+              <h2 className="text-2xl sm:text-3xl lg:text-3xl xl:text-4xl font-bold mb-6 lg:mb-8 leading-tight">
+                WHAT IS <span className="text-red-500">ACUMEN</span>?
+              </h2>
+              <div className="space-y-6 text-gray-300 text-sm sm:text-base leading-relaxed">
+                <p>
+                  TechTatva 2025 presents Acumen - Where Strategy, Puzzles, and Possibilities Unite!
+                  Step into the most exhilarating challenge of TechTatva: Acumen, a battleground of
+                  intellect and imagination featuring two thrilling journeys - Tesseract and Hopeless Opus.
+                </p>
+                <p>
+                  From mind-bending puzzles to choices that shape your destiny,
+                  Acumen is not just a test - it's an adventure you won't forget.
+                  Try your hand at the prize pool of a whopping Rs. 28,000!
+                </p>
+              </div>
+            </div>
+            <div className="w-full flex items-center justify-center">
+              <div className="w-full h-48 sm:h-56 lg:h-64 xl:h-72 bg-gray-800 rounded-lg border border-gray-700"></div>
             </div>
           </div>
-          <div className="flex justify-center">
-            <div className="w-full h-64 bg-gray-800 rounded-lg border border-gray-700"></div>
-          </div>
-        </div>
 
-        {/* WHAT IS HOPELESS OPUS */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 py-16 items-center">
-          <div className="flex justify-center">
-            <div className="w-full h-64 bg-gray-800 rounded-lg border border-gray-700"></div>
-          </div>
-          <div>
-            <h2 className="text-3xl font-bold mb-6 leading-tight">
-              WHAT IS <span className="text-red-500">Hopeless Opus</span>?
-            </h2>
-            <div className="space-y-6 text-gray-300 text-base leading-relaxed">
-              <p>
-                Hopeless Opus is an immersive online RPG and choice-based story game crafted 
-                by Acumen for TechTatva. Set in a world where every decision shapes your fate,
-                it challenges players to think, adapt, and uncover the truth behind a mysterious,
-                collapsing realm. With interactive storylines, mind-bending mini-games, and 
-                branching paths that test logic and emotion alike, Hopeless Opus turns every choice 
-                into a consequence - and every player into the author of their own destiny.
-              </p>
+          {/* What is Hopeless Opus Section */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 py-16 lg:py-20 items-center">
+            <div className="w-full flex items-center justify-center">
+              {/* --- CAROUSEL STARTS HERE --- */}
+              <Swiper
+                className="w-full h-48 sm:h-56 lg:h-64 xl:h-72 rounded-lg border border-gray-700"
+                modules={[Autoplay, Pagination, Navigation]}
+                spaceBetween={30}
+                centeredSlides={true}
+                autoplay={{
+                  delay: 3000,
+                  disableOnInteraction: false,
+                }}
+                pagination={{
+                  clickable: true,
+                }}
+                navigation={true}
+                loop={true}
+              >
+                {carouselImages.map((image, index) => (
+                  <SwiperSlide key={index}>
+                    <img
+                      src={image.src}
+                      alt={image.alt}
+                      className="w-full h-full object-cover"
+                    />
+                  </SwiperSlide>
+                ))}
+              </Swiper>
+              {/* --- CAROUSEL ENDS HERE --- */}
+            </div>
+            <div className="w-full">
+              <h2 className="text-2xl sm:text-3xl lg:text-3xl xl:text-4xl font-bold mb-6 lg:mb-8 leading-tight">
+                WHAT IS <span className="text-red-500">Hopeless Opus</span>?
+              </h2>
+              <div className="space-y-6 text-gray-300 text-sm sm:text-base leading-relaxed">
+                <p>
+                  Hopeless Opus is an immersive online RPG and choice-based story game crafted
+                  by Acumen for TechTatva. Set in a world where every decision shapes your fate,
+                  it challenges players to think, adapt, and uncover the truth behind a mysterious,
+                  collapsing realm. With interactive storylines, mind-bending mini-games, and
+                  branching paths that test logic and emotion alike, Hopeless Opus turns every choice
+                  into a consequence - and every player into the author of their own destiny.
+                </p>
+              </div>
             </div>
           </div>
-        </div>
 
         {/* MEET THE TEAM */}
         <div className="py-16">
@@ -162,6 +241,7 @@ const About = () => {
         </div>
       </div>
     </div>
+    </>
   );
 };
 
