@@ -44,7 +44,7 @@ import c8 from '../assets/c8.jpg';
 import c10 from '../assets/c10.jpg';
 import c11 from '../assets/c11.jpg';
 import c12 from '../assets/c12.jpg';
-import c13 from '../assets/c13.jpeg';
+import c15 from '../assets/c15.jpg';
 
 const About = () => {
   const [formData, setFormData] = useState({
@@ -99,7 +99,7 @@ const About = () => {
     { src: c10, alt: "Carousel Image 10" },
     { src: c11, alt: "Carousel Image 11" },
     { src: c12, alt: "Carousel Image 12" },
-    { src: c13, alt: "Carousel Image 13" },
+    { src: c15, alt: "Carousel Image 15" },
   ];
 
   const handleInputChange = (e) => {
@@ -153,7 +153,13 @@ const About = () => {
               </div>
             </div>
             <div className="w-full flex items-center justify-center">
-              <div className="w-full h-48 sm:h-56 lg:h-64 xl:h-72 bg-gray-800 rounded-lg border border-gray-700"></div>
+              {/* --- THIS IS THE UPDATED PART --- */}
+              <img
+                src={c15}
+                alt="Acumen Event Teaser"
+                className="w-full h-48 sm:h-56 lg:h-64 xl:h-72 object-cover rounded-lg border border-gray-700"
+              />
+              {/* --- END OF UPDATE --- */}
             </div>
           </div>
 

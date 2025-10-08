@@ -258,8 +258,37 @@ const PuzzleGame = ({ config, onComplete, session, sessionApi }) => {
         if (isWin) {
             clearInterval(timerRef.current);
             isGameOver.current = true;
+            // notify loader about win once
+            if (onComplete) {
+                // small delay so UI shows winning state before transitioning
+                setTimeout(() => {
+                    try {
+                        onComplete(true);
+                    } catch (err) {
+                        // swallow to avoid crashing game
+                        console.error('onComplete threw', err);
+                    }
+                }, 800);
+            }
         }
     }, [isWin]);
+
+    // Notify loader when time is up (lose). Use effect watching isTimeUp to match session updates.
+    useEffect(() => {
+        if (isTimeUp) {
+            clearInterval(timerRef.current);
+            isGameOver.current = true;
+            if (onComplete) {
+                setTimeout(() => {
+                    try {
+                        onComplete(false);
+                    } catch (err) {
+                        console.error('onComplete threw', err);
+                    }
+                }, 400);
+            }
+        }
+    }, [isTimeUp, onComplete]);
 
     return (
         <div
