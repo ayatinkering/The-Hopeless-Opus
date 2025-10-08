@@ -32,14 +32,27 @@ export default function M1({ tileSize = 106.25, imageSrc = valImg, onComplete })
     setWon(false);
   }, [tileSize, imageSrc]);
 
-  // ✅ Fail automatically when timer hits zero
-  useEffect(() => {
-    if (!session || session.completed) return;
-    if (remainingSeconds === 0) {
-      sessionApi.completeSession(); // notify backend
-      if (onComplete) onComplete(false);
-    }
-  }, [remainingSeconds, session, sessionApi, onComplete]);
+// ✅ Fail automatically when timer hits zero
+useEffect(() => {
+  if (!session || session.completed || remainingSeconds == null) return;
+
+  if (remainingSeconds === 0) {
+    // Prevent multiple triggers
+    let didFail = false;
+
+    (async () => {
+      if (didFail) return;
+      didFail = true;
+      try {
+        await sessionApi.completeSession(); // notify backend of fail
+        if (onComplete) onComplete(false);
+      } catch (err) {
+        console.error("Failed to mark session as failed:", err);
+      }
+    })();
+  }
+}, [remainingSeconds, session, sessionApi, onComplete]);
+
 
   // ✅ Auto-complete when solved
   useEffect(() => {

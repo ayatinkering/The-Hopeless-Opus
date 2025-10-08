@@ -99,17 +99,33 @@ export default function MinigameLoader({ id, config, onComplete }) {
     }
   }, [api, onComplete, id, triesLeft]);
 
-  const Component = MAP[id];
-
-  // Auto-handle backend timer expiry: when remainingSeconds reaches 0, treat as a failure
+  // Auto-handle backend timer expiry: when remainingSeconds reaches 0, treat as a FINAL failure
+  // This bypasses the tries system because time running out should end the game immediately
   useEffect(() => {
-    if (!session) return;
-    if (session.completed) return;
-    if (remainingSeconds === 0) {
-      // call the centralized failure handling
-      handleComplete(false);
-    }
-  }, [remainingSeconds, session, handleComplete]);
+    if (!session || session.completed || remainingSeconds !== 0) return;
+    
+    // Prevent multiple triggers
+    let didFail = false;
+
+    (async () => {
+      if (didFail || finalizingRef.current) return;
+      didFail = true;
+      finalizingRef.current = true;
+
+      try {
+        // Complete the session on backend (marks as failed)
+        await api.completeSession();
+        console.log('Timer expired - session completed on backend');
+      } catch (err) {
+        console.error('Failed to complete session on timer expiry:', err);
+      }
+
+      // Notify parent that game failed
+      onComplete(false);
+    })();
+  }, [remainingSeconds, session, api, onComplete]);
+
+  const Component = MAP[id];
 
   if (!Component) {
     return (
