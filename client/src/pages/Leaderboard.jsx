@@ -41,28 +41,17 @@ export default function Leaderboard({ currentUserId, token}) {
   }
 
   return (
-    <div className="min-h-screen pt-15 bg-[#0D1A2B] text-white">
+    <div className="min-h-screen pt-15 bg-black text-white">
       <div className="max-w-screen-xl mx-auto px-4">
         {/* Stats Section */}
         <div className="flex flex-wrap justify-center gap-8 mt-10">
-          <div className="bg-[#111C33] flex items-center gap-4 px-6 py-4 rounded-lg shadow-lg w-full sm:w-auto">
-            <div className="w-18 h-18 bg-black rounded-lg" />
+          <div className="bg-gray-900 flex items-center gap-6 px-12 py-8 rounded-2xl shadow-2xl w-full sm:w-auto text-lg sm:text-xl">
             <div>
-              <h3 className="text-cyan-400 text-sm font-semibold">ACTIVE RETARDS</h3>
+              <h3 className="text-cyan-400 text-sm font-semibold">ACTIVE USERS</h3>
               <p className="text-2xl md:text-3xl font-bold">{teams.length}</p>
             </div>
-          </div>
-          <div className="bg-[#111C33] flex items-center gap-4 px-6 py-4 rounded-lg shadow-lg w-full sm:w-auto">
-            <div className="w-18 h-18 bg-black rounded-lg" />
-            <div>
-              <h3 className="text-cyan-400 text-sm font-semibold">TOTAL POOL</h3>
-              <p className="text-2xl md:text-3xl font-bold">
-                {teams.reduce((acc, t) => acc + (t.points ?? 0), 0)}
-              </p>
-            </div>
-          </div>
-          <div className="bg-[#111C33] flex items-center gap-4 px-6 py-4 rounded-lg shadow-lg w-full sm:w-auto">
-            <div className="w-18 h-18 bg-black rounded-lg" />
+          </div>  
+          <div className="bg-gray-900 flex items-center gap-6 px-12 py-8 rounded-2xl shadow-2xl w-full sm:w-auto text-lg sm:text-xl">
             <div>
               <h3 className="text-cyan-400 text-sm font-semibold">CURRENT RANK</h3>
               <p className="text-2xl md:text-3xl font-bold">
@@ -73,7 +62,7 @@ export default function Leaderboard({ currentUserId, token}) {
         </div>
 
         {/* Leaderboard */}
-        <div className="bg-[#111C33] mt-8 p-6 sm:p-8 md:p-10 rounded-2xl">
+        <div className="bg-gray-900 mt-8 p-6 sm:p-8 md:p-10 rounded-2xl">
           {/* Team Avatars */}
           <div className="flex flex-wrap justify-center gap-10 md:gap-20 mb-10">
   {teams.slice(0, 3).map((team, idx) => {

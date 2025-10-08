@@ -16,7 +16,6 @@ export default function Profile({ setUser }) {
       if (!storedUser) return;
 
       try {
-        // --- Fetch Profile ---
         const profileRes = await axios.get(
           `${API_BASE}/users/${storedUser._id}`,
           { headers: { Authorization: `Bearer ${token}` } }
@@ -24,18 +23,15 @@ export default function Profile({ setUser }) {
         const profile = profileRes.data;
         setProfileData(profile);
 
-        // --- Fetch Leaderboard ---
         const leaderboardRes = await axios.get(`${API_BASE}/leaderboard`);
         const leaderboardData = Array.isArray(leaderboardRes.data.leaderboard)
           ? leaderboardRes.data.leaderboard
           : leaderboardRes.data;
 
-        // Sort leaderboard by points descending
         const sorted = [...leaderboardData].sort(
           (a, b) => (b.points ?? 0) - (a.points ?? 0)
         );
 
-        // Find current user's rank by matching teamId or _id
         const teamIndex = sorted.findIndex(
           (t) =>
             t._id === profile._id ||
@@ -45,7 +41,7 @@ export default function Profile({ setUser }) {
 
         setRank(teamIndex !== -1 ? teamIndex + 1 : "N/A");
       } catch (err) {
-        // console.error("Error fetching profile or rank:", err);
+        // Handle error
       } finally {
         setLoading(false);
       }
@@ -62,24 +58,24 @@ export default function Profile({ setUser }) {
   };
 
   if (loading || !profileData) {
-    return <p className="text-center text-white mt-20">Loading profile...</p>;
+    return <p className="text-center text-white mt-20 text-base">Loading profile...</p>;
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#411E3A] to-[#0D1A2F] flex flex-col items-center justify-start p-4 pt-28">
-      <div className="w-full max-w-lg">
-        <div className="text-center mb-5">
-          <h1 className="text-3xl font-bold text-[#09D8C7] mb-1">
+    <div className="min-h-screen bg-black flex flex-col items-center justify-start px-4 sm:px-6 pt-28 pb-16 text-base">
+      <div className="w-full max-w-3xl">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl sm:text-4xl font-bold text-[#09D8C7] tracking-wide">
             {profileData.teamId}
           </h1>
         </div>
 
-        {/* Personal Information */}
-        <div className="bg-[#0D1A2F] rounded-2xl p-4 mb-2 border border-[#09D8C7]/20">
-          <h2 className="text-[#09D8C7] text-base font-semibold mb-3">
+        {/* Personal Info */}
+        <div className="bg-gray-900 rounded-2xl p-6 mb-5 border border-[#09D8C7]/20 shadow-lg">
+          <h2 className="text-[#09D8C7] text-xl font-semibold mb-4">
             Personal Information
           </h2>
-          <div className="space-y-3 text-sm">
+          <div className="space-y-4 text-sm sm:text-base">
             <div>
               <p className="text-gray-400">Team Leader Name</p>
               <p className="text-white border-b border-slate-700 pb-1">
@@ -124,18 +120,18 @@ export default function Profile({ setUser }) {
         </div>
 
         {/* Gaming Stats */}
-        <div className="bg-[#0D1A2F] rounded-2xl p-4 mb-2 border border-[#09D8C7]/20">
-          <h2 className="text-[#09D8C7] text-base font-semibold mb-3">
+        <div className="bg-gray-900 rounded-2xl p-6 mb-6 border border-[#09D8C7]/20 shadow-lg">
+          <h2 className="text-[#09D8C7] text-xl font-semibold mb-4">
             Gaming Stats
           </h2>
-          <div className="flex gap-4">
-            <div className="w-1/2 bg-[#0D1A2F] rounded-xl p-3 border border-[#09D8C7]/20 text-center">
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="w-full sm:w-1/2 bg-gray-800 rounded-xl p-4 border border-[#09D8C7]/20 text-center">
               <p className="text-gray-400 text-sm">Points Earned</p>
-              <p className="text-white font-semibold">{profileData.points}</p>
+              <p className="text-white font-semibold text-lg">{profileData.points}</p>
             </div>
-            <div className="w-1/2 bg-[#0D1A2F] rounded-xl p-3 border border-[#09D8C7]/20 text-center">
+            <div className="w-full sm:w-1/2 bg-gray-800 rounded-xl p-4 border border-[#09D8C7]/20 text-center">
               <p className="text-gray-400 text-sm">Rank</p>
-              <p className="text-white font-semibold">
+              <p className="text-white font-semibold text-lg">
                 {rank !== null ? `#${rank}` : "#N/A"}
               </p>
             </div>
@@ -145,7 +141,7 @@ export default function Profile({ setUser }) {
         {/* Logout Button */}
         <button
           onClick={handleLogout}
-          className="mt-6 w-full bg-[#9f1818] hover:bg-[#800b0b] text-white font-normal px-8 py-2 rounded-full transition text-base"
+          className="mt-6 w-full bg-[#9f1818] hover:bg-[#800b0b] text-white font-medium px-6 py-3 rounded-full transition text-base"
         >
           LOGOUT
         </button>

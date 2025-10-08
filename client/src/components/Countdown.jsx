@@ -32,7 +32,7 @@ const Countdown = ({ targetDateProp }) => {
   <div
     className="
       relative flex items-center justify-center
-      backdrop-blur-xs bg-[#000000]/20
+      backdrop-blur-xs bg-[#000000]/40
       w-28 h-28            /* bigger on mobile */
       sm:w-28 sm:h-28       /* keep original for sm+ */
       md:w-32 md:h-32
