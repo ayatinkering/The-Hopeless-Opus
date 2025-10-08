@@ -11,7 +11,7 @@ const ClockDialLock = ({ onSequenceComplete, setCodeMsg }) => {
   const NUMBERS = 12; // 1 to 12
   const ROTATION_FACTOR = 360 / NUMBERS; // 30 degrees per number
 
-  // The required sequence of target numbers only
+  // The required sequence of target numbers
   const requiredSequence = [3, 4, 7, 12];
 
   // We use 12 as the start value, corresponding to 0 degrees rotation
@@ -303,7 +303,8 @@ export default function Letter({ config, onComplete, session, sessionApi }) {
   const [isBroken, setIsBroken] = useState(true);
   const [message, setMessage] = useState("");
   const [stage, setStage] = useState("puzzle"); // Start on puzzle
-
+  const completionHandledRef = useRef(false);
+  
   const [boardW, setBoardW] = useState(1000);
   const [boardH, setBoardH] = useState(680);
 
@@ -388,14 +389,26 @@ export default function Letter({ config, onComplete, session, sessionApi }) {
     generatePieces();
   }, [boardW, boardH]);
 
-  // Auto-fail when backend timer expires — mark local state and let loader finalize
+  // Auto-fail when backend timer expires
   useEffect(() => {
-    if (!session || session.completed) return;
+    if (!session || session.completed || completionHandledRef.current) return;
     if (session.remainingSeconds === 0) {
       setMessage('TIME EXPIRED');
       setStage('expired');
+      completionHandledRef.current = true;
+      
+      (async () => {
+        try {
+          await sessionApi.completeSession();
+          console.log('M8: Timer expired - session completed on backend');
+          if (onComplete) onComplete(false);
+        } catch (err) {
+          console.error('M8: Failed to complete session on timer expiry:', err);
+          if (onComplete) onComplete(false);
+        }
+      })();
     }
-  }, [session]);
+  }, [session, sessionApi, onComplete]);
 
   // ---------------- Dragging logic ----------------
   useEffect(() => {
@@ -547,8 +560,22 @@ THAT WILL GO ON TILL MIDNIGHT`;
   // ---------------- Secret Code Stage Logic ----------------
   const [codeMsg, setCodeMsg] = useState("");
 
-  const handleSequenceComplete = () => {
+  const handleSequenceComplete = async () => {
+    if (completionHandledRef.current) return;
+    completionHandledRef.current = true;
+    
     setCodeMsg("You successfully cracked the code!");
+    
+    try {
+      await sessionApi.completeSession();
+      console.log('M8: Secret code cracked - session completed successfully');
+      setTimeout(() => {
+        if (onComplete) onComplete(true);
+      }, 1500);
+    } catch (err) {
+      console.error('M8: Failed to complete session on success:', err);
+      if (onComplete) onComplete(true);
+    }
   };
 
   // ---------------- Render ----------------
@@ -570,6 +597,12 @@ THAT WILL GO ON TILL MIDNIGHT`;
           position: "relative",
         }}
       >
+        {/* Timer Display */}
+        <div style={{ position: 'absolute', top: 18, right: 18, zIndex: 500 }}>
+          <div className="bg-slate-800/60 rounded-full px-3 py-1">
+            <MinigameTimer remainingSeconds={session?.remainingSeconds ?? null} />
+          </div>
+        </div>
         <div
           style={{
             backgroundImage: `url(${letterbg})`,
@@ -655,22 +688,6 @@ THAT WILL GO ON TILL MIDNIGHT`;
           >
             Submit
           </button>
-
-          <button
-            onClick={() => {
-              setUserInput(answerText.split(""));
-              setDecodeMsg("All letters revealed");
-            }}
-            style={{
-              padding: "10px 20px",
-              borderRadius: 6,
-              background: "orange",
-              color: "white",
-              cursor: "pointer",
-            }}
-          >
-            Solve
-          </button>
         </div>
 
         <div style={{ marginTop: 10 }}>{decodeMsg}</div>
@@ -692,8 +709,16 @@ THAT WILL GO ON TILL MIDNIGHT`;
           color: "white",
           fontFamily: "monospace",
           gap: '20px', // Provides spacing
+          position: "relative",
         }}
       >
+        {/* Timer Display */}
+        <div style={{ position: 'absolute', top: 18, right: 18, zIndex: 500 }}>
+          <div className="bg-slate-800/60 rounded-full px-3 py-1">
+            <MinigameTimer remainingSeconds={session?.remainingSeconds ?? null} />
+          </div>
+        </div>
+        
         <h2 style={{ fontSize: '26px' }}>Enter the 4 digit Combination</h2>
         
         <ClockDialLock 
@@ -724,49 +749,21 @@ THAT WILL GO ON TILL MIDNIGHT`;
         userSelect: "none",
       }}
     >
-      <div style={{ position: "absolute", top: 18, left: 18, zIndex: 500 }}>
+      {/* Submit button positioned at center-bottom */}
+      <div style={{ position: "absolute", bottom: 18, left: "50%", transform: "translateX(-50%)", zIndex: 500 }}>
         <button
           onClick={handleSubmit}
           style={{
-            padding: "8px 12px",
+            padding: "10px 24px",
             background: "#518908ff",
             color: "white",
             borderRadius: 6,
             cursor: "pointer",
+            fontWeight: 600,
           }}
         >
           Submit
         </button>
-        <button
-          onClick={() => {
-            const boardRect = getBoardRect();
-            const pw = boardW / COLS;
-            const ph = boardH / ROWS;
-            setPieces((prev) =>
-              prev.map((p) => ({
-                ...p,
-                posX: Math.round(boardRect.left + p.col * pw),
-                posY: Math.round(boardRect.top + p.row * ph),
-                rot: 0,
-                placed: true,
-              }))
-            );
-            setMessage("All pieces placed automatically 🟢");
-            setIsBroken(false);
-          }}
-          style={{
-            padding: "8px 12px",
-            marginLeft: 8,
-            background: "orange",
-            color: "white",
-            borderRadius: 6,
-            cursor: "pointer",
-          }}
-        >
-          Solve
-        </button>
-
-        {/* Removed the redundant 'Decode Letter' button */}
       </div>
 
       <div
@@ -778,17 +775,28 @@ THAT WILL GO ON TILL MIDNIGHT`;
           zIndex: 500,
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div>{message}</div>
-          <div style={{ marginLeft: 6 }}>
-            <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50">
-              <div className="bg-slate-800/60 rounded-full px-2 py-1 inline-block">
-                <MinigameTimer remainingSeconds={session?.remainingSeconds ?? null} triesLeft={session?.triesLeft ?? null} />
-              </div>
-            </div>
-          </div>
+        <div className="bg-slate-800/60 rounded-full px-3 py-1">
+          <MinigameTimer remainingSeconds={session?.remainingSeconds ?? null} />
         </div>
       </div>
+
+      {/* Message Display */}
+      {message && (
+        <div
+          style={{
+            position: "absolute",
+            top: 60,
+            right: 18,
+            color: "white",
+            zIndex: 500,
+            background: "rgba(0,0,0,0.7)",
+            padding: "8px 12px",
+            borderRadius: 6,
+          }}
+        >
+          {message}
+        </div>
+      )}
 
       <div
         style={{

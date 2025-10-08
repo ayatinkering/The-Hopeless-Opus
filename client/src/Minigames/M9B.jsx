@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Check } from 'lucide-react';
 import MinigameTimer from '../components/MinigameTimer';
 
@@ -9,18 +9,19 @@ export default function MusicArcade({ config, onComplete, session, sessionApi })
   const [draggedWire, setDraggedWire] = useState(null);
   const [connections, setConnections] = useState({});
   const [completedInstructions, setCompletedInstructions] = useState({});
+  const completionHandledRef = useRef(false);
 
   const instructions = [
-    { id: 1, start: 5, end: 15, items: ['1', 'volume', 'record'], speaker: 'left', label: '1 + volume + record' },
-    { id: 2, start: 10, end: 20, items: ['2', '3', 'fade'], speaker: 'right', label: '2 + 3 + fade' },
-    { id: 3, start: 15, end: 25, items: ['4', 'pitch', 'record'], speaker: 'left', label: '4 + pitch + record' },
-    { id: 4, start: 20, end: 30, items: ['1', '2', 'volume'], speaker: 'right', label: '1 + 2 + volume' },
-    { id: 5, start: 25, end: 35, items: ['base', '3', 'pitch'], speaker: 'left', label: 'base + 3 + pitch' },
-    { id: 6, start: 30, end: 40, items: ['pitch', '4', 'fade'], speaker: 'right', label: 'pitch + 4 + fade' },
-    { id: 7, start: 35, end: 45, items: ['3', 'record', 'volume'], speaker: 'left', label: '3 + record + volume' },
-    { id: 8, start: 40, end: 50, items: ['1', 'base', 'record'], speaker: 'right', label: '1 + base + record' },
-    { id: 9, start: 45, end: 55, items: ['2', 'pitch', 'volume'], speaker: 'left', label: '2 + pitch + volume' },
-    { id: 10, start: 50, end: 60, items: ['4', 'fade', 'base'], speaker: 'right', label: '4 + fade + base' }
+    { id: 1, start: 10, end: 20, items: ['1', 'volume', 'record'], speaker: 'left', label: '1 + volume + record' },
+    { id: 2, start: 15, end: 25, items: ['2', '3', 'fade'], speaker: 'right', label: '2 + 3 + fade' },
+    { id: 3, start: 20, end: 30, items: ['4', 'pitch', 'record'], speaker: 'left', label: '4 + pitch + record' },
+    { id: 4, start: 25, end: 35, items: ['1', '2', 'volume'], speaker: 'right', label: '1 + 2 + volume' },
+    { id: 5, start: 30, end: 40, items: ['base', '3', 'pitch'], speaker: 'left', label: 'base + 3 + pitch' },
+    { id: 6, start: 35, end: 45, items: ['pitch', '4', 'fade'], speaker: 'right', label: 'pitch + 4 + fade' },
+    { id: 7, start: 40, end: 50, items: ['3', 'record', 'volume'], speaker: 'left', label: '3 + record + volume' },
+    { id: 8, start: 45, end: 55, items: ['1', 'base', 'record'], speaker: 'right', label: '1 + base + record' },
+    { id: 9, start: 50, end: 60, items: ['2', 'pitch', 'volume'], speaker: 'left', label: '2 + pitch + volume' },
+    { id: 10, start: 55, end: 65, items: ['4', 'fade', 'base'], speaker: 'right', label: '4 + fade + base' }
   ];
 
   const wires = [
@@ -89,14 +90,47 @@ export default function MusicArcade({ config, onComplete, session, sessionApi })
     });
   }, [currentTime, connections]);
 
-  // Auto-fail when backend timer expires — mark local UI state, loader will finalize
+  // Handle successful completion when all instructions are completed
   useEffect(() => {
-    if (!session || session.completed) return;
+    const totalCompleted = Object.keys(completedInstructions).length;
+    if (totalCompleted === instructions.length && !completionHandledRef.current) {
+      completionHandledRef.current = true;
+      
+      (async () => {
+        try {
+          await sessionApi.completeSession();
+          console.log('M9B: All instructions completed - session completed successfully');
+          setTimeout(() => {
+            if (onComplete) onComplete(true);
+          }, 1500); // Give user time to see completion
+        } catch (err) {
+          console.error('M9B: Failed to complete session on success:', err);
+          if (onComplete) onComplete(true);
+        }
+      })();
+    }
+  }, [completedInstructions, sessionApi, onComplete]);
+
+  // Auto-fail when backend timer expires
+  useEffect(() => {
+    if (!session || session.completed || completionHandledRef.current) return;
     if (session.remainingSeconds === 0) {
       setGameStarted(false);
       setCurrentTime(60);
+      completionHandledRef.current = true;
+      
+      (async () => {
+        try {
+          await sessionApi.completeSession();
+          console.log('M9B: Timer expired - session completed on backend');
+          if (onComplete) onComplete(false);
+        } catch (err) {
+          console.error('M9B: Failed to complete session on timer expiry:', err);
+          if (onComplete) onComplete(false);
+        }
+      })();
     }
-  }, [session]);
+  }, [session, sessionApi, onComplete]);
 
   const getActiveInstructions = () => {
     return instructions.filter(
@@ -166,12 +200,14 @@ export default function MusicArcade({ config, onComplete, session, sessionApi })
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-100 via-yellow-50 to-orange-100 p-8 flex flex-col items-center justify-center">
-  <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50">
-    <div className="bg-slate-800/60 rounded-full px-2 py-1 inline-block">
-      <MinigameTimer remainingSeconds={session?.remainingSeconds ?? null} triesLeft={session?.triesLeft ?? null} />
-    </div>
-  </div>
+    <div className="min-h-screen bg-gradient-to-br from-amber-100 via-yellow-50 to-orange-100 p-8 flex flex-col items-center justify-center relative">
+      {/* Timer Display */}
+      <div className="fixed top-4 right-4 z-50">
+        <div className="bg-slate-800/60 rounded-full px-3 py-1">
+          <MinigameTimer remainingSeconds={session?.remainingSeconds ?? null} />
+        </div>
+      </div>
+      
       <h1 className="text-5xl font-bold text-amber-900 mb-8 tracking-wider" style={{ fontFamily: 'serif', textShadow: '2px 2px 4px rgba(0,0,0,0.3)' }}>MUSIC ARCADE</h1>
       
       {!gameStarted && countdown > 0 ? (

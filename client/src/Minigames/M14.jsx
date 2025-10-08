@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+  import React, { useState, useEffect, useRef } from 'react';
 import MinigameTimer from '../components/MinigameTimer';
 import { RotateCw } from 'lucide-react';
 import lightbg from "../assets/lightbg.png";
@@ -28,6 +28,7 @@ const MirrorPuzzleGame = ({ config, onComplete, session, sessionApi }) => {
   const [mirrors, setMirrors] = useState(initMirrors());
   const [lightPath, setLightPath] = useState([]);
   const [hasWon, setHasWon] = useState(false);
+  const completionHandledRef = useRef(false);
 
   const rotateMirror = (row, col) => {
     const key = `${row}-${col}`;
@@ -167,24 +168,43 @@ const MirrorPuzzleGame = ({ config, onComplete, session, sessionApi }) => {
   }
 };
 
-  // Auto fail on expiry — mark local UI state and let loader finalize
+  // Handle timer expiry - call sessionApi.completeSession() and onComplete(false)
   useEffect(() => {
-    if (!session || session.completed) return;
+    if (!session || session.completed || completionHandledRef.current) return;
     if (session.remainingSeconds === 0) {
-      setHasWon(false);
+      completionHandledRef.current = true;
+      sessionApi.completeSession().then(() => {
+        onComplete(false);
+      });
     }
-  }, [session]);
+  }, [session, sessionApi, onComplete]);
+
+  // Handle success completion when hasWon
+  useEffect(() => {
+    if (hasWon && !completionHandledRef.current && session && !session.completed) {
+      completionHandledRef.current = true;
+      sessionApi.completeSession().then(() => {
+        setTimeout(() => {
+          onComplete(true);
+        }, 500);
+      });
+    }
+  }, [hasWon, sessionApi, onComplete, session]);
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 p-8">
-  <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50">
-    <div className="bg-slate-800/60 rounded-full px-2 py-1 inline-block">
-      <MinigameTimer remainingSeconds={session?.remainingSeconds ?? null} triesLeft={session?.triesLeft ?? null} />
-    </div>
-  </div>
+      {/* Timer Display */}
+      <div className="fixed top-4 right-4 z-50">
+        <div className="bg-slate-800/60 rounded-full px-3 py-1">
+          <MinigameTimer 
+            remainingSeconds={session?.remainingSeconds ?? null}
+          />
+        </div>
+      </div>
+
       <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 shadow-2xl">
         <h1 className="text-4xl font-bold text-white mb-2 text-center">Mirror Puzzle</h1>
-  <p className="text-white/80 mb-4 text-center">Guide the light to the bottom-right corner!</p>
+  <p className="text-white/80 mb-10 text-center">Guide the light to the bottom-right corner!</p>
 
         <div className="mb-6 relative">
           {/* Light source indicator */}

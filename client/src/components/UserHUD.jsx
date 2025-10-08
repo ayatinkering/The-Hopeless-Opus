@@ -61,12 +61,13 @@ const UserHUD = ({ userState, activeMinigame }) => {
     M9A: [
       'A number crossword lies before you.',
       'Drag and drop the number tiles into their correct spots on the grid.',
-      'Once every piece falls into place, read the marked cells carefully to uncover the hidden code.'
+      'Once every piece falls into place, read the marked cells carefully to uncover the hidden code.',
+      'Click on the arrow buttons to rotate the grid and get a new perspective.'
     ],
     M9B: [
       'Before you lies an audio mixer with 7 ports and 3 connections.',
       'Two speakers stand on either side, each whispering a set of instructions.',
-      'Follow their cues carefully and connect the wires before time runs out — or the sound fades into silence.'
+      'Follow their cues carefully and connect the brown buttons by drag and drop before time runs out — or the sound fades into silence.'
     ],
     M10: [
       'To escape the Hivemind, you must ascend through five levels.',
@@ -127,7 +128,7 @@ const UserHUD = ({ userState, activeMinigame }) => {
   };
 
   return (
-    <div className="absolute top-4 left-4 z-50 flex items-center space-x-4 select-none">
+    <div className="absolute top-4 left-4 z-450 flex items-center space-x-4 select-none">
       {/* --- Points Display --- */}
       <div className="px-4 py-2 bg-black/70 text-white rounded-lg shadow-lg flex items-center gap-3 border border-white/10 backdrop-blur-sm">
         <div className="flex items-center gap-2">

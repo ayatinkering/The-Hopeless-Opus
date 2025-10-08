@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import MinigameTimer from "../components/MinigameTimer";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function BinaryBulbGame({ config, onComplete, session, sessionApi }) {
+  const completionHandledRef = useRef(false);
   const colors = ['R', 'G', 'B', 'Y'];
 
   const generateScenes = () => {
@@ -62,9 +63,24 @@ export default function BinaryBulbGame({ config, onComplete, session, sessionApi
     setInputs({ ...inputs, [key]: e.target.value });
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const isCorrect = colors.every(color => parseInt(inputs[color]) === correctAnswers[color]);
     setResult(isCorrect ? "🎉 Amazing! You cracked the code!" : "❌ Oops! Try to decode the lights again!");
+    
+    if (isCorrect && !completionHandledRef.current) {
+      completionHandledRef.current = true;
+      
+      try {
+        await sessionApi.completeSession();
+        console.log('M12: Code cracked - session completed successfully');
+        setTimeout(() => {
+          if (onComplete) onComplete(true);
+        }, 1500); // Give user time to see success message
+      } catch (err) {
+        console.error('M12: Failed to complete session on success:', err);
+        if (onComplete) onComplete(true);
+      }
+    }
   };
 
   const handleReplay = () => {
@@ -87,19 +103,34 @@ export default function BinaryBulbGame({ config, onComplete, session, sessionApi
     </motion.div>
   );
 
-  // Auto-fail when backend timer expires — set UI state and let loader finalize
+  // Auto-fail when backend timer expires
   useEffect(() => {
-    if (!session || session.completed) return;
+    if (!session || session.completed || completionHandledRef.current) return;
     if (session.remainingSeconds === 0) {
-      setResult('⏱ Time Expired');
-      setShowInput(false);
-      setGameStarted(false);
+      completionHandledRef.current = true;
+      
+      (async () => {
+        try {
+          await sessionApi.completeSession();
+          console.log('M12: Timer expired - session completed on backend');
+          if (onComplete) onComplete(false);
+        } catch (err) {
+          console.error('M12: Failed to complete session on timer expiry:', err);
+          if (onComplete) onComplete(false);
+        }
+      })();
     }
-  }, [session]);
+  }, [session, sessionApi, onComplete]);
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-white p-6">
-  <div className="absolute top-4 left-1/2 -translate-x-1/2"><MinigameTimer remainingSeconds={session?.remainingSeconds ?? null} triesLeft={session?.triesLeft ?? null} /></div>
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-white p-6 relative">
+      {/* Timer Display */}
+      <div className="fixed top-4 right-4 z-50">
+        <div className="bg-slate-800/60 rounded-full px-3 py-1">
+          <MinigameTimer remainingSeconds={session?.remainingSeconds ?? null} />
+        </div>
+      </div>
+
       <h1 className="text-3xl font-bold mb-4 text-yellow-300">💡 Binary Bulb Challenge 💡</h1>
       <p className="text-gray-300 mb-6 text-center max-w-md">
         Welcome, Code Breaker! Observe the colored bulbs as they flicker in mysterious sequences. Once the show ends, enter the hidden number behind each color (top to bottom) to unlock the secret code.

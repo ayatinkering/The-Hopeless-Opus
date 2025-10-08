@@ -1,5 +1,6 @@
 // SlidingBlocks.jsx
 import React, { useState, useRef, useEffect } from "react";
+import MinigameTimer from "../components/MinigameTimer";
 
 const GRID = 7;
 
@@ -66,6 +67,7 @@ export default function SlidingBlocks({ config, onComplete, session, sessionApi 
   const containerRef = useRef(null);
   const [drag, setDrag] = useState(null);
   const [, force] = useState(0);
+  const completionHandledRef = useRef(false);
 
   const buildOccupancy = (skipId) => {
     const grid = Array.from({ length: GRID }, () => Array(GRID).fill(null));
@@ -89,13 +91,28 @@ export default function SlidingBlocks({ config, onComplete, session, sessionApi 
     checkWin();
   }, [blocks]);
 
-  // Auto-fail when backend timer expires — rely on loader
+  // Handle timer expiry - call sessionApi.completeSession() and onComplete(false)
   useEffect(() => {
-    if (!session || session.completed) return;
+    if (!session || session.completed || completionHandledRef.current) return;
     if (session.remainingSeconds === 0) {
-      setWon(false);
+      completionHandledRef.current = true;
+      sessionApi.completeSession().then(() => {
+        onComplete(false);
+      });
     }
-  }, [session]);
+  }, [session, sessionApi, onComplete]);
+
+  // Handle success completion when won
+  useEffect(() => {
+    if (won && !completionHandledRef.current && session && !session.completed) {
+      completionHandledRef.current = true;
+      sessionApi.completeSession().then(() => {
+        setTimeout(() => {
+          onComplete(true);
+        }, 500);
+      });
+    }
+  }, [won, sessionApi, onComplete, session]);
 
   const computeRange = (block, axis) => {
     const occ = buildOccupancy(block.id);
@@ -177,6 +194,15 @@ export default function SlidingBlocks({ config, onComplete, session, sessionApi 
 
   return (
     <div className="min-h-screen flex items-center mt-18 justify-center bg-slate-100 p-6">
+      {/* Timer Display */}
+      <div className="fixed top-4 right-4 z-50">
+        <div className="bg-slate-800/60 rounded-full px-3 py-1">
+          <MinigameTimer 
+            remainingSeconds={session?.remainingSeconds ?? null}
+          />
+        </div>
+      </div>
+
       <div className="max-w-[720px] w-full">
         <div className="flex justify-between mb-4">
           <h1 className="font-semibold">Sliding Puzzle - Straight Line Only</h1>

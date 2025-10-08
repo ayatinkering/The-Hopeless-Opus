@@ -1,8 +1,9 @@
 import Minigame from '../models/minigameSchema.js';
-import MinigameSession from '../models/minigameSession.js';
+import MiniggameSession from '../models/minigameSession.js';
 import User from '../models/user.js';
 
 // Base scores per minigame (from user specification)
+// MODIFIED: Added base scores for new minigames
 const BASE_SCORES = {
   M1: 150,
   M2: 100,
@@ -11,6 +12,15 @@ const BASE_SCORES = {
   M5: 200,
   M6: 150,
   M7: 150,
+  M8: 240,
+  M9A: 240,
+  M9B: 240,
+  M10: 280,
+  M11: 280,
+  M12: 250,
+  M13: 200,
+  M14: 320,
+  M15: 360,
 };
 
 // ---------------- Per-User Session Endpoints ----------------
@@ -33,11 +43,11 @@ export const startSession = async (req, res) => {
     const base = await Minigame.findOne({ minigameId });
     if (!base) return res.status(404).json({ message: 'Minigame not found' });
 
-  let session = await MinigameSession.findOne({ user: userId, minigameId });
+    let session = await MiniggameSession.findOne({ user: userId, minigameId });
     if (!session) {
       // Games with finite tries (initialize to 3-5 depending on game type)
       const triesGames = ['M4','M5','M6','M8','M9A','M9B','M10','M11','M12','M13','M14','M15'];
-      session = new MinigameSession({
+      session = new MiniggameSession({
         user: userId,
         minigameId,
         timerSeconds: base.timer || 300,
@@ -65,7 +75,6 @@ export const startSession = async (req, res) => {
       }
     });
   } catch (err) {
-    // console.error('startSession error', err);
     return res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
@@ -76,7 +85,7 @@ export const getSessionState = async (req, res) => {
     const { minigameId } = req.query;
     if (!userId) return res.status(401).json({ message: 'Auth required' });
     if (!minigameId) return res.status(400).json({ message: 'minigameId required' });
-  const session = await MinigameSession.findOne({ user: userId, minigameId });
+    const session = await MiniggameSession.findOne({ user: userId, minigameId });
     if (!session) return res.status(404).json({ message: 'Session not found' });
     const remainingSeconds = computeRemaining(session);
     return res.json({
@@ -90,7 +99,6 @@ export const getSessionState = async (req, res) => {
       }
     });
   } catch (err) {
-    // console.error('getSessionState error', err);
     return res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
@@ -101,20 +109,23 @@ export const decrementTrySession = async (req, res) => {
     const { minigameId } = req.body;
     if (!userId) return res.status(401).json({ message: 'Auth required' });
     if (!minigameId) return res.status(400).json({ message: 'minigameId required' });
-    if (!['M4','M5','M6'].includes(minigameId)) return res.status(400).json({ message: 'No tries for this minigame' });
-  const session = await MinigameSession.findOne({ user: userId, minigameId });
+    // MODIFIED: Added new games to this list so their tries can be decremented
+    const gamesWithTries = ['M4','M5','M6', 'M8', 'M9A', 'M9B', 'M10', 'M11', 'M12', 'M13', 'M14', 'M15'];
+    if (!gamesWithTries.includes(minigameId)) {
+      return res.status(400).json({ message: 'No tries for this minigame' });
+    }
+    const session = await MiniggameSession.findOne({ user: userId, minigameId });
     if (!session) return res.status(404).json({ message: 'Session not found' });
     if (session.triesLeft <= 0) return res.status(400).json({ message: 'No tries left' });
     session.triesLeft -= 1;
-      // If tries reach zero, mark session as completed (failed)
-      if (session.triesLeft <= 0) {
-        session.completed = true;
-        session.completedAt = new Date();
-      }
-      await session.save();
-      return res.json({ message: 'Try decremented', triesLeft: session.triesLeft, completed: session.completed });
+    // If tries reach zero, mark session as completed (failed)
+    if (session.triesLeft <= 0) {
+      session.completed = true;
+      session.completedAt = new Date();
+    }
+    await session.save();
+    return res.json({ message: 'Try decremented', triesLeft: session.triesLeft, completed: session.completed });
   } catch (err) {
-    // console.error('decrementTrySession error', err);
     return res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
@@ -125,24 +136,57 @@ export const completeSession = async (req, res) => {
     const { minigameId } = req.body;
     if (!userId) return res.status(401).json({ message: 'Auth required' });
     if (!minigameId) return res.status(400).json({ message: 'minigameId required' });
-  const session = await MinigameSession.findOne({ user: userId, minigameId });
+    const session = await MiniggameSession.findOne({ user: userId, minigameId });
     if (!session) return res.status(404).json({ message: 'Session not found' });
     if (session.completed) return res.json({ message: 'Already completed', score: session.score });
 
     const elapsed = session.startedAt ? Math.floor((Date.now() - session.startedAt.getTime())/1000) : session.timerSeconds;
     const timer = session.timerSeconds;
-    // New scoring: Evaluated score = max(0, baseScore * (1 - max(0, (timeUsed - 60) / (totalTime - 60))))
     const baseScore = BASE_SCORES[minigameId] || 100; // fallback to 100 if missing
     let score;
-    // Full base score only if completed in strictly less than 60 seconds
-    if (elapsed < 60) {
-      score = baseScore; // full base score for <60s
-    } else if (elapsed >= timer) {
-      score = 0;
+
+    // ======================= ADDED LOGIC START =======================
+    const formulaGames = ['M8', 'M9A', 'M9B', 'M10', 'M11', 'M12', 'M13', 'M14', 'M15'];
+
+    if (formulaGames.includes(minigameId)) {
+      // Use the new complex formula for specified games
+      const x = baseScore;
+      const a = 3; // Initial tries for these games is set to 3 in startSession
+      const i = a - session.triesLeft; // 'i' is the number of tries used
+      const t_used = elapsed;
+      const t_lim = timer;
+
+      // --- Calculate Value A: The Logarithmic Penalty Term ---
+      const logTerm = Math.log((i + 1) / 2) / Math.log(a);
+      const valueA = (-x / (a - i + 1)) * logTerm;
+
+      // --- Calculate Value B: The Time-Decay Score Term ---
+      let valueB;
+      if (t_used < 60) {
+        valueB = x;
+      } else if (t_used >= t_lim) {
+        valueB = 0;
+      } else {
+        const penaltyFraction = (t_used - 60) / (t_lim - 60);
+        valueB = x * (1 - penaltyFraction);
+      }
+
+      // Final score is the max of the two values, rounded and floored at 0.
+      score = Math.round(Math.max(0, valueA, valueB));
+
     } else {
-      const penaltyFraction = Math.max(0, (elapsed - 60) / (timer - 60));
-      score = Math.max(0, Math.round(baseScore * (1 - penaltyFraction)));
+      // --- Existing scoring logic for all other games ---
+      if (elapsed < 60) {
+        score = baseScore;
+      } else if (elapsed >= timer) {
+        score = 0;
+      } else {
+        const penaltyFraction = Math.max(0, (elapsed - 60) / (timer - 60));
+        score = Math.max(0, Math.round(baseScore * (1 - penaltyFraction)));
+      }
     }
+    // ======================== ADDED LOGIC END ========================
+
     session.completed = true;
     session.completedAt = new Date();
     session.score = score;
@@ -150,7 +194,6 @@ export const completeSession = async (req, res) => {
 
     return res.json({ message: 'Session completed', score, sessionId: session._id, minigameId });
   } catch (err) {
-    // console.error('completeSession error', err);
     return res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
@@ -162,7 +205,7 @@ export const claimMinigameReward = async (req, res) => {
     const { minigameId } = req.body;
     if (!userId) return res.status(401).json({ message: 'Auth required' });
     if (!minigameId) return res.status(400).json({ message: 'minigameId required' });
-    const session = await MinigameSession.findOne({ user: userId, minigameId });
+    const session = await MiniggameSession.findOne({ user: userId, minigameId });
     if (!session) return res.status(404).json({ message: 'Session not found' });
     if (!session.completed) return res.status(400).json({ message: 'Minigame not completed yet' });
     if (session.rewardClaimed) {
@@ -184,7 +227,6 @@ export const claimMinigameReward = async (req, res) => {
       userPoints: user.points
     });
   } catch (err) {
-    // console.error('claimMinigameReward error', err);
     return res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
