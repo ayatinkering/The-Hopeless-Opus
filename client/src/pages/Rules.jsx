@@ -1,37 +1,56 @@
+import React from "react";
 import background from "../assets/background.jpg";
-import React from 'react';
 
 function Rules() {
-  return (
-    <div className="relative min-h-screen pt-24 px-4 sm:px-6 lg:px-8">
-      {/* Background Image */}
-      <div
-        className="fixed inset-0 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: `url(${background})` }}
-      ></div>
+  const rules = [
+    "Please play the games on a laptop for the best experience.",
+    "Respect all players – no harassment, hate speech, or discrimination.",
+    "No cheating or exploiting – avoid hacks, bots, or unfair advantages.",
+    "Play fair – follow the intended game mechanics.",
+    "Keep content appropriate – no offensive usernames, avatars, or messages.",
+    "Respect moderators and admins – their decisions help keep the community safe.",
+    "One account per person – no multiple or fake accounts.",
+    "Report suspicious activity – help prevent scams and abuse.",
+    "Constructive criticism only – respect developers and other players’ efforts.",
+    "Follow game-specific rules – each game may have its own guidelines."
+  ];
 
-      {/* Translucent Overlay with Responsive Styling */}
-      <div className="relative z-10 bg-white/10 bg-opacity-70 backdrop-blur-md rounded-lg max-w-4xl mx-auto p-6 sm:p-8 lg:p-10 shadow-xl">
-        <h1 className="text-2xl sm:text-3xl font-bold mb-6 text-center text-gray-900">
-          Community Rules
+  return (
+    <div
+      className="relative min-h-screen pt-24 px-4 sm:px-6 lg:px-8 flex items-center justify-center"
+      style={{
+        backgroundImage: `url(${background})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+      }}
+    >
+      {/* Dark overlay for readability */}
+      <div className="absolute inset-0 bg-black/80" />
+
+      {/* Rules Card */}
+      <div className="relative z-10 max-w-4xl w-full bg-white/10 backdrop-blur-lg border border-white/10 rounded-2xl shadow-2xl p-8 sm:p-10">
+        <h1 className="text-3xl sm:text-4xl font-extrabold text-center mb-8 text-red-500 tracking-wide">
+          Community <span className="text-white">Rules</span>
         </h1>
-        <ol className="list-decimal pl-5 space-y-3 text-base sm:text-lg text-black leading-relaxed">
-          <li>Please play the games on the laptop for the best user experience</li>
-          <li>Respect all players – no harassment, hate speech, or discrimination.</li>
-          <li>No cheating or exploiting – avoid hacks, bots, or unfair advantages.</li>
-          <li>Play fair – follow the intended game mechanics.</li>
-          <li>Keep content appropriate – no offensive usernames, avatars, or messages.</li>
-          <li>Respect moderators and admins – their decisions help keep the community safe.</li>
-          <li>One account per person – no multiple or fake accounts.</li>
-          <li>Do not share your login – protect your account and progress.</li>
-          <li>Report suspicious activity – help prevent scams and abuse.</li>
-          <li>Be polite in chat/forums – avoid spamming, trolling, or flooding.</li>
-          <li>Stay on topic – no unrelated advertising or self-promotion.</li>
-          <li>Constructive criticism only – respect developers and other players’ efforts.</li>
-          <li>Follow game-specific rules – each game may have its own guidelines.</li>
-          <li>No griefing – don’t intentionally ruin the experience for others.</li>
-          <li>Respect team play – cooperate in multiplayer modes.</li>
-        </ol>
+
+        {/* Apply white/50 background behind all rules */}
+        <div className="bg-white/10 rounded-xl p-6 sm:p-8">
+          <div className="grid sm:grid-cols-1 gap-3 text-white">
+            {rules.map((rule, index) => (
+              <div
+                key={index}
+                className="flex items-start gap-4 p-2 hover:border-[#09D8C7]/40 transition-all duration-300"
+              >
+                <div className="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-full text-white font-bold text-lg shadow-md">
+                  {index + 1}
+                </div>
+                <p className="font-medium text-lg sm:text-lg leading-relaxed">
+                  {rule}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );

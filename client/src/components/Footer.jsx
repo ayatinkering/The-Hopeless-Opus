@@ -1,5 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import sponsers from "../assets/sponser.png";
 
 const Footer = () => {
   const navigate = useNavigate();
@@ -79,14 +80,22 @@ const Footer = () => {
           </div>
         </div>
 
-        {/* Bottom section */}
-<div className="border-t border-gray-200 mt-10 pt-6 text-center text-xs font-thin sm:text-xl text-white">
-  © 2025 ACUMEN
-</div>
-<div className="mt-1 text-center text-xs font-thin sm:text-sm text-white">
-  All rights reserved.
-</div>
+        {/* Sponsors section */}
+        <div className="mt-12">
+          <img
+            src={sponsers}
+            alt="Sponsors"
+            className="w-full h-auto object-contain mx-auto"
+          />
+        </div>
 
+        {/* Bottom section */}
+        <div className="border-t border-gray-200 mt-10 pt-6 text-center text-xs font-thin sm:text-xl text-white">
+          © 2025 ACUMEN
+        </div>
+        <div className="mt-1 text-center text-xs font-thin sm:text-sm text-white">
+          All rights reserved.
+        </div>
       </div>
     </footer>
   );

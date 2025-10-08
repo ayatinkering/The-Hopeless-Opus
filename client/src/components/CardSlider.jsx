@@ -90,7 +90,7 @@ Are you ready to see where your skills will lead you?`,
                 className="
                   eventCard flex flex-col justify-between 
                   w-96 h-96 rounded-xl border border-gray-400
-                  backdrop-blur-xs bg-[#000000]/20 
+                  backdrop-blur-xs bg-[#000000]/40 
                   p-12 pt-12
                   max-[760px]:w-full max-[760px]:h-[22rem]  
                   max-[760px]:p-8

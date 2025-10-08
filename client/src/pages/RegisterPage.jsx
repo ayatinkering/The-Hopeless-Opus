@@ -45,79 +45,71 @@ export default function Register() {
   };
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  if (formData.password !== formData.confirmPassword) {
-    alert("Passwords do not match");
-    return;
-  }
+    if (formData.password !== formData.confirmPassword) {
+      alert("Passwords do not match");
+      return;
+    }
 
-  // ✅ Map to backend structure
-  const payload = {
-    teamId: formData.teamId,
-    password: formData.password,
-    teamLeader: {
-      name: formData.leader.name,
-      email: formData.leader.email,
-      phone: formData.leader.phone,
-      registrationNumber: formData.leader.registration,
-      institute: formData.leader.institute,
-      delegateId: formData.leader.delegate,
-    },
+    const payload = {
+      teamId: formData.teamId,
+      password: formData.password,
+      teamLeader: {
+        name: formData.leader.name,
+        email: formData.leader.email,
+        phone: formData.leader.phone,
+        registrationNumber: formData.leader.registration,
+        institute: formData.leader.institute,
+        delegateId: formData.leader.delegate,
+      },
+    };
+
+    if (hasPlayer2) {
+      const { name, email, phone, registration, institute, delegate } = formData.player2;
+      const hasAnyValue = [name, email, phone, registration, institute, delegate].some(
+        (val) => val && val.trim() !== ""
+      );
+
+      if (hasAnyValue) {
+        payload.player2 = {
+          name,
+          email,
+          phone,
+          registrationNumber: registration,
+          institute,
+          delegateId: delegate,
+        };
+      }
+    }
+
+    try {
+      const res = await fetch(`${API_BASE}/users/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        alert("Registration successful!");
+        Navigate("/login");
+      } else {
+        alert(data.message || "Registration failed");
+      }
+    } catch (err) {
+      alert("Network error");
+    }
   };
 
-  // 👇 Only add player2 if checkbox ticked AND at least one field filled
-  if (hasPlayer2) {
-    const { name, email, phone, registration, institute, delegate } = formData.player2;
-
-    // Check if player2 has any actual data
-    const hasAnyValue = [name, email, phone, registration, institute, delegate].some(
-      (val) => val && val.trim() !== ""
-    );
-
-    if (hasAnyValue) {
-      payload.player2 = {
-        name,
-        email,
-        phone,
-        registrationNumber: registration,
-        institute,
-        delegateId: delegate,
-      };
-    }
-  }
-
-  try {
-  const res = await fetch(`${API_BASE}/users/register`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-
-    const data = await res.json();
-    if (res.ok) {
-      alert("Registration successful!");
-      // console.log("Server response:", data);
-      Navigate("/login");
-
-    } else {
-      alert(data.message || "Registration failed");
-    }
-  } catch (err) {
-    // console.error(err);
-    alert("Network error");
-  }
-};
-
-
   return (
-    <div className="min-h-screen pt-25 flex items-center justify-center bg-gradient-to-br from-[#411E3A] to-[#0D1A2F] p-4">
-      <div className="w-full max-w-3xl bg-[#0D1A2F] rounded-2xl shadow-lg p-4 sm:p-10 text-white">
+    <div className="min-h-screen pt-24 flex items-center justify-center bg-black p-4">
+      <div className="w-full max-w-3xl bg-gray-900 rounded-2xl shadow-lg p-4 sm:p-10 text-white">
         <h1 className="text-3xl font-bold text-center text-[#09D8C7] mb-2">
           Register
         </h1>
         <p className="text-center text-gray-300 mb-4">
-          Join the adventure and create your gaming profile
+          Please remember your password
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-5">
@@ -179,7 +171,7 @@ export default function Register() {
             </label>
           </div>
 
-          {/* Player 2 (only if checked) */}
+          {/* Player 2 (if checked) */}
           {hasPlayer2 && (
             <>
               <h2 className="text-lg font-semibold text-[#09D8C7]">
@@ -209,7 +201,7 @@ export default function Register() {
             </>
           )}
 
-          {/* Password fields (always visible) */}
+          {/* Password fields */}
           <h2 className="text-lg font-semibold text-[#09D8C7] mt-4">
             Team Password
           </h2>
@@ -242,6 +234,7 @@ export default function Register() {
             </div>
           </div>
 
+          {/* Submit */}
           <button
             type="submit"
             className="w-full bg-[#09D8C7] text-[#0D1A2F] font-semibold py-2 rounded-md hover:bg-cyan-500 transition"
