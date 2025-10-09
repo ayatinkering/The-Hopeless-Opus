@@ -197,13 +197,24 @@ export default function ConcentricToggleGame({ config, onComplete, session, sess
     }
   }, [winner, gameEnded, sessionApi, onComplete]);
 
-  // Effect: check if tries exhausted (handled by MinigameLoader's handleComplete logic)
+  // --- Game over state based on backend session (same logic as M5) ---
   useEffect(() => {
-    if (session?.triesLeft === 0 && !alreadyEnded.current && !gameEnded) {
+    if (!session) return;
+
+    if (session.completed) {
       setGameEnded(true);
-      alreadyEnded.current = true;
     }
-  }, [session?.triesLeft, gameEnded]);
+
+    if (session.remainingSeconds === 0) {
+      setGameEnded(true);
+      onComplete && onComplete(false);
+    }
+
+    if (typeof session.triesLeft === "number" && session.triesLeft <= 0) {
+      setGameEnded(true);
+      onComplete && onComplete(false);
+    }
+  }, [session, onComplete]);
 
   const triesLeft = session?.triesLeft ?? null;
   const remainingSeconds = session?.remainingSeconds ?? null;

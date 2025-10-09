@@ -98,17 +98,6 @@ export default function LightGrid({
     });
   };
 
-  // ✅ Debugging: Fill correct green cells and mark rest red
-  const fillCorrectSolution = () => {
-    const filled = Array.from({ length: SIZE }, () =>
-      Array.from({ length: SIZE }, () => 2) // fill red by default
-    );
-    solution.forEach(([r, c]) => {
-      filled[r][c] = 1; // correct greens
-    });
-    setGrid(filled);
-  };
-
   // ✅ Submit: check correctness
   const checkSolution = () => {
     const solSet = new Set(solution.map(([r, c]) => `${r},${c}`));
@@ -246,12 +235,6 @@ export default function LightGrid({
 
       {/* Buttons */}
       <div className="mt-6 flex items-center gap-3">
-        <button
-          onClick={fillCorrectSolution}
-          className="px-4 py-2 border border-blue-700 bg-[#1b2a3a] rounded-lg hover:bg-[#253b4c] text-gray-200 shadow-md"
-        >
-          Fill Correct Solution
-        </button>
         <button
           onClick={checkSolution}
           className="px-4 py-2 border border-green-700 bg-[#1b2a3a] rounded-lg hover:bg-[#244c25] text-gray-200 shadow-md"

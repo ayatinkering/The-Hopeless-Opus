@@ -50,38 +50,24 @@ export default function M6({ onComplete }) {
     }
   };
 
-  // Skip button handler
-  const handleSkip = async () => {
-    if (gameEnded || alreadyEnded.current) return;
-    setGameEnded(true);
-    alreadyEnded.current = true;
-    try {
-      await sessionApi.completeSession();
-    } catch (err) {
-      console.error("Failed to skip game:", err);
-    }
-    if (onComplete) onComplete(false);
-  };
-
-  // Timer expiry is handled by MinigameLoader - no need to handle it here
-
-  // Effect: check if tries exhausted
+  // --- Game over state based on backend session (same logic as M5) ---
   useEffect(() => {
-    if (triesLeft === 0 && !alreadyEnded.current && !gameEnded) {
+    if (!session) return;
+
+    if (session.completed) {
       setGameEnded(true);
-      alreadyEnded.current = true;
-      
-      (async () => {
-        try {
-          await sessionApi.completeSession();
-          console.log("Tries exhausted - session completed on backend");
-          if (onComplete) onComplete(false);
-        } catch (err) {
-          console.error("Failed to complete session on tries exhausted:", err);
-        }
-      })();
     }
-  }, [triesLeft, gameEnded, sessionApi, onComplete]);
+
+    if (session.remainingSeconds === 0) {
+      setGameEnded(true);
+      onComplete && onComplete(false);
+    }
+
+    if (typeof session.triesLeft === "number" && session.triesLeft <= 0) {
+      setGameEnded(true);
+      onComplete && onComplete(false);
+    }
+  }, [session, onComplete]);
 
   if (loading) {
     return (
@@ -110,19 +96,11 @@ export default function M6({ onComplete }) {
       }}
     >
       {/* Timer Component with Tries */}
-      <div className="absolute top-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3">
+      <div className="absolute top-8 left-1/2 -translate-x-1/2">
         <MinigameTimer 
           remainingSeconds={remainingSeconds} 
           triesLeft={triesLeft}
         />
-
-        <button
-          onClick={handleSkip}
-          disabled={gameEnded}
-          className="px-4 py-2 bg-[#5c0000] text-white rounded-lg hover:bg-[#7a0000] transition font-semibold shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          Skip
-        </button>
       </div>
 
       {/* Cipher Text Display */}
