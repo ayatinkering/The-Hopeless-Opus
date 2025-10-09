@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import MinigameTimer from '../components/MinigameTimer';
 
 export default function StepBlocksGame({ config, onComplete, session, sessionApi }) {
+  const completionHandledRef = useRef(false);
   const structure = [2, 3, 4, 5];
 
   const levels = [
@@ -277,14 +278,25 @@ export default function StepBlocksGame({ config, onComplete, session, sessionApi
     return () => clearInterval(timerInterval);
   }, [levelIndex]);
 
-  // Auto-fail when backend timer expires — set UI state and let loader finalize
+  // Auto-fail when backend timer expires
   useEffect(() => {
-    if (!session || session.completed) return;
+    if (!session || session.completed || completionHandledRef.current) return;
     if (session.remainingSeconds === 0) {
       setMsg('Session expired');
-      setLevelIndex(levels.length - 1);
+      completionHandledRef.current = true;
+      
+      (async () => {
+        try {
+          await sessionApi.completeSession();
+          console.log('M10: Timer expired - session completed on backend');
+          if (onComplete) onComplete(false);
+        } catch (err) {
+          console.error('M10: Failed to complete session on timer expiry:', err);
+          if (onComplete) onComplete(false);
+        }
+      })();
     }
-  }, [session]);
+  }, [session, sessionApi, onComplete]);
 
   const renderCell = (side, blocks, row, col) => {
     const occupyingColor = findOccupyingColor(blocks, row, col);
@@ -351,7 +363,7 @@ export default function StepBlocksGame({ config, onComplete, session, sessionApi
   const balanced = leftWeight === rightWeight;
 
   useEffect(() => {
-    if (balanced) {
+    if (balanced && !completionHandledRef.current) {
       const timer = setTimeout(() => {
         if (levelIndex + 1 < levels.length) {
           setLevelIndex(levelIndex + 1);
@@ -359,15 +371,37 @@ export default function StepBlocksGame({ config, onComplete, session, sessionApi
           setRightBlocks(levels[levelIndex + 1].right);
           setMsg("Next Level Loaded!");
         } else {
+          // All levels completed
           setMsg("🎉 You completed all levels!");
+          completionHandledRef.current = true;
+          
+          (async () => {
+            try {
+              await sessionApi.completeSession();
+              console.log('M10: All levels completed - session completed successfully');
+              setTimeout(() => {
+                if (onComplete) onComplete(true);
+              }, 150);
+            } catch (err) {
+              console.error('M10: Failed to complete session on success:', err);
+              if (onComplete) onComplete(true);
+            }
+          })();
         }
       }, 1200);
       return () => clearTimeout(timer);
     }
-  }, [balanced]);
+  }, [balanced, levelIndex, sessionApi, onComplete]);
 
   return (
-    <div className="min-h-screen flex flex-col items-center mt-20 justify-start p-6 gap-6">
+    <div className="min-h-screen flex flex-col items-center mt-20 justify-start p-6 gap-6 relative">
+      {/* Timer Display */}
+      <div className="fixed top-4 right-4 z-50">
+        <div className="bg-slate-800/60 rounded-full px-3 py-1">
+          <MinigameTimer remainingSeconds={session?.remainingSeconds ?? null} />
+        </div>
+      </div>
+
       <h1 className="text-2xl text-black font-semibold">
         Step Blocks — Level {levelIndex + 1}
       </h1>
@@ -376,8 +410,6 @@ export default function StepBlocksGame({ config, onComplete, session, sessionApi
         {renderStructure("left", leftBlocks)}
         {renderStructure("right", rightBlocks)}
       </div>
-
-  <div className="absolute top-4 left-1/2 -translate-x-1/2"><MinigameTimer remainingSeconds={session?.remainingSeconds ?? null} triesLeft={session?.triesLeft ?? null} /></div>
 
       {dragging && preview && (
         <div

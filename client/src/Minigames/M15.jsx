@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import MinigameTimer from '../components/MinigameTimer';
 
 const DEFAULT_TOP = [
@@ -52,21 +52,6 @@ export default function LightGrid({
   session,
   sessionApi,
 }) {
-  // accept loader props
-  // signature: ({ config, onComplete, session, sessionApi }) is passed by MinigameLoader
-  // but keep existing param structure by allowing extra props via rest args if necessary
-  // NOTE: MinigameLoader passes session and onComplete; we'll read them from props via arguments
-  // (React provides props as first arg; since we destructured above, we can instead access `arguments[0]`)
-
-
-  // Auto-fail when backend timer expires — set result and let loader finalize
-  useEffect(() => {
-    if (!session || session.completed) return;
-    if (session.remainingSeconds === 0) {
-      setResultMsg('TIME EXPIRED');
-    }
-  }, [session]);
-
   const SIZE = 10;
   const [grid, setGrid] = useState(() =>
     Array.from({ length: SIZE }, () =>
@@ -74,6 +59,30 @@ export default function LightGrid({
     )
   );
   const [resultMsg, setResultMsg] = useState("");
+  const completionHandledRef = useRef(false);
+
+  // Handle timer expiry - call sessionApi.completeSession() and onComplete(false)
+  useEffect(() => {
+    if (!session || session.completed || completionHandledRef.current) return;
+    if (session.remainingSeconds === 0) {
+      completionHandledRef.current = true;
+      sessionApi.completeSession().then(() => {
+        onComplete(false);
+      });
+    }
+  }, [session, sessionApi, onComplete]);
+
+  // Handle success completion when puzzle is solved
+  useEffect(() => {
+    if (resultMsg.includes("GREAT") && !completionHandledRef.current && session && !session.completed) {
+      completionHandledRef.current = true;
+      sessionApi.completeSession().then(() => {
+        setTimeout(() => {
+          onComplete(true);
+        }, 500);
+      });
+    }
+  }, [resultMsg, sessionApi, onComplete, session]);
 
   const COLORS = [
     "#6b7489ff", // gray-blue (off)
@@ -138,6 +147,15 @@ export default function LightGrid({
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-[#1b2838] text-white">
+      {/* Timer Display */}
+      <div className="fixed top-4 right-4 z-50">
+        <div className="bg-slate-800/60 rounded-full px-3 py-1">
+          <MinigameTimer 
+            remainingSeconds={session?.remainingSeconds ?? null}
+          />
+        </div>
+      </div>
+
       <div
         className="grid border border-blue-900 bg-[#1b2a3a] p-4 rounded-xl shadow-[0_0_25px_rgba(0,0,50,0.4)]"
         style={{
@@ -224,13 +242,6 @@ export default function LightGrid({
             </button>
           ))
         )}
-      </div>
-      <div style={{ position: 'absolute', top: 16, right: 16 }}>
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50">
-          <div className="bg-slate-800/60 rounded-full px-2 py-1 inline-block">
-            <MinigameTimer remainingSeconds={session?.remainingSeconds ?? null} triesLeft={session?.triesLeft ?? null} />
-          </div>
-        </div>
       </div>
 
       {/* Buttons */}

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import MinigameTimer from '../components/MinigameTimer';
 import { ChevronLeft, ChevronRight, ChevronUp } from 'lucide-react';
 import { Map as MapIcon, X as CloseIcon } from 'lucide-react'; 
@@ -17,6 +17,8 @@ import img911 from '../assets/img911.png';
 import map from '../assets/map.png';
 
 export default function MazeGame({ config, onComplete, session, sessionApi }) {
+  const completionHandledRef = useRef(false);
+  
   // ---------------- Maze Setup ----------------
   const nodes = {
     1: { images: choice1, connections: { up: 2 } },
@@ -56,14 +58,46 @@ export default function MazeGame({ config, onComplete, session, sessionApi }) {
   const [gameStarted, setGameStarted] = useState(false);
 
   // ---------------- Timer Effect ----------------
-  // Session based expiry — do not finalize here, let loader handle completion
+  // Auto-fail when backend timer expires
   useEffect(() => {
-    if (!session || session.completed) return;
+    if (!session || session.completed || completionHandledRef.current) return;
     if (session.remainingSeconds === 0 && gameStarted) {
       setGameStarted(false);
       setShowMap(true);
+      completionHandledRef.current = true;
+      
+      (async () => {
+        try {
+          await sessionApi.completeSession();
+          console.log('M11: Timer expired - session completed on backend');
+          if (onComplete) onComplete(false);
+        } catch (err) {
+          console.error('M11: Failed to complete session on timer expiry:', err);
+          if (onComplete) onComplete(false);
+        }
+      })();
     }
-  }, [session, gameStarted]);
+  }, [session, gameStarted, sessionApi, onComplete]);
+
+  // Handle successful completion when reaching goal node 16
+  useEffect(() => {
+    if (currentNode === 16 && !completionHandledRef.current && gameStarted) {
+      completionHandledRef.current = true;
+      
+      (async () => {
+        try {
+          await sessionApi.completeSession();
+          console.log('M11: Reached goal (node 16) - session completed successfully');
+          setTimeout(() => {
+            if (onComplete) onComplete(true);
+          }, 1500); // Give user time to see the goal image
+        } catch (err) {
+          console.error('M11: Failed to complete session on success:', err);
+          if (onComplete) onComplete(true);
+        }
+      })();
+    }
+  }, [currentNode, gameStarted, sessionApi, onComplete]);
 
   // ---------------- Navigation ----------------
   const handleNavigation = (direction) => {
@@ -88,7 +122,16 @@ export default function MazeGame({ config, onComplete, session, sessionApi }) {
 
   // ---------------- UI ----------------
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-900 gap-6">
+    <div className="flex items-center justify-center min-h-screen bg-gray-900 gap-6 relative">
+      {/* Timer Display */}
+      {gameStarted && (
+        <div className="fixed top-4 right-4 z-50">
+          <div className="bg-slate-800/60 rounded-full px-3 py-1">
+            <MinigameTimer remainingSeconds={session?.remainingSeconds ?? null} />
+          </div>
+        </div>
+      )}
+
       {!gameStarted ? (
         // Start screen
         <div className="flex flex-col items-center gap-6">
@@ -177,7 +220,7 @@ export default function MazeGame({ config, onComplete, session, sessionApi }) {
             )}
           </div>
 
-          {/* Sidebar with Map + Timer */}
+          {/* Sidebar with Map Button */}
           <div className="flex flex-col items-center gap-4">
             {/* Map Button */}
             <button
@@ -186,8 +229,6 @@ export default function MazeGame({ config, onComplete, session, sessionApi }) {
             >
               <MapIcon className="w-8 h-8 text-white" />
             </button>
-              {/* Timer */}
-              <div className="absolute top-4 left-1/2 -translate-x-1/2"><MinigameTimer remainingSeconds={session?.remainingSeconds ?? null} triesLeft={session?.triesLeft ?? null} /></div>
           </div>
 
           {/* Map Overlay */}

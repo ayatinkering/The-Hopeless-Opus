@@ -20,10 +20,30 @@ const characterAssets = {
   // Workshop heads are not included per your last request, but can be added here if needed
   'Workshop head 1': { src: 'https://res.cloudinary.com/dzntiuwyr/image/upload/v1759849140/pride_bgjd7m.png', position: 'left' },
   'Workshop head 2': { src: 'https://res.cloudinary.com/dzntiuwyr/image/upload/v1759849140/sloth_m84fg2.png', position: 'right' },
+  'Spirit 1': { src: 'https://res.cloudinary.com/dzntiuwyr/image/upload/v1759948882/spirit_gqy4ag.png', position: 'left' },
+  'Spirit 2': { src: 'https://res.cloudinary.com/dzntiuwyr/image/upload/v1759948882/spirit2_ov6cpv.png', position: 'left' },
+  'Spirit 3': { src: 'https://res.cloudinary.com/dzntiuwyr/image/upload/v1759948882/spirit3_fi0o2l.png', position: 'left' },
+  'Spirit 4': { src: 'https://res.cloudinary.com/dzntiuwyr/image/upload/v1759948883/spirit4_gd9rch.png', position: 'left' },
+  'Spirit 5': { src: 'https://res.cloudinary.com/dzntiuwyr/image/upload/v1759948883/spirit5_f142jd.png', position: 'left' },
+  'Spirit 6': { src: 'https://res.cloudinary.com/dzntiuwyr/image/upload/v1759948882/spirit6_h1c6rh.png', position: 'left' },
 };
 
 // --- Story ID List for Inverted/Italic Style ---
-const INVERTED_STORY_IDS = ['0101', '0102', '0103', '1001', '1002', '1003', '1601', '1602', '1603', '2201c', '2202c', '2401a', '2501b'];
+const INVERTED_STORY_IDS = [
+  '0101', '0102', '0103',
+  '1001', '1002', '1003',
+  '1601', '1602', '1603',
+  '2201c', '2202c',
+  '2401a', '2501b',
+  '3101', '3102', '3103',
+  '3601', '3602', '3603',
+  '4901', '4902', '4903',
+  '5401', '5402', '5403', '5404', '5405',
+  '6101', '6102', '6103', '6104',
+  '6301', '6401a', '6401b', '6401c',
+  '6501', '6601',
+  '6901', '6902', '6903', '6904', '6905'
+];
 
 const VisualNovelInterface = () => {
   const [storyData, setStoryData] = useState(null);
