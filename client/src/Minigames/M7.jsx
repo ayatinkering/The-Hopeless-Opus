@@ -89,13 +89,20 @@ const PuzzleGame = ({ config, onComplete, session, sessionApi }) => {
     const [greenPathsCount, setGreenPathsCount] = useState(0);
 
     const timerRef = useRef(null);
-    const isGameOver = useRef(false);
+    const [gameEnded, setGameEnded] = useState(false);
     const isTimeUp = !!(session && session.remainingSeconds === 0);
 
+    // --- Game over state based on backend session (same logic as M5) ---
     useEffect(() => {
-        if (!session || session.completed) return;
+        if (!session) return;
+
+        if (session.completed) {
+            setGameEnded(true);
+        }
+
         if (session.remainingSeconds === 0) {
-            isGameOver.current = true;
+            setGameEnded(true);
+            onComplete && onComplete(false);
         }
     }, [session, onComplete]);
 
@@ -151,7 +158,7 @@ const PuzzleGame = ({ config, onComplete, session, sessionApi }) => {
     }, [slots]); // ✅ No infinite loop now
 
     const handleDragStart = (e, token, fromSlotId = null) => {
-        if (isTimeUp || isWin) {
+        if (gameEnded || isWin) {
             e.preventDefault();
             return;
         }
@@ -169,7 +176,7 @@ const PuzzleGame = ({ config, onComplete, session, sessionApi }) => {
 
     const handleDrop = (e, slotId) => {
         e.preventDefault();
-        if (!draggedToken || isTimeUp || isWin) return;
+        if (!draggedToken || gameEnded || isWin) return;
 
         if (starterTokenIds.includes(slotId)) return;
 
@@ -216,7 +223,7 @@ const PuzzleGame = ({ config, onComplete, session, sessionApi }) => {
 
     const handleDropOnTokenBar = (e) => {
         e.preventDefault();
-        if (!draggedToken || !draggedFromSlotId || isTimeUp || isWin) return;
+        if (!draggedToken || !draggedFromSlotId || gameEnded || isWin) return;
 
         if (starterTokenIds.includes(draggedFromSlotId)) return;
 
@@ -255,9 +262,9 @@ const PuzzleGame = ({ config, onComplete, session, sessionApi }) => {
     const isWin = greenPathsCount === totalPaths && totalPaths > 0;
 
     useEffect(() => {
-        if (isWin) {
+        if (isWin && !gameEnded) {
+            setGameEnded(true);
             clearInterval(timerRef.current);
-            isGameOver.current = true;
             // notify loader about win once
             if (onComplete) {
                 // small delay so UI shows winning state before transitioning
@@ -271,24 +278,7 @@ const PuzzleGame = ({ config, onComplete, session, sessionApi }) => {
                 }, 800);
             }
         }
-    }, [isWin]);
-
-    // Notify loader when time is up (lose). Use effect watching isTimeUp to match session updates.
-    useEffect(() => {
-        if (isTimeUp) {
-            clearInterval(timerRef.current);
-            isGameOver.current = true;
-            if (onComplete) {
-                setTimeout(() => {
-                    try {
-                        onComplete(false);
-                    } catch (err) {
-                        console.error('onComplete threw', err);
-                    }
-                }, 400);
-            }
-        }
-    }, [isTimeUp, onComplete]);
+    }, [isWin, gameEnded, onComplete]);
 
     return (
         <div
@@ -300,7 +290,7 @@ const PuzzleGame = ({ config, onComplete, session, sessionApi }) => {
                 backgroundRepeat: 'no-repeat',
             }}
         >
-            {(isWin || isTimeUp) && (
+            {(isWin || gameEnded) && (
                 <div className="absolute inset-0 z-50 flex items-center justify-center bg-gray-900 bg-opacity-80 rounded-lg shadow-lg backdrop-blur-sm">
                     <div
                         className="text-center p-8 bg-gray-900 rounded-xl shadow-2xl transform scale-105 transition-transform duration-500 border-4"
@@ -334,7 +324,7 @@ const PuzzleGame = ({ config, onComplete, session, sessionApi }) => {
                         <div
                             key={token.id}
                             className="w-20 h-20 flex items-center justify-center rounded-full bg-gray-700 m-2 cursor-grab transform transition-transform duration-200 hover:scale-110 active:scale-95 shadow-md border-2 border-gray-600"
-                            draggable={!isTimeUp && !isWin}
+                            draggable={!gameEnded && !isWin}
                             onDragStart={(e) => handleDragStart(e, token)}
                         >
                             <TokenDisplay imageName={token.image} />
@@ -384,7 +374,7 @@ const PuzzleGame = ({ config, onComplete, session, sessionApi }) => {
                 {slots.map(slot => (
                     <div
                         key={slot.id}
-                        className={`absolute z-10 w-12 h-12 sm:w-16 sm:h-16 rounded-full flex items-center justify-center border-2 sm:border-4 border-dashed border-gray-500 bg-gray-800 hover:bg-gray-700 transition-colors duration-200 transform ${!isTimeUp && !isWin ? 'hover:scale-105' : ''}`}
+                        className={`absolute z-10 w-12 h-12 sm:w-16 sm:h-16 rounded-full flex items-center justify-center border-2 sm:border-4 border-dashed border-gray-500 bg-gray-800 hover:bg-gray-700 transition-colors duration-200 transform ${!gameEnded && !isWin ? 'hover:scale-105' : ''}`}
                         style={slotPositions[slot.id]}
                         onDragOver={handleDragOver}
                         onDrop={(e) => handleDrop(e, slot.id)}
@@ -392,7 +382,7 @@ const PuzzleGame = ({ config, onComplete, session, sessionApi }) => {
                         {slot.placedToken ? (
                             <div
                                 className={`w-full h-full flex items-center justify-center rounded-full shadow-lg ${starterTokenIds.includes(slot.id) ? 'bg-gray-600 cursor-default' : 'bg-gray-700 cursor-move'}`}
-                                draggable={!starterTokenIds.includes(slot.id) && !isTimeUp && !isWin}
+                                draggable={!starterTokenIds.includes(slot.id) && !gameEnded && !isWin}
                                 onDragStart={(e) => handleDragStart(e, slot.placedToken, slot.id)}
                             >
                                 <TokenDisplay imageName={slot.placedToken.image} />

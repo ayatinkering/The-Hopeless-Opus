@@ -366,6 +366,7 @@ export default function StepBlocksGame({ config, onComplete, session, sessionApi
     if (balanced && !completionHandledRef.current) {
       const timer = setTimeout(() => {
         if (levelIndex + 1 < levels.length) {
+          // Move to next level after 3 seconds
           setLevelIndex(levelIndex + 1);
           setLeftBlocks(levels[levelIndex + 1].left);
           setRightBlocks(levels[levelIndex + 1].right);
@@ -379,16 +380,14 @@ export default function StepBlocksGame({ config, onComplete, session, sessionApi
             try {
               await sessionApi.completeSession();
               console.log('M10: All levels completed - session completed successfully');
-              setTimeout(() => {
-                if (onComplete) onComplete(true);
-              }, 150);
+              if (onComplete) onComplete(true);
             } catch (err) {
               console.error('M10: Failed to complete session on success:', err);
               if (onComplete) onComplete(true);
             }
           })();
         }
-      }, 1200);
+      }, 600);
       return () => clearTimeout(timer);
     }
   }, [balanced, levelIndex, sessionApi, onComplete]);
