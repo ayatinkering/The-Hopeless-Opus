@@ -105,6 +105,29 @@ const UserHUD = ({ userState, activeMinigame }) => {
       'Next to every row and column, you’ll see numbers showing the lengths of consecutive green lights in that line.',
       'For example, if it says 2 5, there are two green lights together and five green lights together, separated by at least one red light.',
       'Complete the pattern to restore the system.'
+    ],
+    M16: [
+      'To escape from Lust, you must cross the Hall of Traps.',
+      'Follow the arrows to create a continuous path from start to end.',
+      'Step on every tile along the way — only then can you break free from Lust’s hold.'
+    ],
+    M17: [
+      'To go beyond the wall to reach the innermost city, place each circular glass piece on the numbered spots.',
+      'The total number of semicircles on the glass must match the number shown at that position.',
+      'Arrange them all correctly to complete the pattern.'
+    ]
+    ,
+    M18: [
+      'Navigate through the grid of blocks to reach the green block and escape. But beware — four serpents guard the path. Their poison spreads across entire rows, columns, or diagonals following the pattern shown below.',
+      'With every move you take, the serpents shift their direction. Time your steps carefully — one wrong move, and the poison will find you.'
+    ],
+    M19: [
+      'Refer to the tab of symbols to figure out the pattern to fill the correct symbol in the blanks.'
+    ],
+    M20: [
+      'Each tile’s number reveals how many traps surround it.',
+      'Mark the tiles you believe hide traps, and flip the ones that are safe. Tiles with white marks are guaranteed safe zones.',
+      'Uncover all the safe tiles to win the game — but one wrong flip could trigger a trap.'
     ]
   };
 

@@ -21,13 +21,13 @@ const MinigameSchema = new Schema({
   tries: {
     type: Number,
     default: function() {
-      if (["M1", "M5", "M6", "M9B","M18","M20"].includes(this.minigameId)) return 3;
+      if (["M1", "M5", "M6", "M9B","M20"].includes(this.minigameId)) return 3;
       return null;
     },
     min: 0,
-    max: 5,
+    max: 3,
     required: function() {
-      return ["M1", "M5", "M6", "M9B", "M18","M20"].includes(this.minigameId);
+      return ["M1", "M5", "M6", "M9B","M20"].includes(this.minigameId);
     },
   },
 });

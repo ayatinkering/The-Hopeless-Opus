@@ -1,6 +1,8 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
+import MinigameTimer from '../components/MinigameTimer';
+import useMinigameSession from '../lib/useMinigameSession';
 
-function App() {
+function App({ onComplete }) {
   const numbers = [7, 3, 6, 11, 14, 10, 4, 9, 12, 6, 3, 8];
 
   const initialLeftTokens = [
@@ -34,6 +36,11 @@ function App() {
   const [numberStacks, setNumberStacks] = useState({});
   const [draggedToken, setDraggedToken] = useState(null);
   const [showWinner, setShowWinner] = useState(false);
+
+  // session hook for minigame
+  const minigameId = 'M17';
+  const { session, loading, error, remainingSeconds, triesLeft, api: sessionApi } = useMinigameSession(minigameId);
+  const completionHandledRef = useRef(false);
 
   const handleDragStart = (token, source) => {
     setDraggedToken({ ...token, source });
@@ -156,8 +163,33 @@ function App() {
     setShowWinner(false);
   };
 
+  // Watch backend session for timeout and handle completion
+  useEffect(() => {
+    if (!session || completionHandledRef.current) return;
+    if (typeof remainingSeconds === 'number' && remainingSeconds <= 0) {
+      completionHandledRef.current = true;
+      sessionApi.completeSession().then(() => {
+        if (onComplete) onComplete(false);
+      }).catch((e) => console.error('Failed to complete session on timeout:', e));
+    }
+  }, [session, remainingSeconds, sessionApi, onComplete]);
+
+  // Handle win condition: notify backend then parent
+  useEffect(() => {
+    if (showWinner && !completionHandledRef.current) {
+      completionHandledRef.current = true;
+      sessionApi.completeSession().then(() => {
+        if (onComplete) onComplete(true);
+      }).catch((e) => console.error('Failed to complete session on win:', e));
+    }
+  }, [showWinner, sessionApi, onComplete]);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-200 to-slate-300 flex items-center justify-center p-8">
+      {/* Timer */}
+      <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50">
+        <MinigameTimer remainingSeconds={remainingSeconds} />
+      </div>
       <div className="relative flex gap-8">
         <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-3xl shadow-xl p-8
           border-4 border-red-300">
@@ -278,13 +310,6 @@ function App() {
             <div className="bg-white rounded-3xl p-12 shadow-2xl text-center">
               <h1 className="text-6xl font-bold text-green-600 mb-4">Congratulations!</h1>
               <p className="text-2xl text-gray-700 mb-6">You solved all the numbers!</p>
-              <button
-                onClick={reset}
-                className="bg-blue-500 hover:bg-blue-600 text-white font-bold text-xl px-8 py-4
-                  rounded-full transition-colors shadow-lg"
-              >
-                Play Again
-              </button>
             </div>
           </div>
         )}
