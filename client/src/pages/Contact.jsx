@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import Cyber from "../assets/Cyber.jpeg";
+import Cyber from "../assets/cyber.jpeg";
 import { motion } from "framer-motion";
 
 function Contact() {

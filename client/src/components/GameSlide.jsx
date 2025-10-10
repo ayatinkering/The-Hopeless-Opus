@@ -505,23 +505,6 @@ if (activeMinigame) {
 }
 
 // ✅ Handle V1 video story
-if (storyData?.storyID === 'V1') {
-  return (
-    <div className="w-screen h-screen relative bg-black flex items-center justify-center">
-      <UserHUD userState={userState} />
-      <div style={{ opacity: sceneVisible ? 1 : 0, transition: 'opacity 260ms ease' }} className="w-full h-full">
-        <video
-          className="w-full h-full object-contain"
-          controls
-          autoPlay
-          src="client/src/assets/V1.mp4"
-        >
-          Your browser does not support the video tag.
-        </video>
-      </div>
-    </div>
-  );
-}
   // Logic based on the new, extensive list of IDs
   const isInvertedBox = storyData?.storyID && INVERTED_STORY_IDS.includes(storyData.storyID);
 

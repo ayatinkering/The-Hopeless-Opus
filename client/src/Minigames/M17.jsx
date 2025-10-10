@@ -1,8 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import MinigameTimer from '../components/MinigameTimer';
-import useMinigameSession from '../lib/useMinigameSession';
 
-function App({ onComplete }) {
+function App({ config, onComplete, session, sessionApi }) {
   const numbers = [7, 3, 6, 11, 14, 10, 4, 9, 12, 6, 3, 8];
 
   const initialLeftTokens = [
@@ -36,13 +35,12 @@ function App({ onComplete }) {
   const [numberStacks, setNumberStacks] = useState({});
   const [draggedToken, setDraggedToken] = useState(null);
   const [showWinner, setShowWinner] = useState(false);
+  const [gameEnded, setGameEnded] = useState(false);
 
-  // session hook for minigame
-  const minigameId = 'M17';
-  const { session, loading, error, remainingSeconds, triesLeft, api: sessionApi } = useMinigameSession(minigameId);
-  const completionHandledRef = useRef(false);
+  const alreadyEnded = useRef(false);
 
   const handleDragStart = (token, source) => {
+    if (gameEnded || alreadyEnded.current) return;
     setDraggedToken({ ...token, source });
   };
 
@@ -52,7 +50,7 @@ function App({ onComplete }) {
 
   const handleDrop = (e, numberIndex) => {
     e.preventDefault();
-    if (!draggedToken) return;
+    if (!draggedToken || gameEnded || alreadyEnded.current) return;
 
     const currentStack = numberStacks[numberIndex] || [];
     const newStack = [...currentStack, draggedToken];
@@ -77,6 +75,8 @@ function App({ onComplete }) {
   };
 
   const handleRemoveToken = (numberIndex, tokenId) => {
+    if (gameEnded || alreadyEnded.current) return;
+    
     const stack = numberStacks[numberIndex];
     const token = stack.find(t => t.id === tokenId);
 
@@ -111,6 +111,8 @@ function App({ onComplete }) {
   };
 
   const checkWinCondition = (stacks) => {
+    if (gameEnded || alreadyEnded.current) return;
+    
     const allCorrect = numbers.every((num, idx) => {
       const stack = stacks[idx] || [];
       if (stack.length === 0) return false;
@@ -120,6 +122,18 @@ function App({ onComplete }) {
 
     if (allCorrect) {
       setShowWinner(true);
+      setGameEnded(true);
+      alreadyEnded.current = true;
+      
+      // Complete session on success
+      (async () => {
+        try {
+          await sessionApi.completeSession();
+          if (onComplete) onComplete(true);
+        } catch (err) {
+          console.error('Failed to complete session on win:', err);
+        }
+      })();
     }
   };
 
@@ -157,32 +171,18 @@ function App({ onComplete }) {
   };
 
   const reset = () => {
+    if (gameEnded || alreadyEnded.current) return;
+    
     setLeftTokens(initialLeftTokens);
     setRightTokens(initialRightTokens);
     setNumberStacks({});
     setShowWinner(false);
   };
 
-  // Watch backend session for timeout and handle completion
-  useEffect(() => {
-    if (!session || completionHandledRef.current) return;
-    if (typeof remainingSeconds === 'number' && remainingSeconds <= 0) {
-      completionHandledRef.current = true;
-      sessionApi.completeSession().then(() => {
-        if (onComplete) onComplete(false);
-      }).catch((e) => console.error('Failed to complete session on timeout:', e));
-    }
-  }, [session, remainingSeconds, sessionApi, onComplete]);
+  // Timer expiry is handled by MinigameLoader - no need to handle it here
 
-  // Handle win condition: notify backend then parent
-  useEffect(() => {
-    if (showWinner && !completionHandledRef.current) {
-      completionHandledRef.current = true;
-      sessionApi.completeSession().then(() => {
-        if (onComplete) onComplete(true);
-      }).catch((e) => console.error('Failed to complete session on win:', e));
-    }
-  }, [showWinner, sessionApi, onComplete]);
+  const remainingSeconds = session?.remainingSeconds ?? null;
+  const triesLeft = session?.triesLeft ?? null;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-200 to-slate-300 flex items-center justify-center p-8">
@@ -203,9 +203,9 @@ function App({ onComplete }) {
                   {tokens.map((token, idx) => (
                     <div
                       key={token.id}
-                      draggable
+                      draggable={!gameEnded && !alreadyEnded.current}
                       onDragStart={() => handleDragStart(token, 'left')}
-                      className="absolute cursor-grab active:cursor-grabbing hover:scale-110 hover:z-50 transition-transform"
+                      className={`absolute ${gameEnded ? 'cursor-default' : 'cursor-grab active:cursor-grabbing hover:scale-110'} hover:z-50 transition-transform`}
                       style={{
                         top: `${idx * 3}px`,
                         left: `${idx * 2}px`,
@@ -251,7 +251,7 @@ function App({ onComplete }) {
                               <div
                                 key={token.id}
                                 onClick={() => handleRemoveToken(idx, token.id)}
-                                className="absolute cursor-pointer hover:scale-110 transition-transform"
+                                className={`absolute ${gameEnded ? 'cursor-default' : 'cursor-pointer hover:scale-110'} transition-transform`}
                                 style={{
                                   zIndex: tIdx,
                                   transform: `rotate(${tIdx * 15}deg)`
@@ -287,9 +287,9 @@ function App({ onComplete }) {
                   {tokens.map((token, idx) => (
                     <div
                       key={token.id}
-                      draggable
+                      draggable={!gameEnded && !alreadyEnded.current}
                       onDragStart={() => handleDragStart(token, 'right')}
-                      className="absolute cursor-grab active:cursor-grabbing hover:scale-110 hover:z-50 transition-transform"
+                      className={`absolute ${gameEnded ? 'cursor-default' : 'cursor-grab active:cursor-grabbing hover:scale-110'} hover:z-50 transition-transform`}
                       style={{
                         top: `${idx * 3}px`,
                         left: `${idx * 2}px`,

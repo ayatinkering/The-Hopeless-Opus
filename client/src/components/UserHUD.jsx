@@ -114,15 +114,19 @@ const UserHUD = ({ userState, activeMinigame }) => {
     M17: [
       'To go beyond the wall to reach the innermost city, place each circular glass piece on the numbered spots.',
       'The total number of semicircles on the glass must match the number shown at that position.',
-      'Arrange them all correctly to complete the pattern.'
+      'Arrange them all correctly to complete the pattern.',
+      'Click on the tokens to remove them.',
     ]
     ,
     M18: [
-      'Navigate through the grid of blocks to reach the green block and escape. But beware — four serpents guard the path. Their poison spreads across entire rows, columns, or diagonals following the pattern shown below.',
-      'With every move you take, the serpents shift their direction. Time your steps carefully — one wrong move, and the poison will find you.'
-    ],
+      'With every move you take, the serpents shift their direction. Time your steps carefully — one wrong move, and the poison will find you.',
+      'The next directions the serpents are taking are mentioned on the serpent.',
+      'Refresh for reset.'
+    ],
     M19: [
-      'Refer to the tab of symbols to figure out the pattern to fill the correct symbol in the blanks.'
+      'Analyze the given tab of symbols to determine the underlying pattern.',
+      'The pattern may occur horizontally, vertically, or diagonally.',
+      'Patterns can progress in both upward and downward directions.'
     ],
     M20: [
       'Each tile’s number reveals how many traps surround it.',
