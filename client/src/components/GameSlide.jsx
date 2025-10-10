@@ -25,7 +25,11 @@ const characterAssets = {
   'Spirit 3': { src: 'https://res.cloudinary.com/dzntiuwyr/image/upload/v1759948882/spirit3_fi0o2l.png', position: 'left' },
   'Spirit 4': { src: 'https://res.cloudinary.com/dzntiuwyr/image/upload/v1759948883/spirit4_gd9rch.png', position: 'left' },
   'Spirit 5': { src: 'https://res.cloudinary.com/dzntiuwyr/image/upload/v1759948883/spirit5_f142jd.png', position: 'left' },
-  'Spirit 6': { src: 'https://res.cloudinary.com/dzntiuwyr/image/upload/v1759948882/spirit6_h1c6rh.png', position: 'left' },
+  'Spirit 6': { src: 'https://res.cloudinary.com/dzntiuwyr/image/upload/v1760097561/spirit6-removebg-preview_yosw9b.png ', position: 'left' },
+  'Envy': { src: 'https://res.cloudinary.com/dzntiuwyr/image/upload/v1759948882/envy_zkt62r.png', position: 'right' },
+  'Lust': { src: 'https://res.cloudinary.com/dzntiuwyr/image/upload/v1760084356/Lust_tigr7i.png', position: 'left' },
+  'Greed': { src: 'https://res.cloudinary.com/dzntiuwyr/image/upload/v1759948882/greed_sqitjx.png', position: 'right' },
+  'Wrath': { src: 'https://res.cloudinary.com/dzntiuwyr/image/upload/v1760084382/wrath_nykd9l.png', position: 'right' },
 };
 
 // --- Story ID List for Inverted/Italic Style ---
@@ -42,7 +46,8 @@ const INVERTED_STORY_IDS = [
   '6101', '6102', '6103', '6104',
   '6301', '6401a', '6401b', '6401c',
   '6501', '6601',
-  '6901', '6902', '6903', '6904', '6905'
+  '6901', '6902', '6903', '6904', '6905',
+  '12401a','12402a','12401b'
 ];
 
 const VisualNovelInterface = () => {
@@ -295,15 +300,21 @@ const VisualNovelInterface = () => {
             </button>
           </div>
         )}
-        <div 
-          // Apply dynamic text color and italic style
-          className={`text-xl font-light whitespace-pre-line ${textClasses}`}
+        <div
+          // outer scrollable wrapper: will show scrollbar when text gets large
+          className="w-full"
+          style={{ maxHeight: '28vh', overflowY: 'auto' }}
         >
-          {displayedText}
-          {displayedText.length < fullDialogue.length && (
-            // Ensure the typing cursor color matches the current text color
-            <span className={`animate-pulse ${isSpecialStory ? 'text-black' : 'text-white'}`}>_</span>
-          )}
+          <div 
+            // Apply dynamic text color and italic style
+            className={`text-xl font-light whitespace-pre-line ${textClasses}`}
+          >
+            {displayedText}
+            {displayedText.length < fullDialogue.length && (
+              // Ensure the typing cursor color matches the current text color
+              <span className={`animate-pulse ${isSpecialStory ? 'text-black' : 'text-white'}`}>_</span>
+            )}
+          </div>
         </div>
       </div>
     );
@@ -488,6 +499,25 @@ if (activeMinigame) {
             {awardMessage}
           </div>
         )}
+      </div>
+    </div>
+  );
+}
+
+// ✅ Handle V1 video story
+if (storyData?.storyID === 'V1') {
+  return (
+    <div className="w-screen h-screen relative bg-black flex items-center justify-center">
+      <UserHUD userState={userState} />
+      <div style={{ opacity: sceneVisible ? 1 : 0, transition: 'opacity 260ms ease' }} className="w-full h-full">
+        <video
+          className="w-full h-full object-contain"
+          controls
+          autoPlay
+          src="client/src/assets/V1.mp4"
+        >
+          Your browser does not support the video tag.
+        </video>
       </div>
     </div>
   );

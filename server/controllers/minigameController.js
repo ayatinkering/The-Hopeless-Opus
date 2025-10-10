@@ -3,7 +3,7 @@ import MiniggameSession from '../models/minigameSession.js';
 import User from '../models/user.js';
 
 // Base scores per minigame (from user specification)
-// MODIFIED: Added base scores for new minigames
+// MODIFIED: Added base scores for new minigames M16-M20
 const BASE_SCORES = {
   M1: 150,
   M2: 100,
@@ -12,15 +12,20 @@ const BASE_SCORES = {
   M5: 200,
   M6: 150,
   M7: 150,
-  M8: 240,
-  M9A: 240,
-  M9B: 240,
-  M10: 50,
-  M11: 280,
+  M8: 150,
+  M9A: 150,
+  M9B: 150,
+  M10: 200,
+  M11: 200,
   M12: 250,
-  M13: 200,
-  M14: 320,
-  M15: 360,
+  M13: 250,
+  M14: 300,
+  M15: 300,
+  M16: 400, 
+  M17: 400, 
+  M18: 450, 
+  M19: 350, 
+  M20: 350, 
 };
 
 // ---------------- Per-User Session Endpoints ----------------
@@ -45,13 +50,22 @@ export const startSession = async (req, res) => {
 
     let session = await MiniggameSession.findOne({ user: userId, minigameId });
     if (!session) {
-      // Games with finite tries (initialize to 3-5 depending on game type)
-      const triesGames = ['M4','M5','M6','M8','M9A','M9B','M10','M11','M12','M13','M14','M15'];
+      // MODIFIED: Added new games and logic to assign 5 tries to M16-M20
+      const triesGames3 = ['M4','M5','M6','M8','M9A','M9B','M10','M11','M12','M13','M14','M15'];
+      const triesGames5 = ['M16', 'M17', 'M18', 'M19', 'M20'];
+      
+      let initialTries = 0;
+      if (triesGames3.includes(minigameId)) {
+          initialTries = 3;
+      } else if (triesGames5.includes(minigameId)) {
+          initialTries = 5;
+      }
+
       session = new MiniggameSession({
         user: userId,
         minigameId,
         timerSeconds: base.timer || 300,
-        triesLeft: triesGames.includes(minigameId) ? 3 : 0,
+        triesLeft: initialTries,
         startedAt: new Date(),
       });
       await session.save();
@@ -109,8 +123,9 @@ export const decrementTrySession = async (req, res) => {
     const { minigameId } = req.body;
     if (!userId) return res.status(401).json({ message: 'Auth required' });
     if (!minigameId) return res.status(400).json({ message: 'minigameId required' });
-    // MODIFIED: Added new games to this list so their tries can be decremented
-    const gamesWithTries = ['M4','M5','M6', 'M8', 'M9A', 'M9B', 'M10', 'M11', 'M12', 'M13', 'M14', 'M15'];
+    
+    // MODIFIED: Added new games M16-M20 to this list so their tries can be decremented
+    const gamesWithTries = ['M4','M5','M6', 'M8', 'M9A', 'M9B', 'M10', 'M11', 'M12', 'M13', 'M14', 'M15', 'M16', 'M17', 'M18', 'M19', 'M20'];
     if (!gamesWithTries.includes(minigameId)) {
       return res.status(400).json({ message: 'No tries for this minigame' });
     }
@@ -145,47 +160,68 @@ export const completeSession = async (req, res) => {
     const baseScore = BASE_SCORES[minigameId] || 100; // fallback to 100 if missing
     let score;
 
-    // ======================= ADDED LOGIC START =======================
-    const formulaGames = ['M8', 'M9A', 'M9B', 'M10', 'M11', 'M12', 'M13', 'M14', 'M15'];
+    // ======================= MODIFIED SCORING LOGIC START =======================
+    const formulaGamesOld = ['M8', 'M9A', 'M9B', 'M10', 'M11', 'M12', 'M13', 'M14', 'M15'];
+    const formulaGamesNew = ['M16', 'M17', 'M18', 'M19', 'M20'];
 
-    if (formulaGames.includes(minigameId)) {
-      // Use the new complex formula for specified games
-      const x = baseScore;
-      const a = 3; // Initial tries for these games is set to 3 in startSession
-      const i = a - session.triesLeft; // 'i' is the number of tries used
-      const t_used = elapsed;
-      const t_lim = timer;
+    if (formulaGamesOld.includes(minigameId)) {
+        // --- Existing complex formula for games M8-M15 ---
+        const x = baseScore;
+        const a = 3; // Initial tries for these games is 3
+        const i = a - session.triesLeft; // 'i' is the number of tries used
+        const t_used = elapsed;
+        const t_lim = timer;
 
-      // --- Calculate Value A: The Logarithmic Penalty Term ---
-      const logTerm = Math.log((i + 1) / 2) / Math.log(a);
-      const valueA = (-x / (a - i + 1)) * logTerm;
+        const logTerm = Math.log((i + 1) / 2) / Math.log(a);
+        const valueA = (-x / (a - i + 1)) * logTerm;
 
-      // --- Calculate Value B: The Time-Decay Score Term ---
-      let valueB;
-      if (t_used < 60) {
-        valueB = x;
-      } else if (t_used >= t_lim) {
-        valueB = 0;
-      } else {
-        const penaltyFraction = (t_used - 60) / (t_lim - 60);
-        valueB = x * (1 - penaltyFraction);
-      }
+        let valueB;
+        if (t_used < 60) {
+            valueB = x;
+        } else if (t_used >= t_lim) {
+            valueB = 0;
+        } else {
+            const penaltyFraction = (t_used - 60) / (t_lim - 60);
+            valueB = x * (1 - penaltyFraction);
+        }
+        score = Math.round(Math.max(0, valueA, valueB));
 
-      // Final score is the max of the two values, rounded and floored at 0.
-      score = Math.round(Math.max(0, valueA, valueB));
+    } else if (formulaGamesNew.includes(minigameId)) {
+        // --- New formula from image for games M16-M20 ---
+        const x = baseScore;
+        const a = 5; // Initial tries for these games is 5
+        const i = a - session.triesLeft;
+        const t_used = elapsed;
+        const t_lim = timer;
+
+        // Part A: Try-based penalty value.
+        // Formula: -x / (5 - i + 1) * log(i + 5)
+        const valueA = (-x / (6 - i)) * Math.log(i + 5);
+
+        // Part B: Time-based score value. This can become negative.
+        // Formula: x * [1 - max(0, (t_used - 60) / (t_lim - 60))]
+        const timeRatio = (t_used - 60) / (t_lim - 60);
+        const timePenalty = Math.max(0, timeRatio);
+        const valueB = x * (1 - timePenalty);
+        
+        // Final score is the integer of the maximum of the two values.
+        score = Math.round(Math.max(valueA, valueB));
+
+        // Ensure the final score stored is never negative.
+        score = Math.max(0, score);
 
     } else {
-      // --- Existing scoring logic for all other games ---
-      if (elapsed < 60) {
-        score = baseScore;
-      } else if (elapsed >= timer) {
-        score = 0;
-      } else {
-        const penaltyFraction = Math.max(0, (elapsed - 60) / (timer - 60));
-        score = Math.max(0, Math.round(baseScore * (1 - penaltyFraction)));
-      }
+        // --- Existing simple scoring logic for all other games ---
+        if (elapsed < 60) {
+            score = baseScore;
+        } else if (elapsed >= timer) {
+            score = 0;
+        } else {
+            const penaltyFraction = Math.max(0, (elapsed - 60) / (timer - 60));
+            score = Math.max(0, Math.round(baseScore * (1 - penaltyFraction)));
+        }
     }
-    // ======================== ADDED LOGIC END ========================
+    // ======================== MODIFIED SCORING LOGIC END ========================
 
     session.completed = true;
     session.completedAt = new Date();
@@ -198,7 +234,6 @@ export const completeSession = async (req, res) => {
   }
 };
 
-// Claim reward after completion (idempotent) - uses existing awardMinigameReward logic
 export const claimMinigameReward = async (req, res) => {
   try {
     const userId = req.user?._id || req.user?.id;
@@ -230,6 +265,8 @@ export const claimMinigameReward = async (req, res) => {
     return res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
+
+// --- Commented out code remains unchanged ---
 
 
 
@@ -272,7 +309,7 @@ export const checkAndExpireTimers = async () => {
 /*
 export const initializeMinigames = async (req, res) => {
   try {
-    const minigameIds = ["M1", "M2", "M3", "M4", "M5", "M6", "M7"];
+    const minigameIds = ["M1", "M2", "M3", "M4", "M5", "M6", "M7", "M8", "M9A", "M9B", "M10", "M11", "M12", "M13", "M14", "M15", "M16", "M17", "M18", "M19", "M20"];
     const created = [];
     for (const id of minigameIds) {
       let minigame = await Minigame.findOne({ minigameId: id });
@@ -288,7 +325,6 @@ export const initializeMinigames = async (req, res) => {
     return res.status(500).json({ message: "Server error", error: err.message });
   }
 };
-*/
 
 // export const getAllMinigames = async (req, res) => {
 //   try {

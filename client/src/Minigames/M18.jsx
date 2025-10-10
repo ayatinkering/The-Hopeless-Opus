@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   ArrowUp,
   ArrowDown,
@@ -9,8 +9,10 @@ import {
   ArrowUpRight,
   ArrowUpLeft,
 } from 'lucide-react';
+import MinigameTimer from '../components/MinigameTimer';
+import useMinigameSession from '../lib/useMinigameSession';
 
-const LaserMazeGame = () => {
+const LaserMazeGame = ({ onComplete }) => {
   const GRID_ROWS = 7;
   const GRID_COLS = 10;
   const INITIAL_PLAYER = { x: 6, y: 0 };
@@ -29,6 +31,10 @@ const LaserMazeGame = () => {
   const [laserBeams, setLaserBeams] = useState([]);
   const [showLasers, setShowLasers] = useState(false);
   const [moves, setMoves] = useState(0);
+
+  const minigameId = 'M18';
+  const { session, loading, error, remainingSeconds, triesLeft, api: sessionApi } = useMinigameSession(minigameId);
+  const completionHandledRef = useRef(false);
 
   const calculateLaserBeams = (pattern) => {
     const beams = [];
@@ -153,6 +159,17 @@ const LaserMazeGame = () => {
     setMoves(0);
   };
 
+  // backend timeout handling
+  useEffect(() => {
+    if (!session || completionHandledRef.current) return;
+    if (typeof remainingSeconds === 'number' && remainingSeconds <= 0) {
+      completionHandledRef.current = true;
+      sessionApi.completeSession().then(() => {
+        if (onComplete) onComplete(false);
+      }).catch((e) => console.error('Failed to complete session on timeout:', e));
+    }
+  }, [session, remainingSeconds, sessionApi, onComplete]);
+
   const isLaserSource = (x, y) => {
     return LASERS.some((laser) => laser.x === x && laser.y === y);
   };
@@ -161,8 +178,30 @@ const LaserMazeGame = () => {
     return laserBeams.some((beam) => beam.x === x && beam.y === y);
   };
 
+  // handle local game outcomes -> complete session and notify parent
+  useEffect(() => {
+    if (!completionHandledRef.current && session) {
+      if (gameStatus === 'won') {
+        completionHandledRef.current = true;
+        sessionApi.completeSession().then(() => {
+          if (onComplete) onComplete(true);
+        }).catch((e) => console.error('Failed to complete session on win:', e));
+      }
+      if (gameStatus === 'lost') {
+        completionHandledRef.current = true;
+        sessionApi.completeSession().then(() => {
+          if (onComplete) onComplete(false);
+        }).catch((e) => console.error('Failed to complete session on loss:', e));
+      }
+    }
+  }, [gameStatus, session, sessionApi, onComplete]);
+
   return (
     <div className="min-h-screen bg-[#D9CEBF] flex items-center justify-center p-4">
+      {/* Timer */}
+      <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50">
+        <MinigameTimer remainingSeconds={remainingSeconds}/>
+      </div>
       <div className="w-full max-w-screen-md sm:max-w-screen-lg mx-auto px-2 sm:px-4">
         <div className="bg-gray-800 rounded-lg shadow-2xl p-4 sm:p-8">
           <div className="text-center mb-6">

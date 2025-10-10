@@ -1,5 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
+import MinigameTimer from "../components/MinigameTimer";
+import useMinigameSession from "../lib/useMinigameSession";
 
 // --- Arrow SVG --- //
 const Arrow = ({ color = "white" }) => (
@@ -50,13 +52,16 @@ const greenCells = [
   [7, 0], [7, 4], [7, 7],
 ];
 
-export default function ArrowPathPuzzle() {
+export default function ArrowPathPuzzle({ onComplete }) {
   const [grid, setGrid] = useState([]);
   const [playing, setPlaying] = useState(false);
   const [path, setPath] = useState([]);
   const [message, setMessage] = useState("");
-  const [time, setTime] = useState(0);
   const [animate, setAnimate] = useState(false);
+
+  const minigameId = "M16";
+  const { session, loading, error, remainingSeconds, triesLeft, api: sessionApi } = useMinigameSession(minigameId);
+  const completionHandledRef = useRef(false);
 
   const startR = 3, startC = 0;
   const endR = 4, endC = 7;
@@ -84,12 +89,16 @@ export default function ArrowPathPuzzle() {
     initializeGrid(puzzleSetup);
   }, []);
 
-  // --- Timer --- //
+  // handle backend timeout
   useEffect(() => {
-    if (!playing) return;
-    const timer = setInterval(() => setTime((t) => t + 1), 1000);
-    return () => clearInterval(timer);
-  }, [playing]);
+    if (!session || completionHandledRef.current) return;
+    if (session.remainingSeconds === 0) {
+      completionHandledRef.current = true;
+      sessionApi.completeSession().then(() => {
+        if (onComplete) onComplete(false);
+      }).catch((e) => console.error('Failed to complete session on timeout:', e));
+    }
+  }, [session, sessionApi, onComplete]);
 
   // --- Rotate Green Arrows --- //
   const rotate = (r, c) => {
@@ -142,16 +151,14 @@ export default function ArrowPathPuzzle() {
 
     setPath(p);
     setAnimate(true);
-    setMessage("❌ Path didn’t connect all arrows!");
+    setMessage("❌ Path didn't connect all arrows!");
   };
-
   // --- Reset --- //
   const resetGame = () => {
     initializeGrid(puzzleSetup);
-    setPlaying(false);
+    setPlaying(true);
     setPath([]);
     setMessage("");
-    setTime(0);
     setAnimate(false);
   };
 
@@ -166,25 +173,30 @@ export default function ArrowPathPuzzle() {
       ? `M${pathPoints.map(([x, y]) => `${x},${y}`).join(" L")}`
       : "";
 
-  // --- Format Timer --- //
-  const formatTime = (t) => {
-    const m = Math.floor(t / 60).toString().padStart(2, "0");
-    const s = (t % 60).toString().padStart(2, "0");
-    return `${m}:${s}`;
-  };
+  // handle success completion when puzzle solved
+  useEffect(() => {
+    if (!message || completionHandledRef.current || !session) return;
+    let timerId;
+    if (message.includes("🎉") && !session.completed) {
+      completionHandledRef.current = true;
+      // wait 10 seconds to let player enjoy the win before notifying backend
+      timerId = setTimeout(() => {
+        sessionApi.completeSession().then(() => {
+          if (onComplete) onComplete(true);
+        }).catch((e) => console.error('Failed to complete session on success:', e));
+      }, 10000);
+    }
+    return () => {
+      if (timerId) clearTimeout(timerId);
+    };
+  }, [message, session, sessionApi, onComplete]);
 
   return (
     <div className="flex flex-col items-center p-6 bg-gradient-to-br from-slate-800 to-slate-900 min-h-screen text-white select-none">
-      <h1 className="text-4xl font-bold mb-2 text-cyan-400">Arrow Path Puzzle</h1>
-      <p className="text-slate-300 mb-3 text-center max-w-md">
-        Rotate 🟢 arrows to form the single correct path covering all 64 cells!
-      </p>
-
-      {playing && (
-        <div className="text-lg font-semibold text-yellow-300 mb-3">
-          ⏱ Time: {formatTime(time)}
-        </div>
-      )}
+      <div className="absolute top-8 left-1/2 -translate-x-1/2 z-50">
+        <MinigameTimer remainingSeconds={remainingSeconds} />
+      </div>
+      <h1 className="text-4xl font-bold mb-2 text-cyan-400 mt-12">Arrow Path Puzzle</h1>
 
       {!playing ? (
         <button

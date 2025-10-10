@@ -19,6 +19,11 @@ const M12 = React.lazy(() => import('../Minigames/M12'));
 const M13 = React.lazy(() => import('../Minigames/M13'));
 const M14 = React.lazy(() => import('../Minigames/M14'));
 const M15 = React.lazy(() => import('../Minigames/M15'));
+const M16 = React.lazy(() => import('../Minigames/M16'));
+const M17 = React.lazy(() => import('../Minigames/M17'));
+const M18 = React.lazy(() => import('../Minigames/M18'));
+const M19 = React.lazy(() => import('../Minigames/M19'));
+const M20 = React.lazy(() => import('../Minigames/M20'));
 
 const MAP = {
   M1,
@@ -37,6 +42,11 @@ const MAP = {
   M13,
   M14,
   M15,
+  M16,
+  M17,
+  M18,
+  M19,
+  M20,
 };
 
 export default function MinigameLoader({ id, config, onComplete }) {

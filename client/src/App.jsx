@@ -15,8 +15,7 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import Profile from "./pages/Profile";
 import GameSlide from "./components/GameSlide";
-import Letter from "./Minigames/M8";
-import ConcentricToggleGame from "./Minigames/M4";
+import Ann from "./components/Ann";
 
 
 function App() {
@@ -73,7 +72,6 @@ function App() {
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/profile" element={<Profile setUser={setUser} />} />
-          <Route path="/M8" element={<ConcentricToggleGame/>} />
         </Routes>
       </>
     );
