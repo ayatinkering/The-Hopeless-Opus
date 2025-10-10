@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import MinigameTimer from "../components/MinigameTimer";
-import useMinigameSession from "../lib/useMinigameSession";
 
 // --- Arrow SVG --- //
 const Arrow = ({ color = "white" }) => (
@@ -52,16 +51,15 @@ const greenCells = [
   [7, 0], [7, 4], [7, 7],
 ];
 
-export default function ArrowPathPuzzle({ onComplete }) {
+export default function ArrowPathPuzzle({ config, onComplete, session, sessionApi }) {
   const [grid, setGrid] = useState([]);
   const [playing, setPlaying] = useState(false);
   const [path, setPath] = useState([]);
   const [message, setMessage] = useState("");
   const [animate, setAnimate] = useState(false);
-
-  const minigameId = "M16";
-  const { session, loading, error, remainingSeconds, triesLeft, api: sessionApi } = useMinigameSession(minigameId);
-  const completionHandledRef = useRef(false);
+  const [gameEnded, setGameEnded] = useState(false);
+  
+  const alreadyEnded = useRef(false);
 
   const startR = 3, startC = 0;
   const endR = 4, endC = 7;
@@ -89,20 +87,11 @@ export default function ArrowPathPuzzle({ onComplete }) {
     initializeGrid(puzzleSetup);
   }, []);
 
-  // handle backend timeout
-  useEffect(() => {
-    if (!session || completionHandledRef.current) return;
-    if (session.remainingSeconds === 0) {
-      completionHandledRef.current = true;
-      sessionApi.completeSession().then(() => {
-        if (onComplete) onComplete(false);
-      }).catch((e) => console.error('Failed to complete session on timeout:', e));
-    }
-  }, [session, sessionApi, onComplete]);
+  // Timer expiry is handled by MinigameLoader - no need to handle it here
 
   // --- Rotate Green Arrows --- //
   const rotate = (r, c) => {
-    if (grid[r][c].fixed) return;
+    if (grid[r][c].fixed || gameEnded) return;
     const newGrid = grid.map((row) => row.map((cell) => ({ ...cell })));
     newGrid[r][c].dir = (newGrid[r][c].dir + 1) % 8;
     setGrid(newGrid);
@@ -113,6 +102,8 @@ export default function ArrowPathPuzzle({ onComplete }) {
 
   // --- Follow the Path --- //
   const followPath = async () => {
+    if (gameEnded || alreadyEnded.current) return;
+    
     setAnimate(false);
     setMessage("");
     const visited = new Set();
@@ -127,6 +118,16 @@ export default function ArrowPathPuzzle({ onComplete }) {
         setPath(p);
         setAnimate(true);
         setMessage("🎉 Perfect! You connected all 64 arrows!");
+        setGameEnded(true);
+        alreadyEnded.current = true;
+        
+        // Complete session on success
+        try {
+          await sessionApi.completeSession();
+          if (onComplete) onComplete(true);
+        } catch (err) {
+          console.error('Failed to complete session on success:', err);
+        }
         return;
       }
 
@@ -153,8 +154,11 @@ export default function ArrowPathPuzzle({ onComplete }) {
     setAnimate(true);
     setMessage("❌ Path didn't connect all arrows!");
   };
+
   // --- Reset --- //
   const resetGame = () => {
+    if (gameEnded || alreadyEnded.current) return;
+    
     initializeGrid(puzzleSetup);
     setPlaying(true);
     setPath([]);
@@ -173,35 +177,21 @@ export default function ArrowPathPuzzle({ onComplete }) {
       ? `M${pathPoints.map(([x, y]) => `${x},${y}`).join(" L")}`
       : "";
 
-  // handle success completion when puzzle solved
-  useEffect(() => {
-    if (!message || completionHandledRef.current || !session) return;
-    let timerId;
-    if (message.includes("🎉") && !session.completed) {
-      completionHandledRef.current = true;
-      // wait 10 seconds to let player enjoy the win before notifying backend
-      timerId = setTimeout(() => {
-        sessionApi.completeSession().then(() => {
-          if (onComplete) onComplete(true);
-        }).catch((e) => console.error('Failed to complete session on success:', e));
-      }, 10000);
-    }
-    return () => {
-      if (timerId) clearTimeout(timerId);
-    };
-  }, [message, session, sessionApi, onComplete]);
+  const remainingSeconds = session?.remainingSeconds ?? null;
+  const triesLeft = session?.triesLeft ?? null;
 
   return (
     <div className="flex flex-col items-center p-6 bg-gradient-to-br from-slate-800 to-slate-900 min-h-screen text-white select-none">
       <div className="absolute top-8 left-1/2 -translate-x-1/2 z-50">
-        <MinigameTimer remainingSeconds={remainingSeconds} />
+        <MinigameTimer remainingSeconds={remainingSeconds}/>
       </div>
       <h1 className="text-4xl font-bold mb-2 text-cyan-400 mt-12">Arrow Path Puzzle</h1>
 
       {!playing ? (
         <button
           onClick={() => setPlaying(true)}
-          className="px-8 py-3 bg-gradient-to-r from-green-500 to-green-600 rounded-lg text-xl font-semibold shadow-lg hover:scale-105 transition-all"
+          disabled={gameEnded}
+          className="px-8 py-3 bg-gradient-to-r from-green-500 to-green-600 rounded-lg text-xl font-semibold shadow-lg hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
         >
           ▶ Start Game
         </button>
@@ -230,7 +220,7 @@ export default function ArrowPathPuzzle({ onComplete }) {
                 } else if (cell.type === "green") {
                   bg = "bg-green-600";
                   border = "border-green-500";
-                  cursor = "cursor-pointer hover:scale-105";
+                  cursor = gameEnded ? "" : "cursor-pointer hover:scale-105";
                 }
 
                 return (
@@ -274,13 +264,15 @@ export default function ArrowPathPuzzle({ onComplete }) {
           <div className="mt-6 flex gap-4">
             <button
               onClick={followPath}
-              className="px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg font-semibold hover:scale-105 transition-all"
+              disabled={gameEnded}
+              className="px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg font-semibold hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Submit Path
             </button>
             <button
               onClick={resetGame}
-              className="px-6 py-3 bg-gradient-to-r from-red-500 to-red-600 rounded-lg font-semibold hover:scale-105 transition-all"
+              disabled={gameEnded}
+              className="px-6 py-3 bg-gradient-to-r from-red-500 to-red-600 rounded-lg font-semibold hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Reset Game
             </button>
