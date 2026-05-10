@@ -29,7 +29,7 @@ function App() {
     const navigate = useNavigate();
     const hideNavbar = location.pathname === '/play' || location.pathname.startsWith('/play/');
 
-    // Global axios interceptor for token expiry handling (401)
+    // Global axios interceptor for token expiry handling (401 page)
     useEffect(() => {
       const interceptor = axios.interceptors.response.use(
         res => res,
