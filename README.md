@@ -4,7 +4,7 @@ Developed and deployed for TechTatva 2026, the national technical fest of MIT Ma
 
 Hopeless Opus is a full-stack interactive narrative game platform. It combines a visual-novel style story engine, modular minigames, authenticated team accounts, persistent game sessions, dynamic scoring, and live leaderboard ranking.
 
-Teams make choices that branch the story, solve timed puzzles, and earn points that count toward their leaderboard rank.
+Teams make choices that shape the story and solve timed puzzles to earn leaderboard points. Progress is saved so teams can pick up where they left off.
 
 The project is built as a production-ready web application with a React/Vite frontend, Express/MongoDB backend, Dockerized services, Nginx reverse proxying, and Certbot-based SSL renewal support.
 
