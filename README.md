@@ -110,7 +110,7 @@ Minigames use base scores and time-based penalties. Some minigame groups also in
 
 ### Leaderboard
 
-The leaderboard sorts teams by:
+The leaderboard ranks teams by the following criteria, in order:
 
 1. Points, descending
 2. Money, descending
